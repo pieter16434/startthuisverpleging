@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>startthuisverpleging — Schrijf je in voor de lancering (zomer 2026)</title>
 <meta name="description" content="Het complete stappenplan om in Vlaanderen zelfstandig thuisverpleegkundige te worden. Lanceren in de zomer van 2026 — schrijf je in op de wachtlijst en krijg €10 korting." />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="shortcut icon" href="/favicon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=Bricolage+Grotesque:opsz,wght@12..96,300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -2190,13 +2192,15 @@
       btn.innerHTML = "Versturen…";
 
       try {
-        const formData = new FormData(form);
         const res = await fetch(form.action, {
           method: "POST",
-          headers: { "Accept": "application/json" },
-          body: formData
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({ email: email })
         });
-        if (res.ok || res.status === 302) {
+        if (res.ok) {
           // Show success state — find matching .wl-success sibling/related element
           const successId = form.id.replace("wl-form-", "wl-success-");
           const success = document.getElementById(successId);
