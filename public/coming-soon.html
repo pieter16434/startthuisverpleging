@@ -1142,6 +1142,188 @@
   .price-btn:hover { background: var(--cream-soft); transform: translateY(-1px); }
   .guarantee { margin-top: 20px; font-size: 13px; color: rgba(247,243,234,0.6); display: inline-flex; align-items: center; gap: 8px; text-align: center; line-height: 1.4; }
 
+  /* ============ BESTEL KNOP IN PRICE CARD ============ */
+  .bestel-btn {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 18px 28px;
+    background: var(--butter);
+    color: var(--green-dark);
+    border: none;
+    border-radius: 100px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+  .bestel-btn:hover { background: var(--cream-soft); transform: translateY(-1px); }
+  .bestel-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    color: rgba(247,243,234,0.35);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .bestel-divider::before, .bestel-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(247,243,234,0.15);
+  }
+
+  /* ============ CHECKOUT MODAL ============ */
+  .co-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26,26,23,0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .co-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .co-modal {
+    background: var(--cream);
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    transform: translateY(16px);
+    transition: transform 0.25s ease;
+    box-shadow: 0 40px 80px -20px rgba(26,26,23,0.35);
+  }
+  .co-overlay.open .co-modal { transform: translateY(0); }
+  .co-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: transparent;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--ink-mute);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .co-close:hover { background: var(--surface); color: var(--ink); }
+  .co-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--clay);
+    margin-bottom: 8px;
+  }
+  .co-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--green);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin-bottom: 28px;
+    font-variation-settings: "SOFT" 40, "opsz" 72;
+  }
+  .co-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .co-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .co-field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-soft);
+  }
+  .co-field input, .co-field select {
+    padding: 13px 16px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--ink);
+    background: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .co-field input:focus, .co-field select:focus {
+    outline: none;
+    border-color: var(--clay);
+    box-shadow: 0 0 0 3px rgba(182,84,54,0.12);
+  }
+  .co-field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%236E6B62' stroke-width='2'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+  }
+  .co-submit {
+    margin-top: 8px;
+    width: 100%;
+    padding: 17px 24px;
+    background: var(--clay);
+    color: var(--cream-soft);
+    border: none;
+    border-radius: 100px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .co-submit:hover { background: var(--clay-dark); transform: translateY(-1px); }
+  .co-submit:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+  .co-security {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--ink-mute);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .co-error {
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #b91c1c;
+    display: none;
+  }
+  .co-error.visible { display: block; }
+  @media (max-width: 520px) {
+    .co-modal { padding: 28px 20px; }
+    .co-row { grid-template-columns: 1fr; }
+  }
+
   /* ============ FAQ ============ */
   .faq-list { max-width: 820px; margin: 0 auto; }
   .faq-item {
@@ -1446,7 +1628,7 @@
       <a href="#faq">FAQ</a>
     </nav>
     <div class="nav-cta">
-      <a href="#wachtlijst" class="btn">Schrijf me in <span class="arrow">→</span></a>
+      <button class="btn" id="nav-bestel-btn" style="border:none;cursor:pointer;">Bestel nu — €85 <span class="arrow">→</span></button>
     </div>
   </div>
 </header>
@@ -1954,6 +2136,17 @@
           <div class="price-amount"><span class="currency">€</span>75</div>
           <div class="price-meta">Vroegboekerstarief · normaal €85</div>
 
+          <!-- Bestel nu knop → opent checkout modal -->
+          <button class="bestel-btn" id="open-checkout">
+            Bestel nu — €85 <span>→</span>
+          </button>
+          <p class="guarantee" style="margin-top:12px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            30 dagen geld-terug-garantie
+          </p>
+
+          <div class="bestel-divider">of schrijf je in op de wachtlijst</div>
+
           <!-- Backend hook: replace action with your Formspark URL (or Vercel route) -->
           <form class="waitlist-form" id="wl-form-price" data-action="waitlist-submit" action="https://submit-form.com/hzzGRrLC8" method="POST" novalidate>
             
@@ -2163,16 +2356,74 @@
   });
 
   /* ============================================================
-     Checkout & partner-action click handlers (stubs for Claude Code)
+     Checkout modal
   ============================================================ */
+  const overlay = document.getElementById("checkout-overlay");
+  const openBtn = document.getElementById("open-checkout");
+  const closeBtn = document.getElementById("close-checkout");
+  const checkoutForm = document.getElementById("checkout-form");
+  const submitBtn = document.getElementById("co-submit-btn");
+  const errorBox = document.getElementById("co-error");
+
+  function openModal() {
+    overlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+    setTimeout(() => document.getElementById("co-first").focus(), 50);
+  }
+  function closeModal() {
+    overlay.classList.remove("open");
+    document.body.style.overflow = "";
+  }
+
+  if (openBtn) openBtn.addEventListener("click", openModal);
+  const navBtn = document.getElementById("nav-bestel-btn");
+  if (navBtn) navBtn.addEventListener("click", openModal);
+  if (closeBtn) closeBtn.addEventListener("click", closeModal);
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
   document.querySelectorAll('[data-action="checkout"]').forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      // Backend: POST /api/checkout → returns Mollie payment URL → redirect
-      // For now, default <a href="/checkout"> behavior is fine
-      // Uncomment to intercept:
-      // e.preventDefault();
-      // fetch("/api/checkout", { method: "POST" }).then(r => r.json()).then(d => window.location = d.payment_url);
-    });
+    btn.addEventListener("click", (e) => { e.preventDefault(); openModal(); });
+  });
+
+  checkoutForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorBox.classList.remove("visible");
+
+    const first_name = document.getElementById("co-first").value.trim();
+    const last_name  = document.getElementById("co-last").value.trim();
+    const email      = document.getElementById("co-email").value.trim();
+    const province   = document.getElementById("co-province").value;
+
+    if (!first_name || !last_name) {
+      errorBox.textContent = "Vul je voornaam en achternaam in.";
+      errorBox.classList.add("visible");
+      return;
+    }
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      errorBox.textContent = "Vul een geldig e-mailadres in.";
+      errorBox.classList.add("visible");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Even wachten…";
+
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ first_name, last_name, email, province: province || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Onbekende fout");
+      window.location.href = data.payment_url;
+    } catch (err) {
+      errorBox.textContent = "Er ging iets mis. Probeer opnieuw of mail hallo@startthuisverpleging.be";
+      errorBox.classList.add("visible");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Ga naar betaling →";
+    }
   });
 
   /* ============================================================
@@ -2232,6 +2483,50 @@
   }, { threshold: 0.12, rootMargin: "0px 0px -50px 0px" });
   document.querySelectorAll("section.section > .wrap > *").forEach(el => io.observe(el));
 </script>
+
+<!-- ==================== CHECKOUT MODAL ==================== -->
+<div class="co-overlay" id="checkout-overlay" role="dialog" aria-modal="true" aria-label="Bestelling plaatsen">
+  <div class="co-modal">
+    <button class="co-close" id="close-checkout" aria-label="Sluiten">×</button>
+    <div class="co-label">Bestelling</div>
+    <h2 class="co-title">Jouw gids bestellen</h2>
+    <form id="checkout-form" novalidate>
+      <div class="co-row">
+        <div class="co-field">
+          <label for="co-first">Voornaam</label>
+          <input type="text" id="co-first" name="first_name" placeholder="Pieter" autocomplete="given-name" required>
+        </div>
+        <div class="co-field">
+          <label for="co-last">Achternaam</label>
+          <input type="text" id="co-last" name="last_name" placeholder="Vanermen" autocomplete="family-name" required>
+        </div>
+      </div>
+      <div class="co-field">
+        <label for="co-email">E-mailadres</label>
+        <input type="email" id="co-email" name="email" placeholder="jouw@email.be" autocomplete="email" required>
+      </div>
+      <div class="co-field">
+        <label for="co-province">Provincie</label>
+        <select id="co-province" name="province">
+          <option value="">— Kies je provincie —</option>
+          <option value="ANT">Antwerpen</option>
+          <option value="LIM">Limburg</option>
+          <option value="OVL">Oost-Vlaanderen</option>
+          <option value="VBR">Vlaams-Brabant</option>
+          <option value="WVL">West-Vlaanderen</option>
+        </select>
+      </div>
+      <div class="co-error" id="co-error">Er ging iets mis. Probeer opnieuw of mail <a href="mailto:hallo@startthuisverpleging.be">hallo@startthuisverpleging.be</a></div>
+      <button type="submit" class="co-submit" id="co-submit-btn">
+        Ga naar betaling →
+      </button>
+      <p class="co-security">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        Veilige betaling via Mollie · Bancontact, Visa, Mastercard
+      </p>
+    </form>
+  </div>
+</div>
 
 </body>
 </html>
