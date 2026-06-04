@@ -61,7 +61,7 @@ export default function PrivacyPage() {
       <ul style={{ paddingLeft: 20, marginTop: 8 }}>
         <li>Inzage in uw gegevens</li>
         <li>Correctie van onjuiste gegevens</li>
-        <li>Verwijdering van uw gegevens ("recht om vergeten te worden")</li>
+        <li>Verwijdering van uw gegevens (&ldquo;recht om vergeten te worden&rdquo;)</li>
         <li>Beperking van de verwerking</li>
         <li>Overdraagbaarheid van uw gegevens</li>
       </ul>
