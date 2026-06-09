@@ -2,41 +2,64 @@ export default function CancelledPage() {
   return (
     <main style={{
       minHeight: '100vh',
+      background: '#F1ECE0',
+      fontFamily: '"Bricolage Grotesque", system-ui, sans-serif',
       display: 'flex',
-      flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#F1ECE0',
-      fontFamily: '"Bricolage Grotesque", sans-serif',
       padding: '40px 24px',
-      textAlign: 'center',
     }}>
-      <div style={{ fontSize: '48px', marginBottom: '24px' }}>←</div>
-      <h1 style={{
-        fontFamily: '"Fraunces", Georgia, serif',
-        fontSize: '2rem',
-        color: '#2A3D2E',
-        marginBottom: '16px',
-        fontWeight: 400,
-      }}>
-        Betaling geannuleerd
-      </h1>
-      <p style={{ color: '#3A3A33', fontSize: '1.1rem', maxWidth: '480px', lineHeight: 1.6 }}>
-        Geen probleem — je bent niets verschuldigd. Je kan het altijd opnieuw proberen.
-      </p>
-      <a href="/" style={{
-        marginTop: '40px',
-        display: 'inline-block',
-        padding: '14px 28px',
-        background: '#2A3D2E',
-        color: '#F7F3EA',
-        borderRadius: '100px',
-        textDecoration: 'none',
-        fontSize: '0.95rem',
-        fontWeight: 500,
-      }}>
-        ← Terug naar de website
-      </a>
+      <div style={{ width: '100%', maxWidth: 480, textAlign: 'center' }}>
+
+        {/* Icoon */}
+        <div style={{
+          width: 72, height: 72, borderRadius: '50%',
+          background: '#F1ECE0', border: '2px solid #D8D0C0',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 28px', fontSize: 32,
+        }}>
+          ↩
+        </div>
+
+        <h1 style={{
+          fontFamily: 'Georgia, serif', fontSize: 28, color: '#1A1A17',
+          fontWeight: 400, marginBottom: 12,
+        }}>
+          Betaling geannuleerd
+        </h1>
+        <p style={{ color: '#3A3A33', fontSize: 17, lineHeight: 1.6, marginBottom: 32, maxWidth: 380, margin: '0 auto 32px' }}>
+          Geen probleem — je bent niets verschuldigd en er is niets afgeschreven.
+          Je kan het altijd opnieuw proberen.
+        </p>
+
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {/* Opnieuw proberen */}
+          <a href="/#wachtlijst" style={{
+            display: 'inline-block', padding: '13px 24px',
+            background: '#B65436', color: '#fff', borderRadius: 100,
+            textDecoration: 'none', fontSize: 15, fontWeight: 600,
+          }}>
+            Opnieuw proberen →
+          </a>
+
+          {/* Terug */}
+          <a href="/" style={{
+            display: 'inline-block', padding: '13px 24px',
+            background: 'transparent', color: '#3A3A33',
+            border: '1.5px solid #D8D0C0', borderRadius: 100,
+            textDecoration: 'none', fontSize: 15, fontWeight: 500,
+          }}>
+            ← Terug naar de website
+          </a>
+        </div>
+
+        <p style={{ marginTop: 28, color: '#6E6B62', fontSize: 14 }}>
+          Liever via mail betalen of een vraag?{' '}
+          <a href="mailto:hallo@startthuisverpleging.be" style={{ color: '#B65436' }}>
+            Contacteer ons
+          </a>
+        </p>
+      </div>
     </main>
   )
 }

@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       .from('orders')
       .insert({
         customer_id: customer.id,
-        amount_cents: 8500,
+        amount_cents: 5000,
         status: 'pending',
       })
       .select('id')
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
     // Mollie betaling aanmaken
     const payment = await mollieClient.payments.create({
-      amount: { currency: 'EUR', value: '85.00' },
+      amount: { currency: 'EUR', value: '50.00' },
       description: 'Gids — Zelfstandig thuisverpleegkundige worden in Vlaanderen',
       redirectUrl: `${baseUrl}/checkout/success?order_id=${order.id}`,
       webhookUrl: `${baseUrl}/api/webhooks/mollie`,
