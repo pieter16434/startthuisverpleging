@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mollie/api-client": "^4.5.0",
+    "@react-pdf/renderer": "^4.5.1",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",
     "@types/bcryptjs": "^2.4.6",
