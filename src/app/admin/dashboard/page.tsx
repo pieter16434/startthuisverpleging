@@ -21,6 +21,7 @@ type Partner = {
 }
 type Order = {
   id: string; amount_cents: number; status: string; created_at: string; paid_at: string | null
+  pdf_main_url: string | null
   customers: { first_name: string; last_name: string; email: string; province: string }
 }
 
@@ -51,7 +52,9 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<'partners' | 'orders' | 'invoicing'>('partners')
   const [partners, setPartners] = useState<Partner[]>([])
   const [orders, setOrders] = useState<Order[]>([])
-  const [orderStats, setOrderStats] = useState({ total: 0, revenue: 0 })
+  const [orderStats, setOrderStats] = useState({ total: 0, revenue: 0, pdfPending: 0 })
+  const [sendingPdf, setSendingPdf] = useState<string | null>(null)
+  const [pdfMsg, setPdfMsg] = useState('')
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editPartner, setEditPartner] = useState<Partner | null>(null)
@@ -181,8 +184,8 @@ export default function AdminDashboard() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 32 }}>
           {[
             { label: 'Betalende klanten', value: orderStats.total, color: '#2A3D2E' },
-            { label: 'Totale omzet', value: `€ ${(orderStats.revenue).toLocaleString('nl-BE')}`, color: '#B65436' },
-            { label: 'Actieve partners', value: partners.filter(p => p.is_active).length, color: '#2A3D2E' },
+            { label: 'Totale omzet', value: `€ ${orderStats.revenue.toFixed(2).replace('.', ',')}`, color: '#B65436' },
+            { label: 'PDF nog te sturen', value: orderStats.pdfPending, color: orderStats.pdfPending > 0 ? '#B65436' : '#2A3D2E' },
             { label: 'Geverifieerde codes', value: partners.reduce((a, p) => a + p.verified_codes, 0), color: '#6E6B62' },
           ].map(s => (
             <div key={s.label} style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 12, padding: '18px 20px' }}>
@@ -348,14 +351,17 @@ export default function AdminDashboard() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                   <thead>
                     <tr style={{ background: '#F1ECE0', borderBottom: '2px solid #D8D0C0' }}>
-                      {['Klant', 'E-mail', 'Provincie', 'Bedrag', 'Status', 'Datum'].map(h => (
+                      {['Klant', 'E-mail', 'Provincie', 'Bedrag', 'Status', 'Datum', 'PDF'].map(h => (
                         <th key={h} style={{ textAlign: 'left', padding: '12px 16px', color: '#6E6B62', fontWeight: 600, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {orders.length === 0 && (
-                      <tr><td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: '#6E6B62' }}>Nog geen bestellingen</td></tr>
+                      <tr><td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#6E6B62' }}>Nog geen bestellingen</td></tr>
+                    )}
+                    {pdfMsg && (
+                      <tr><td colSpan={7} style={{ padding: '10px 16px', background: '#E8F5E9', color: '#2A3D2E', fontSize: 13, fontWeight: 600 }}>{pdfMsg}</td></tr>
                     )}
                     {orders.map((o, i) => (
                       <tr key={o.id} style={{ borderBottom: '1px solid #EDE9E0', background: i % 2 === 0 ? 'transparent' : '#F7F3EA' }}>
@@ -370,6 +376,33 @@ export default function AdminDashboard() {
                         </td>
                         <td style={{ padding: '11px 16px', color: '#6E6B62' }}>
                           {new Date(o.paid_at ?? o.created_at).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </td>
+                        <td style={{ padding: '11px 16px' }}>
+                          {o.status === 'paid' ? (
+                            o.pdf_main_url ? (
+                              <span style={{ fontSize: 12, color: '#2A3D2E', fontWeight: 600 }}>✓ Verstuurd</span>
+                            ) : (
+                              <button
+                                onClick={async () => {
+                                  setSendingPdf(o.id)
+                                  setPdfMsg('')
+                                  const res = await fetch(`/api/admin/orders/${o.id}`, { method: 'POST' })
+                                  const data = await res.json()
+                                  setSendingPdf(null)
+                                  if (res.ok) {
+                                    setPdfMsg(`✓ PDF verstuurd naar ${data.sent_to}`)
+                                    setTimeout(() => { setPdfMsg(''); loadData() }, 4000)
+                                  } else {
+                                    setPdfMsg(`✗ Fout: ${data.error}`)
+                                  }
+                                }}
+                                disabled={sendingPdf === o.id}
+                                style={{ background: '#2A3D2E', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: sendingPdf === o.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+                              >
+                                {sendingPdf === o.id ? '…' : 'Stuur PDF'}
+                              </button>
+                            )
+                          ) : <span style={{ color: '#D8D0C0', fontSize: 12 }}>—</span>}
                         </td>
                       </tr>
                     ))}
