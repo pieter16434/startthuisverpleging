@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>startthuisverpleging — Zelfstandig thuisverpleegkundige worden in Vlaanderen</title>
 <meta name="description" content="Het complete stappenplan om als zelfstandig thuisverpleegkundige te starten in Vlaanderen. Geschreven door twee verpleegkundigen die het in 2024 zelf deden. Nu beschikbaar voor €50." />
-<link rel="icon" type="image/x-icon" href="/favicon.ico" />
-<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="shortcut icon" href="/favicon.png" />
+<link rel="apple-touch-icon" href="/favicon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=Bricolage+Grotesque:opsz,wght@12..96,300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -2186,8 +2187,8 @@
         <p>We werken samen met geselecteerde boekhouders, verzekeraars, sociaal verzekeringsfondsen en leveranciers van medisch materiaal in heel Vlaanderen. Per provincie selecteren we maximaal drie partners per categorie. We zijn momenteel onze eerste lichting partners aan het selecteren — wil je gesprek? Mail ons rechtstreeks.</p>
       </div>
       <div>
-        <a href="mailto:hallo@startthuisverpleging.be?subject=Interesse%20als%20partner" class="btn btn-ghost btn-lg">Mail ons <span class="arrow">→</span></a>
-        <p style="margin-top:14px;font-size:14px;color:var(--ink-mute);">hallo@startthuisverpleging.be</p>
+        <button class="btn btn-ghost btn-lg" data-action="open-partner-modal" style="border:none;cursor:pointer;">Laat je gegevens achter <span class="arrow">→</span></button>
+        <p style="margin-top:14px;font-size:14px;color:var(--ink-mute);">We nemen contact op wanneer het past.</p>
       </div>
     </div>
   </div>
@@ -2210,7 +2211,7 @@
       </div>
       <div class="foot-col">
         <h5>Partners</h5>
-        <a href="mailto:hallo@startthuisverpleging.be?subject=Interesse%20als%20partner">Word partner</a>
+        <a href="#" data-action="open-partner-modal">Word partner</a>
       </div>
       <div class="foot-col">
         <h5>Contact</h5>
@@ -2268,6 +2269,81 @@
         Veilige betaling via Mollie · Bancontact, Visa, Mastercard
       </p>
     </form>
+  </div>
+</div>
+
+<!-- ==================== PARTNER MODAL ==================== -->
+<div class="co-overlay" id="partner-overlay" role="dialog" aria-modal="true" aria-label="Interesse als partner">
+  <div class="co-modal">
+    <button class="co-close" id="close-partner" aria-label="Sluiten">×</button>
+    <div class="co-label" style="background:#2A3D2E;color:#E8D08A;border-color:#2A3D2E;">Partner worden</div>
+    <h2 class="co-title">Interesse als partner?</h2>
+    <p style="font-size:14px;color:#6E6B62;margin:0 0 20px;line-height:1.5;">
+      Vul je gegevens in. Pieter neemt contact op om de samenwerking te bespreken — geen verplichting.
+    </p>
+    <form id="partner-form" novalidate>
+      <div class="co-row">
+        <div class="co-field">
+          <label for="pf-first">Voornaam</label>
+          <input type="text" id="pf-first" name="first_name" placeholder="Jan" autocomplete="given-name" required>
+        </div>
+        <div class="co-field">
+          <label for="pf-last">Achternaam</label>
+          <input type="text" id="pf-last" name="last_name" placeholder="Janssen" autocomplete="family-name" required>
+        </div>
+      </div>
+      <div class="co-field">
+        <label for="pf-company">Bedrijfsnaam</label>
+        <input type="text" id="pf-company" name="company" placeholder="Janssen &amp; Co" required>
+      </div>
+      <div class="co-field">
+        <label for="pf-type">Type dienst</label>
+        <select id="pf-type" name="service_type" required>
+          <option value="">— Kies een categorie —</option>
+          <option value="Boekhouder">Boekhouder</option>
+          <option value="Verzekeraar / Makelaar">Verzekeraar / Makelaar</option>
+          <option value="Sociaal verzekeringsfonds">Sociaal verzekeringsfonds</option>
+          <option value="Leverancier medisch materiaal">Leverancier medisch materiaal</option>
+          <option value="Andere">Andere</option>
+        </select>
+      </div>
+      <div class="co-row">
+        <div class="co-field">
+          <label for="pf-email">E-mailadres</label>
+          <input type="email" id="pf-email" name="email" placeholder="jan@bedrijf.be" autocomplete="email" required>
+        </div>
+        <div class="co-field">
+          <label for="pf-phone">Telefoonnummer <span style="color:#9E9B91;font-weight:400;">(optioneel)</span></label>
+          <input type="tel" id="pf-phone" name="phone" placeholder="+32 4xx xx xx xx" autocomplete="tel">
+        </div>
+      </div>
+      <div class="co-field">
+        <label for="pf-province">Provincie <span style="color:#9E9B91;font-weight:400;">(optioneel)</span></label>
+        <select id="pf-province" name="province">
+          <option value="">— Optioneel —</option>
+          <option value="Antwerpen">Antwerpen</option>
+          <option value="Limburg">Limburg</option>
+          <option value="Oost-Vlaanderen">Oost-Vlaanderen</option>
+          <option value="Vlaams-Brabant">Vlaams-Brabant</option>
+          <option value="West-Vlaanderen">West-Vlaanderen</option>
+          <option value="Heel Vlaanderen">Heel Vlaanderen</option>
+        </select>
+      </div>
+      <div class="co-field">
+        <label for="pf-message">Extra info <span style="color:#9E9B91;font-weight:400;">(optioneel)</span></label>
+        <textarea id="pf-message" name="message" rows="3" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #D8D0C0;border-radius:8px;font-family:inherit;font-size:15px;background:#FDFAF4;resize:vertical;transition:border-color .2s;" placeholder="Vertel iets over jouw aanbod of dienst…"></textarea>
+      </div>
+      <div class="co-error" id="pf-error">Vul alle verplichte velden in.</div>
+      <button type="submit" class="co-submit" id="pf-submit-btn" style="background:#2A3D2E;color:#E8D08A;">
+        Stuur aanvraag →
+      </button>
+      <p class="co-security">We nemen binnen 3 werkdagen contact met je op.</p>
+    </form>
+    <div id="pf-success" style="display:none;text-align:center;padding:20px 0 8px;">
+      <div style="width:52px;height:52px;background:#2A3D2E;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:22px;color:#E8D08A;">✓</div>
+      <h3 style="margin:0 0 8px;color:#1A1A17;font-family:Georgia,serif;font-size:20px;font-weight:400;">Aanvraag ontvangen!</h3>
+      <p style="margin:0;color:#6E6B62;line-height:1.6;font-size:15px;">We nemen binnen 3 werkdagen contact<br>met je op via je e-mailadres.</p>
+    </div>
   </div>
 </div>
 
@@ -2497,6 +2573,77 @@
     });
   }, { threshold: 0.12, rootMargin: "0px 0px -50px 0px" });
   document.querySelectorAll("section.section > .wrap > *").forEach(el => io.observe(el));
+
+  /* ============================================================
+     Partner inquiry modal
+  ============================================================ */
+  const partnerOverlay  = document.getElementById("partner-overlay");
+  const closePartnerBtn = document.getElementById("close-partner");
+
+  function openPartnerModal() {
+    partnerOverlay.classList.add("open");
+  }
+  function closePartnerModal() {
+    partnerOverlay.classList.remove("open");
+  }
+
+  if (closePartnerBtn) closePartnerBtn.addEventListener("click", closePartnerModal);
+  if (partnerOverlay) {
+    partnerOverlay.addEventListener("click", (e) => {
+      if (e.target === partnerOverlay) closePartnerModal();
+    });
+  }
+
+  document.querySelectorAll('[data-action="open-partner-modal"]').forEach(el => {
+    el.addEventListener("click", (e) => { e.preventDefault(); openPartnerModal(); });
+  });
+
+  const partnerForm = document.getElementById("partner-form");
+  if (partnerForm) {
+    partnerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn      = document.getElementById("pf-submit-btn");
+      const errorBox = document.getElementById("pf-error");
+
+      const first_name   = document.getElementById("pf-first").value.trim();
+      const last_name    = document.getElementById("pf-last").value.trim();
+      const company      = document.getElementById("pf-company").value.trim();
+      const service_type = document.getElementById("pf-type").value;
+      const email        = document.getElementById("pf-email").value.trim();
+      const phone        = document.getElementById("pf-phone").value.trim();
+      const province     = document.getElementById("pf-province").value;
+      const message      = document.getElementById("pf-message").value.trim();
+
+      if (!first_name || !last_name || !company || !service_type || !email) {
+        errorBox.textContent = "Vul alle verplichte velden in.";
+        errorBox.classList.add("visible");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Versturen…";
+      errorBox.classList.remove("visible");
+
+      try {
+        const res = await fetch("/api/partner-inquiry", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ first_name, last_name, company, service_type, email, phone, province, message })
+        });
+        if (res.ok) {
+          document.getElementById("partner-form").style.display = "none";
+          document.getElementById("pf-success").style.display = "block";
+        } else {
+          throw new Error("Server error");
+        }
+      } catch {
+        errorBox.textContent = "Er ging iets mis. Probeer opnieuw of mail hallo@startthuisverpleging.be";
+        errorBox.classList.add("visible");
+        btn.disabled = false;
+        btn.textContent = "Stuur aanvraag →";
+      }
+    });
+  }
 </script>
 
 </body>
