@@ -15,6 +15,8 @@ const PartnerSchema = z.object({
   discount_description: z.string().min(1).max(500),
   fee_per_customer: z.number().min(0),
   notes: z.string().optional(),
+  vat_number: z.string().max(50).optional(),
+  billing_address: z.string().max(300).optional(),
 })
 
 // GET — alle partners ophalen
@@ -27,7 +29,8 @@ export async function GET() {
     .from('partners')
     .select(`
       id, name, business_name, email, province, service_type,
-      discount_description, fee_per_customer, is_active, notes, created_at,
+      discount_description, fee_per_customer, is_active, notes,
+      vat_number, billing_address, created_at,
       partner_codes(count)
     `)
     .order('created_at', { ascending: false })
@@ -76,6 +79,8 @@ export async function POST(req: NextRequest) {
         discount_description: data.discount_description,
         fee_per_customer: data.fee_per_customer,
         notes: data.notes ?? null,
+        vat_number: data.vat_number ?? null,
+        billing_address: data.billing_address ?? null,
         is_active: true,
       })
       .select('id, name, email')

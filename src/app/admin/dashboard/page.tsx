@@ -17,6 +17,7 @@ type Partner = {
   id: string; name: string; business_name: string; email: string; province: string
   service_type: string; discount_description: string; fee_per_customer: number
   is_active: boolean; notes: string | null; created_at: string
+  vat_number: string | null; billing_address: string | null
   total_codes: number; verified_codes: number
 }
 type Order = {
@@ -63,7 +64,7 @@ export default function AdminDashboard() {
   const [successMsg, setSuccessMsg] = useState('')
 
   // Nieuw partner form
-  const emptyForm = { name: '', business_name: '', email: '', password: '', province: '', service_type: '', discount_description: '', fee_per_customer: '', notes: '' }
+  const emptyForm = { name: '', business_name: '', email: '', password: '', province: '', service_type: '', discount_description: '', fee_per_customer: '', notes: '', vat_number: '', billing_address: '' }
   const [form, setForm] = useState(emptyForm)
 
   const loadData = useCallback(async () => {
@@ -130,6 +131,8 @@ export default function AdminDashboard() {
           fee_per_customer: editPartner.fee_per_customer,
           notes: editPartner.notes,
           service_type: editPartner.service_type,
+          vat_number: editPartner.vat_number,
+          billing_address: editPartner.billing_address,
         }),
       })
       if (!res.ok) { setFormError('Opslaan mislukt'); return }
@@ -222,16 +225,18 @@ export default function AdminDashboard() {
                 <form onSubmit={handleAddPartner}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
                     {[
-                      { label: 'Naam contactpersoon', key: 'name', placeholder: 'Jan Janssen' },
-                      { label: 'Bedrijfsnaam', key: 'business_name', placeholder: 'Janssen Boekhouding' },
-                      { label: 'E-mailadres (login)', key: 'email', placeholder: 'jan@janssen.be', type: 'email' },
-                      { label: 'Wachtwoord', key: 'password', placeholder: 'Minimaal 6 tekens', type: 'password' },
-                      { label: 'Type dienst', key: 'service_type', placeholder: 'Boekhouder / Verzekeringsmakelaar / …' },
-                      { label: 'Facturatiebedrag per klant (€)', key: 'fee_per_customer', placeholder: '25', type: 'number' },
+                      { label: 'Naam contactpersoon', key: 'name', placeholder: 'Jan Janssen', req: true },
+                      { label: 'Bedrijfsnaam', key: 'business_name', placeholder: 'Janssen Boekhouding', req: true },
+                      { label: 'E-mailadres (login)', key: 'email', placeholder: 'jan@janssen.be', type: 'email', req: true },
+                      { label: 'Wachtwoord', key: 'password', placeholder: 'Minimaal 6 tekens', type: 'password', req: true },
+                      { label: 'Type dienst', key: 'service_type', placeholder: 'Boekhouder / Verzekeringsmakelaar / …', req: true },
+                      { label: 'Facturatiebedrag per klant (€)', key: 'fee_per_customer', placeholder: '25', type: 'number', req: true },
+                      { label: 'Ondernemings- / BTW-nummer', key: 'vat_number', placeholder: 'BE0123.456.789', req: false },
+                      { label: 'Facturatieadres', key: 'billing_address', placeholder: 'Kerkstraat 1, 3500 Hasselt', req: false },
                     ].map(f => (
                       <div key={f.key}>
-                        <label style={labelStyle}>{f.label}</label>
-                        <input type={f.type ?? 'text'} value={form[f.key as keyof typeof form]} onChange={e => setField(f.key, e.target.value)} placeholder={f.placeholder} required={f.key !== 'notes'} style={inputStyle} />
+                        <label style={labelStyle}>{f.label}{!f.req && <span style={{ color: '#9E9B91', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}> (optioneel)</span>}</label>
+                        <input type={f.type ?? 'text'} value={form[f.key as keyof typeof form]} onChange={e => setField(f.key, e.target.value)} placeholder={f.placeholder} required={f.req} style={inputStyle} />
                       </div>
                     ))}
                     <div>
@@ -292,6 +297,14 @@ export default function AdminDashboard() {
                         <label style={labelStyle}>Interne notities</label>
                         <input value={editPartner.notes ?? ''} onChange={e => setEditPartner({ ...editPartner, notes: e.target.value })} style={inputStyle} />
                       </div>
+                      <div>
+                        <label style={labelStyle}>Ondernemings- / BTW-nummer</label>
+                        <input value={editPartner.vat_number ?? ''} onChange={e => setEditPartner({ ...editPartner, vat_number: e.target.value })} placeholder="BE0123.456.789" style={inputStyle} />
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Facturatieadres</label>
+                        <input value={editPartner.billing_address ?? ''} onChange={e => setEditPartner({ ...editPartner, billing_address: e.target.value })} placeholder="Kerkstraat 1, 3500 Hasselt" style={inputStyle} />
+                      </div>
                       {formError && <p style={{ color: '#B65436', fontSize: 13 }}>{formError}</p>}
                       <button type="submit" disabled={formLoading} style={{ background: '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                         {formLoading ? 'Opslaan…' : 'Opslaan ✓'}
@@ -313,6 +326,12 @@ export default function AdminDashboard() {
                           Aanbod: {p.discount_description}
                         </div>
                         {p.notes && <div style={{ fontSize: 12, color: '#8A9588', fontStyle: 'italic' }}>Notitie: {p.notes}</div>}
+                        {(p.vat_number || p.billing_address) && (
+                          <div style={{ fontSize: 12, color: '#6E6B62', marginTop: 2, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                            {p.vat_number && <span>BTW: <strong>{p.vat_number}</strong></span>}
+                            {p.billing_address && <span>📍 {p.billing_address}</span>}
+                          </div>
+                        )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
                         <div style={{ textAlign: 'center' }}>
@@ -434,6 +453,8 @@ export default function AdminDashboard() {
                     <div style={{ fontSize: 13, color: '#6E6B62', marginTop: 2 }}>
                       {PROVINCES[p.province]} · € {p.fee_per_customer.toFixed(2).replace('.', ',')} per klant
                     </div>
+                    {p.vat_number && <div style={{ fontSize: 12, color: '#8A9588', marginTop: 2 }}>BTW: {p.vat_number}</div>}
+                    {p.billing_address && <div style={{ fontSize: 12, color: '#8A9588' }}>📍 {p.billing_address}</div>}
                   </div>
                   <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
                     <div style={{ textAlign: 'center' }}>

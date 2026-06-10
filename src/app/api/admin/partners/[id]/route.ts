@@ -22,6 +22,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (body.fee_per_customer !== undefined) update.fee_per_customer = body.fee_per_customer
     if (body.notes !== undefined) update.notes = body.notes
     if (body.is_active !== undefined) update.is_active = body.is_active
+    if (body.vat_number !== undefined) update.vat_number = body.vat_number
+    if (body.billing_address !== undefined) update.billing_address = body.billing_address
     if (body.password) {
       update.password_hash = await bcrypt.hash(body.password, 12)
     }
