@@ -7,7 +7,7 @@ const Schema = z.object({
   last_name:    z.string().min(1).max(60),
   email:        z.string().email(),
   order_ref:    z.string().max(30).optional().default(''),
-  reason:       z.string().min(5).max(1000),
+  reason:       z.string().min(1).max(1000),
 })
 
 export async function POST(req: NextRequest) {
