@@ -25,6 +25,7 @@ type DashboardData = {
     toInvoice: number
   }
   codes: Code[]
+  thisMonthCodes: Code[]
 }
 
 const PROVINCES: Record<string, string> = {
@@ -95,7 +96,9 @@ export default function PartnerDashboardPage() {
   }
 
   if (!data) return null
-  const { partner, stats, codes } = data
+  const { partner, stats, codes, thisMonthCodes } = data
+  const now = new Date()
+  const monthLabel = now.toLocaleDateString('nl-BE', { month: 'long', year: 'numeric' })
 
   return (
     <div style={{ minHeight: '100vh', background: '#F1ECE0', fontFamily: '"Bricolage Grotesque", system-ui, sans-serif' }}>
@@ -264,14 +267,55 @@ export default function PartnerDashboardPage() {
             </p>
             <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #D8D0C0' }}>
               <p style={{ fontSize: 13, color: '#6E6B62', marginBottom: 4 }}>Vragen of wijzigingen?</p>
-              <a href="mailto:hallo@startthuisverpleging.be" style={{ color: '#B65436', fontSize: 14 }}>
-                hallo@startthuisverpleging.be
+              <a href="mailto:info@domuscare.be" style={{ color: '#B65436', fontSize: 14 }}>
+                info@domuscare.be
               </a>
             </div>
           </div>
         </div>
 
-        {/* Codes overzicht */}
+        {/* Huidige maand */}
+        <div style={{ background: '#FBF8F2', border: '2px solid #2A3D2E', borderRadius: 16, padding: '28px', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 20, color: '#1A1A17', margin: 0 }}>
+              Geverifieerde klanten — {monthLabel}
+            </h2>
+            <div style={{ background: '#2A3D2E', color: '#E8D08A', borderRadius: 8, padding: '6px 14px', fontSize: 14, fontWeight: 700 }}>
+              {thisMonthCodes.length} klant{thisMonthCodes.length !== 1 ? 'en' : ''}
+              {thisMonthCodes.length > 0 && ` · € ${(thisMonthCodes.length * stats.toInvoice / Math.max(stats.verifiedCodes, 1)).toFixed(0).replace('.', ',')}`}
+            </div>
+          </div>
+          {thisMonthCodes.length === 0 ? (
+            <p style={{ color: '#6E6B62', fontSize: 14, margin: 0 }}>
+              Nog geen geverifieerde klanten deze maand.
+            </p>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid #D8D0C0' }}>
+                    {['Code', 'Klant', 'Geverifieerd op'].map(h => (
+                      <th key={h} style={{ textAlign: 'left', padding: '8px 12px', color: '#6E6B62', fontWeight: 600, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {thisMonthCodes.map((c, i) => (
+                    <tr key={c.code} style={{ borderBottom: '1px solid #EDE9E0', background: i % 2 === 0 ? 'transparent' : '#F7F3EA' }}>
+                      <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: '#2A3D2E' }}>{c.code}</td>
+                      <td style={{ padding: '10px 12px', color: '#1A1A17' }}>{c.customers.first_name} {c.customers.last_name}</td>
+                      <td style={{ padding: '10px 12px', color: '#6E6B62' }}>
+                        {c.verified_at ? new Date(c.verified_at).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' }) : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Alle codes overzicht */}
         <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 16, padding: '28px 28px' }}>
           <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 20, color: '#1A1A17', marginBottom: 20 }}>
             Overzicht codes ({codes.length})

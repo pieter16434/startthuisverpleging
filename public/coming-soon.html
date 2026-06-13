@@ -2127,6 +2127,9 @@
         <div class="price-card">
           <div class="price-amount"><span class="currency">€</span>50</div>
           <div class="price-meta">Introductieprijs · <s style="opacity:0.6;">normaal €85</s> · tijdelijk aanbod</div>
+          <div style="margin:10px 0 0;padding:10px 14px;background:rgba(232,208,138,0.15);border-radius:8px;font-size:12px;color:rgba(255,255,255,0.8);line-height:1.5;text-align:left;">
+            ℹ️ De lagere prijs is omdat we nog niet in elke provincie lokale partners hebben. Zodra het netwerk volledig is, stijgt de prijs naar €85. Wie nu koopt, houdt de introductieprijs.
+          </div>
 
           <!-- Bestel nu knop → opent checkout modal -->
           <button class="bestel-btn" id="open-checkout">
@@ -2170,8 +2173,8 @@
         <div class="faq-a"><p>De gids zelf is in het Nederlands en focust op Vlaanderen — wetgeving, partners, gewoontes. Voor Brussel en Wallonië gelden andere regels en partners, dus we raden dit document daar niet voor aan.</p></div>
       </div>
       <div class="faq-item">
-        <button class="faq-q" data-action="toggle-faq">Waarom is het maar €50? <span class="icn">+</span></button>
-        <div class="faq-a"><p>De prijs is bewust laag gehouden zodat élke startende verpleegkundige hem kan betalen. Wat we onderweg leerden, mag geen luxe-aankoop zijn. De huidige prijs van €50 is een introductieprijs — normaal kost de gids €85. De prijs kan in de toekomst stijgen naarmate er meer partners aanboord komen.</p></div>
+        <button class="faq-q" data-action="toggle-faq">Waarom is het maar €50 in plaats van €85? <span class="icn">+</span></button>
+        <div class="faq-a"><p>De gids kost normaal €85, maar we lanceren aan €50 omdat we momenteel nog niet in elke Vlaamse provincie lokale partners hebben. Het codeboek met partnerkortingen is daardoor bij sommige provincies nog beperkt. Zodra het partnernetwerk volledig is uitgebouwd, stijgt de prijs naar €85. Wie nu koopt, houdt de introductieprijs — ook als de prijs later stijgt.</p></div>
       </div>
     </div>
   </div>
@@ -2216,7 +2219,7 @@
       </div>
       <div class="foot-col">
         <h5>Contact</h5>
-        <a href="mailto:hallo@startthuisverpleging.be">hallo@startthuisverpleging.be</a>
+        <a href="#" data-action="open-refund-modal">Geld terug aanvragen</a>
         <a href="/privacy">Privacybeleid</a>
         <a href="/voorwaarden">Algemene voorwaarden</a>
         <a href="/terugbetaling">Terugbetalingsbeleid</a>
@@ -2270,6 +2273,52 @@
         Veilige betaling via Mollie · Bancontact, Visa, Mastercard
       </p>
     </form>
+  </div>
+</div>
+
+<!-- ==================== REFUND MODAL ==================== -->
+<div class="co-overlay" id="refund-overlay" role="dialog" aria-modal="true" aria-label="Geld terug aanvragen">
+  <div class="co-modal">
+    <button class="co-close" id="close-refund" aria-label="Sluiten">×</button>
+    <div class="co-label" style="background:#B65436;color:#fff;border-color:#B65436;">30 dagen garantie</div>
+    <h2 class="co-title">Geld terug aanvragen</h2>
+    <p style="font-size:14px;color:#6E6B62;margin:0 0 20px;line-height:1.5;">
+      Niet tevreden? Geen probleem. Vul het formulier in en we storten het volledige bedrag terug binnen 5 werkdagen — zonder vragen.
+    </p>
+    <form id="refund-form" novalidate>
+      <div class="co-row">
+        <div class="co-field">
+          <label for="rf-first">Voornaam</label>
+          <input type="text" id="rf-first" placeholder="Jan" autocomplete="given-name" required>
+        </div>
+        <div class="co-field">
+          <label for="rf-last">Achternaam</label>
+          <input type="text" id="rf-last" placeholder="Janssen" autocomplete="family-name" required>
+        </div>
+      </div>
+      <div class="co-field">
+        <label for="rf-email">E-mailadres waarmee je besteld hebt</label>
+        <input type="email" id="rf-email" placeholder="jan@email.be" autocomplete="email" required>
+      </div>
+      <div class="co-field">
+        <label for="rf-order">Bestelnummer <span style="color:#9E9B91;font-weight:400;">(optioneel — staat in je bevestigingsmail)</span></label>
+        <input type="text" id="rf-order" placeholder="bijv. A1B2C3D4" style="font-family:monospace;">
+      </div>
+      <div class="co-field">
+        <label for="rf-reason">Reden voor terugbetaling</label>
+        <textarea id="rf-reason" rows="3" required style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #D8D0C0;border-radius:8px;font-family:inherit;font-size:15px;background:#FDFAF4;resize:vertical;" placeholder="Vertel ons kort waarom de gids niet aan je verwachtingen voldeed…"></textarea>
+      </div>
+      <div class="co-error" id="rf-error">Vul alle verplichte velden in.</div>
+      <button type="submit" class="co-submit" id="rf-submit-btn" style="background:#B65436;">
+        Terugbetaling aanvragen →
+      </button>
+      <p class="co-security">We verwerken je aanvraag binnen 5 werkdagen.</p>
+    </form>
+    <div id="rf-success" style="display:none;text-align:center;padding:20px 0 8px;">
+      <div style="width:52px;height:52px;background:#B65436;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:22px;color:#fff;">✓</div>
+      <h3 style="margin:0 0 8px;color:#1A1A17;font-family:Georgia,serif;font-size:20px;font-weight:400;">Aanvraag ontvangen!</h3>
+      <p style="margin:0;color:#6E6B62;line-height:1.6;font-size:15px;">We verwerken je terugbetaling<br>binnen 5 werkdagen.</p>
+    </div>
   </div>
 </div>
 
@@ -2574,6 +2623,66 @@
     });
   }, { threshold: 0.12, rootMargin: "0px 0px -50px 0px" });
   document.querySelectorAll("section.section > .wrap > *").forEach(el => io.observe(el));
+
+  /* ============================================================
+     Refund modal
+  ============================================================ */
+  const refundOverlay  = document.getElementById("refund-overlay");
+  const closeRefundBtn = document.getElementById("close-refund");
+
+  function openRefundModal()  { refundOverlay.classList.add("open"); }
+  function closeRefundModal() { refundOverlay.classList.remove("open"); }
+
+  if (closeRefundBtn) closeRefundBtn.addEventListener("click", closeRefundModal);
+  if (refundOverlay) refundOverlay.addEventListener("click", (e) => { if (e.target === refundOverlay) closeRefundModal(); });
+
+  document.querySelectorAll('[data-action="open-refund-modal"]').forEach(el => {
+    el.addEventListener("click", (e) => { e.preventDefault(); openRefundModal(); });
+  });
+
+  const refundForm = document.getElementById("refund-form");
+  if (refundForm) {
+    refundForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn      = document.getElementById("rf-submit-btn");
+      const errorBox = document.getElementById("rf-error");
+
+      const first_name = document.getElementById("rf-first").value.trim();
+      const last_name  = document.getElementById("rf-last").value.trim();
+      const email      = document.getElementById("rf-email").value.trim();
+      const order_ref  = document.getElementById("rf-order").value.trim();
+      const reason     = document.getElementById("rf-reason").value.trim();
+
+      if (!first_name || !last_name || !email || !reason) {
+        errorBox.textContent = "Vul alle verplichte velden in.";
+        errorBox.classList.add("visible");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Versturen…";
+      errorBox.classList.remove("visible");
+
+      try {
+        const res = await fetch("/api/refund-request", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ first_name, last_name, email, order_ref, reason })
+        });
+        if (res.ok) {
+          document.getElementById("refund-form").style.display = "none";
+          document.getElementById("rf-success").style.display = "block";
+        } else {
+          throw new Error();
+        }
+      } catch {
+        errorBox.textContent = "Er ging iets mis. Probeer opnieuw.";
+        errorBox.classList.add("visible");
+        btn.disabled = false;
+        btn.textContent = "Terugbetaling aanvragen →";
+      }
+    });
+  }
 
   /* ============================================================
      Partner inquiry modal

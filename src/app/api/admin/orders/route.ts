@@ -19,5 +19,19 @@ export async function GET() {
   const revenue = paidOrders.reduce((sum, o) => sum + (o.amount_cents ?? 0), 0) / 100
   const pdfPending = paidOrders.filter(o => !o.pdf_main_url).length
 
-  return NextResponse.json({ orders: orders ?? [], stats: { total, revenue, pdfPending } })
+  // Maandelijkse omzet
+  const now = new Date()
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const lastMonth = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth() + 1).padStart(2, '0')}`
+
+  const revenueThisMonth = paidOrders
+    .filter(o => (o.paid_at ?? o.created_at).slice(0, 7) === thisMonth)
+    .reduce((sum, o) => sum + (o.amount_cents ?? 0), 0) / 100
+
+  const revenueLastMonth = paidOrders
+    .filter(o => (o.paid_at ?? o.created_at).slice(0, 7) === lastMonth)
+    .reduce((sum, o) => sum + (o.amount_cents ?? 0), 0) / 100
+
+  return NextResponse.json({ orders: orders ?? [], stats: { total, revenue, pdfPending, revenueThisMonth, revenueLastMonth } })
 }

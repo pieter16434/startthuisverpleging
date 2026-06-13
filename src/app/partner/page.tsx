@@ -157,7 +157,7 @@ export default function PartnerLoginPage() {
 
         <p style={{ textAlign: 'center', fontSize: 13, color: '#6E6B62', marginTop: 24 }}>
           Problemen met inloggen?{' '}
-          <a href="mailto:hallo@startthuisverpleging.be" style={{ color: '#B65436' }}>
+          <a href="mailto:info@domuscare.be?subject=Partner%20login%20probleem" style={{ color: '#B65436' }}>
             Stuur ons een mail
           </a>
         </p>

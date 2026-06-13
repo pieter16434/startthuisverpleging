@@ -53,15 +53,18 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<'partners' | 'orders' | 'invoicing'>('partners')
   const [partners, setPartners] = useState<Partner[]>([])
   const [orders, setOrders] = useState<Order[]>([])
-  const [orderStats, setOrderStats] = useState({ total: 0, revenue: 0, pdfPending: 0 })
+  const [orderStats, setOrderStats] = useState({ total: 0, revenue: 0, pdfPending: 0, revenueThisMonth: 0, revenueLastMonth: 0 })
   const [sendingPdf, setSendingPdf] = useState<string | null>(null)
   const [pdfMsg, setPdfMsg] = useState('')
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editPartner, setEditPartner] = useState<Partner | null>(null)
+  const [editPassword, setEditPassword] = useState('')
   const [formError, setFormError] = useState('')
   const [formLoading, setFormLoading] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
+  const [invoicingData, setInvoicingData] = useState<Record<string, { name: string; business_name: string; province: string; fee: number; months: Record<string, { count: number; amount: number }> }>>({})
+  const [invoicingLoaded, setInvoicingLoaded] = useState(false)
 
   // Nieuw partner form
   const emptyForm = { name: '', business_name: '', email: '', password: '', province: '', service_type: '', discount_description: '', fee_per_customer: '', notes: '', vat_number: '', billing_address: '' }
@@ -133,10 +136,12 @@ export default function AdminDashboard() {
           service_type: editPartner.service_type,
           vat_number: editPartner.vat_number,
           billing_address: editPartner.billing_address,
+          ...(editPassword ? { password: editPassword } : {}),
         }),
       })
       if (!res.ok) { setFormError('Opslaan mislukt'); return }
       setEditPartner(null)
+      setEditPassword('')
       setSuccessMsg('Partner bijgewerkt ✓')
       setTimeout(() => setSuccessMsg(''), 3000)
       loadData()
@@ -184,10 +189,12 @@ export default function AdminDashboard() {
         )}
 
         {/* Snelle stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 14, marginBottom: 32 }}>
           {[
             { label: 'Betalende klanten', value: orderStats.total, color: '#2A3D2E' },
             { label: 'Totale omzet', value: `€ ${orderStats.revenue.toFixed(2).replace('.', ',')}`, color: '#B65436' },
+            { label: `Omzet ${new Date().toLocaleDateString('nl-BE', { month: 'long' })}`, value: `€ ${orderStats.revenueThisMonth.toFixed(2).replace('.', ',')}`, color: '#2A3D2E' },
+            { label: `Omzet ${new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toLocaleDateString('nl-BE', { month: 'long' })}`, value: `€ ${orderStats.revenueLastMonth.toFixed(2).replace('.', ',')}`, color: '#6E6B62' },
             { label: 'PDF nog te sturen', value: orderStats.pdfPending, color: orderStats.pdfPending > 0 ? '#B65436' : '#2A3D2E' },
             { label: 'Geverifieerde codes', value: partners.reduce((a, p) => a + p.verified_codes, 0), color: '#6E6B62' },
           ].map(s => (
@@ -304,6 +311,10 @@ export default function AdminDashboard() {
                       <div>
                         <label style={labelStyle}>Facturatieadres</label>
                         <input value={editPartner.billing_address ?? ''} onChange={e => setEditPartner({ ...editPartner, billing_address: e.target.value })} placeholder="Kerkstraat 1, 3500 Hasselt" style={inputStyle} />
+                      </div>
+                      <div style={{ borderTop: '1px solid #D8D0C0', paddingTop: 14, marginTop: 4 }}>
+                        <label style={labelStyle}>Nieuw wachtwoord <span style={{ color: '#9E9B91', fontWeight: 400, textTransform: 'none' }}>(optioneel — alleen invullen om te resetten)</span></label>
+                        <input type="password" value={editPassword} onChange={e => setEditPassword(e.target.value)} placeholder="Minimaal 6 tekens" style={inputStyle} />
                       </div>
                       {formError && <p style={{ color: '#B65436', fontSize: 13 }}>{formError}</p>}
                       <button type="submit" disabled={formLoading} style={{ background: '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -433,58 +444,98 @@ export default function AdminDashboard() {
         )}
 
         {/* ── TAB: FACTURATIE ── */}
-        {tab === 'invoicing' && (
-          <div>
-            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: '#1A1A17', marginBottom: 8 }}>Facturatie naar partners</h2>
-            <p style={{ color: '#6E6B62', fontSize: 14, marginBottom: 24 }}>
-              Overzicht van wat jij per partner kunt factureren op basis van geverifieerde klanten.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {partners.filter(p => p.verified_codes > 0).length === 0 && (
+        {tab === 'invoicing' && (() => {
+          // Laad maanddata bij eerste keer openen
+          if (!invoicingLoaded) {
+            fetch('/api/admin/invoicing')
+              .then(r => r.json())
+              .then(d => { setInvoicingData(d.monthly ?? {}); setInvoicingLoaded(true) })
+            return <p style={{ color: '#6E6B62' }}>Laden…</p>
+          }
+
+          const now = new Date()
+          const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+          const fmt = (key: string) => {
+            const [y, m] = key.split('-')
+            return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('nl-BE', { month: 'long', year: 'numeric' })
+          }
+
+          const partnerEntries = Object.entries(invoicingData)
+
+          return (
+            <div>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: '#1A1A17', marginBottom: 4 }}>Facturatie per partner per maand</h2>
+              <p style={{ color: '#6E6B62', fontSize: 14, marginBottom: 24 }}>
+                Klik op &ldquo;E-mail versturen&rdquo; bij de betreffende maand om de partner te factureren.
+              </p>
+
+              {partnerEntries.length === 0 && (
                 <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 12, padding: '32px', textAlign: 'center', color: '#6E6B62' }}>
                   Nog geen geverifieerde codes. Zodra partners codes verifiëren verschijnen ze hier.
                 </div>
               )}
-              {partners.filter(p => p.verified_codes > 0).map(p => (
-                <div key={p.id} style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 12, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-                  <div>
-                    <strong style={{ fontSize: 15, color: '#1A1A17' }}>{p.business_name}</strong>
-                    <span style={{ color: '#6E6B62', fontSize: 14, marginLeft: 8 }}>({p.name})</span>
-                    <div style={{ fontSize: 13, color: '#6E6B62', marginTop: 2 }}>
-                      {PROVINCES[p.province]} · € {p.fee_per_customer.toFixed(2).replace('.', ',')} per klant
-                    </div>
-                    {p.vat_number && <div style={{ fontSize: 12, color: '#8A9588', marginTop: 2 }}>BTW: {p.vat_number}</div>}
-                    {p.billing_address && <div style={{ fontSize: 12, color: '#8A9588' }}>📍 {p.billing_address}</div>}
-                  </div>
-                  <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 22, fontWeight: 700, color: '#2A3D2E', fontFamily: 'Georgia, serif' }}>{p.verified_codes}</div>
-                      <div style={{ fontSize: 11, color: '#6E6B62' }}>klanten geverifieerd</div>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontSize: 22, fontWeight: 700, color: '#B65436', fontFamily: 'Georgia, serif' }}>
-                        € {(p.verified_codes * p.fee_per_customer).toFixed(2).replace('.', ',')}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {partnerEntries.map(([partnerId, pd]) => {
+                  const monthEntries = Object.entries(pd.months).sort((a, b) => b[0].localeCompare(a[0]))
+                  const partner = partners.find(p => p.id === partnerId)
+                  return (
+                    <div key={partnerId} style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 16, overflow: 'hidden' }}>
+                      {/* Partner header */}
+                      <div style={{ background: '#2A3D2E', padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                        <div>
+                          <strong style={{ color: '#fff', fontSize: 16 }}>{pd.business_name}</strong>
+                          <span style={{ color: '#8A9588', fontSize: 14, marginLeft: 8 }}>({pd.name})</span>
+                          <div style={{ fontSize: 13, color: '#8A9588', marginTop: 2 }}>
+                            {PROVINCES[pd.province]} · € {pd.fee.toFixed(2).replace('.', ',')} per klant
+                            {partner?.vat_number && ` · BTW: ${partner.vat_number}`}
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: 20, fontWeight: 700, color: '#E8D08A', fontFamily: 'Georgia, serif' }}>
+                            € {Object.values(pd.months).reduce((s, m) => s + m.amount, 0).toFixed(2).replace('.', ',')}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#8A9588' }}>totaal alle maanden</div>
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11, color: '#6E6B62' }}>te factureren</div>
+
+                      {/* Maandtabel */}
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                        <thead>
+                          <tr style={{ background: '#F1ECE0' }}>
+                            {['Maand', 'Geverifieerde klanten', 'Bedrag', 'Actie'].map(h => (
+                              <th key={h} style={{ textAlign: 'left', padding: '10px 20px', color: '#6E6B62', fontWeight: 600, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {monthEntries.map(([monthKey, entry], i) => (
+                            <tr key={monthKey} style={{ borderTop: '1px solid #EDE9E0', background: monthKey === thisMonth ? '#FFFBEF' : (i % 2 === 0 ? 'transparent' : '#F7F3EA') }}>
+                              <td style={{ padding: '12px 20px', fontWeight: monthKey === thisMonth ? 700 : 400, color: '#1A1A17' }}>
+                                {fmt(monthKey)}
+                                {monthKey === thisMonth && <span style={{ marginLeft: 8, fontSize: 11, background: '#E8D08A', color: '#2A3D2E', borderRadius: 4, padding: '2px 6px', fontWeight: 600 }}>Huidig</span>}
+                              </td>
+                              <td style={{ padding: '12px 20px', color: '#2A3D2E', fontWeight: 600 }}>{entry.count}</td>
+                              <td style={{ padding: '12px 20px', color: '#B65436', fontWeight: 700, fontFamily: 'Georgia, serif' }}>€ {entry.amount.toFixed(2).replace('.', ',')}</td>
+                              <td style={{ padding: '12px 20px' }}>
+                                <a
+                                  href={`mailto:${partner?.email ?? ''}?subject=Facturatie ${fmt(monthKey)} — startthuisverpleging&body=Beste ${pd.name},%0D%0A%0D%0AHierbij de facturatie voor ${fmt(monthKey)}:%0D%0A${entry.count} geverifieerde klant(en) × € ${pd.fee.toFixed(2)} = € ${entry.amount.toFixed(2)}%0D%0A%0D%0A${partner?.billing_address ? `Facturatieadres: ${partner.billing_address}%0D%0A` : ''}${partner?.vat_number ? `BTW-nummer: ${partner.vat_number}%0D%0A` : ''}%0D%0AMet vriendelijke groeten,%0D%0APieter Vanermen`}
+                                  style={{ background: '#2A3D2E', color: '#fff', padding: '6px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}
+                                >
+                                  E-mail versturen →
+                                </a>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                    <a href={`mailto:${p.email}?subject=Facturatie startthuisverpleging&body=Beste ${p.name},%0D%0A%0D%0AIn bijlage vindt u de factuur voor ${p.verified_codes} geverifieerde klant(en) via startthuisverpleging.be.%0D%0AFactuurbedrag: € ${(p.verified_codes * p.fee_per_customer).toFixed(2)}%0D%0A%0D%0AMet vriendelijke groeten,%0D%0APieter Vanermen`}
-                      style={{ background: '#2A3D2E', color: '#fff', padding: '9px 18px', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap' }}>
-                      E-mail versturen →
-                    </a>
-                  </div>
-                </div>
-              ))}
-              {partners.filter(p => p.verified_codes > 0).length > 0 && (
-                <div style={{ background: '#2A3D2E', borderRadius: 12, padding: '16px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <strong style={{ color: '#fff', fontSize: 15 }}>Totaal te factureren</strong>
-                  <strong style={{ color: '#E8D08A', fontSize: 22, fontFamily: 'Georgia, serif' }}>
-                    € {partners.reduce((a, p) => a + p.verified_codes * p.fee_per_customer, 0).toFixed(2).replace('.', ',')}
-                  </strong>
-                </div>
-              )}
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
       </main>
     </div>

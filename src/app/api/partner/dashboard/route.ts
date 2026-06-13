@@ -30,10 +30,18 @@ export async function GET() {
     const verifiedCodes = codes?.filter(c => c.is_verified).length ?? 0
     const toInvoice = verifiedCodes * Number(partner?.fee_per_customer ?? 0)
 
+    // Huidige maand geverifieerde codes
+    const now = new Date()
+    const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const thisMonthCodes = codes?.filter(c =>
+      c.is_verified && c.verified_at && c.verified_at.slice(0, 7) === thisMonth
+    ) ?? []
+
     return NextResponse.json({
       partner,
       stats: { totalCodes, verifiedCodes, toInvoice },
       codes: codes ?? [],
+      thisMonthCodes,
     })
   } catch (err) {
     console.error('[partner/dashboard]', err)
