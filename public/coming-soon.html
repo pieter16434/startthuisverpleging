@@ -1320,6 +1320,61 @@
     display: none;
   }
   .co-error.visible { display: block; }
+  .co-coupon-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13px;
+    color: var(--ink-mute);
+    cursor: pointer;
+    font-family: var(--font-body);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.2s;
+  }
+  .co-coupon-toggle:hover { color: var(--clay); }
+  .co-coupon-row {
+    display: none;
+    align-items: stretch;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .co-coupon-row.open { display: flex; }
+  .co-coupon-input {
+    flex: 1;
+    padding: 11px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--ink);
+    background: white;
+    transition: border-color 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .co-coupon-input:focus { outline: none; border-color: var(--clay); }
+  .co-coupon-apply {
+    padding: 11px 16px;
+    background: var(--green);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font-body);
+    white-space: nowrap;
+    transition: opacity 0.2s;
+  }
+  .co-coupon-apply:hover { opacity: 0.85; }
+  .co-coupon-msg {
+    font-size: 12px;
+    margin-top: 6px;
+    display: none;
+  }
+  .co-coupon-msg.ok { color: var(--green); display: block; }
+  .co-coupon-msg.err { color: #b91c1c; display: block; }
   @media (max-width: 520px) {
     .co-modal { padding: 28px 20px; }
     .co-row { grid-template-columns: 1fr; }
@@ -2264,7 +2319,17 @@
           <option value="WVL">West-Vlaanderen</option>
         </select>
       </div>
-      <div class="co-error" id="co-error">Er ging iets mis. Probeer opnieuw of mail <a href="mailto:hallo@startthuisverpleging.be">hallo@startthuisverpleging.be</a></div>
+      <!-- Kortingscode -->
+      <div class="co-field" style="margin-bottom:10px;">
+        <button type="button" class="co-coupon-toggle" id="co-coupon-toggle">Heb je een kortingscode?</button>
+        <div class="co-coupon-row" id="co-coupon-row">
+          <input type="text" class="co-coupon-input" id="co-coupon" placeholder="VRIEND20" maxlength="30">
+          <button type="button" class="co-coupon-apply" onclick="applyCoupon()">Toepassen</button>
+        </div>
+        <div class="co-coupon-msg" id="co-coupon-msg"></div>
+      </div>
+
+      <div class="co-error" id="co-error"></div>
       <button type="submit" class="co-submit" id="co-submit-btn">
         Betaal €50 — Ga naar betaling →
       </button>
@@ -2505,6 +2570,10 @@
   const checkoutForm = document.getElementById("checkout-form");
   const submitBtn = document.getElementById("co-submit-btn");
   const errorBox = document.getElementById("co-error");
+  const coLabel = overlay.querySelector(".co-label");
+
+  const REFERRAL_CODE = "VRIEND20";
+  let discountApplied = false;
 
   function openModal() {
     overlay.classList.add("open");
@@ -2514,7 +2583,56 @@
   function closeModal() {
     overlay.classList.remove("open");
     document.body.style.overflow = "";
+    // Reset kortingscode staat
+    discountApplied = false;
+    document.getElementById("co-coupon").value = "";
+    document.getElementById("co-coupon-row").classList.remove("open");
+    document.getElementById("co-coupon-msg").className = "co-coupon-msg";
+    document.getElementById("co-coupon-msg").textContent = "";
+    submitBtn.textContent = "Betaal €50 — Ga naar betaling →";
+    coLabel.innerHTML = 'Bestelling · <s style="opacity:0.55;font-size:13px;">€85</s> <strong style="color:#2A3D2E;">€50</strong> introductieprijs';
+    errorBox.className = "co-error";
+    errorBox.textContent = "";
   }
+
+  document.getElementById("co-coupon-toggle").addEventListener("click", () => {
+    const row = document.getElementById("co-coupon-row");
+    row.classList.toggle("open");
+    if (row.classList.contains("open")) {
+      setTimeout(() => document.getElementById("co-coupon").focus(), 50);
+    }
+  });
+
+  function applyCoupon() {
+    const input = document.getElementById("co-coupon");
+    const msg = document.getElementById("co-coupon-msg");
+    const code = input.value.trim().toUpperCase();
+
+    if (code === REFERRAL_CODE) {
+      discountApplied = true;
+      input.style.borderColor = "var(--green)";
+      msg.className = "co-coupon-msg ok";
+      msg.textContent = "✓ 20% korting toegepast — je betaalt €40";
+      submitBtn.textContent = "Betaal €40 — Ga naar betaling →";
+      coLabel.innerHTML = 'Bestelling · <s style="opacity:0.55;font-size:13px;">€85</s> <strong style="color:#2A3D2E;">€40</strong> <span style="background:#2A3D2E;color:#E8D08A;font-size:10px;padding:2px 7px;border-radius:4px;margin-left:4px;font-family:var(--font-mono);">VRIEND20 −20%</span>';
+    } else if (code === "") {
+      discountApplied = false;
+      input.style.borderColor = "";
+      msg.className = "co-coupon-msg";
+      msg.textContent = "";
+    } else {
+      discountApplied = false;
+      input.style.borderColor = "#fecaca";
+      msg.className = "co-coupon-msg err";
+      msg.textContent = "Ongeldige kortingscode";
+      submitBtn.textContent = "Betaal €50 — Ga naar betaling →";
+    }
+  }
+
+  // Toepassen ook bij Enter in het kortingscode-veld
+  document.getElementById("co-coupon").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); applyCoupon(); }
+  });
 
   if (openBtn) openBtn.addEventListener("click", openModal);
   const navBtn = document.getElementById("nav-bestel-btn");
@@ -2529,7 +2647,8 @@
 
   checkoutForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    errorBox.classList.remove("visible");
+    errorBox.className = "co-error";
+    errorBox.textContent = "";
 
     const first_name = document.getElementById("co-first").value.trim();
     const last_name  = document.getElementById("co-last").value.trim();
@@ -2538,12 +2657,12 @@
 
     if (!first_name || !last_name) {
       errorBox.textContent = "Vul je voornaam en achternaam in.";
-      errorBox.classList.add("visible");
+      errorBox.className = "co-error visible";
       return;
     }
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
       errorBox.textContent = "Vul een geldig e-mailadres in.";
-      errorBox.classList.add("visible");
+      errorBox.className = "co-error visible";
       return;
     }
 
@@ -2551,19 +2670,22 @@
     submitBtn.textContent = "Even wachten…";
 
     try {
+      const payload = { first_name, last_name, email, province: province || undefined };
+      if (discountApplied) payload.discount_code = REFERRAL_CODE;
+
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ first_name, last_name, email, province: province || undefined }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Onbekende fout");
       window.location.href = data.payment_url;
     } catch (err) {
-      errorBox.textContent = "Er ging iets mis. Probeer opnieuw of mail hallo@startthuisverpleging.be";
-      errorBox.classList.add("visible");
+      errorBox.textContent = err.message || "Er ging iets mis. Probeer opnieuw.";
+      errorBox.className = "co-error visible";
       submitBtn.disabled = false;
-      submitBtn.textContent = "Ga naar betaling →";
+      submitBtn.textContent = discountApplied ? "Betaal €40 — Ga naar betaling →" : "Betaal €50 — Ga naar betaling →";
     }
   });
 

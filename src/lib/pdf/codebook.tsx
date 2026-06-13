@@ -184,6 +184,55 @@ const s = StyleSheet.create({
     textAlign: 'center',
   },
 
+  // Doorverwijzing
+  referralBox: {
+    backgroundColor: C.surface,
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 20,
+    borderLeft: `3 solid ${C.clay}`,
+    border: `1 solid ${C.line}`,
+  },
+  referralTitle: {
+    fontSize: 11,
+    fontFamily: 'Helvetica-Bold',
+    color: C.clay,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  referralText: {
+    fontSize: 10,
+    color: C.inkSoft,
+    lineHeight: 1.5,
+    marginBottom: 12,
+  },
+  referralBadge: {
+    backgroundColor: C.clay,
+    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignSelf: 'flex-start',
+  },
+  referralBadgeLabel: {
+    fontSize: 8,
+    color: 'rgba(255,255,255,0.75)',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 3,
+  },
+  referralBadgeCode: {
+    fontSize: 20,
+    fontFamily: 'Helvetica-Bold',
+    color: '#ffffff',
+    letterSpacing: 3,
+  },
+  referralBadgeNote: {
+    fontSize: 9,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 4,
+  },
+
   // Footer
   footer: {
     marginTop: 24,
@@ -280,6 +329,21 @@ function CodebookDocument({ data }: { data: CodebookData }) {
             </Text>
           </View>
         )}
+
+        {/* Doorverwijzing — kortingscode voor een vriend */}
+        <View style={s.referralBox}>
+          <Text style={s.referralTitle}>Deel dit met een vriend of collega</Text>
+          <Text style={s.referralText}>
+            Ken jij iemand die ook als zelfstandig thuisverpleegkundige wil starten?
+            Geef hen onderstaande kortingscode — zij krijgen 20% korting op de gids.{'\n'}
+            De code is enkel geldig voor wie de gids nog niet heeft aangeschaft.
+          </Text>
+          <View style={s.referralBadge}>
+            <Text style={s.referralBadgeLabel}>Kortingscode voor een vriend</Text>
+            <Text style={s.referralBadgeCode}>VRIEND20</Text>
+            <Text style={s.referralBadgeNote}>20% korting · Gebruiken bij aankoop op startthuisverpleging.be</Text>
+          </View>
+        </View>
 
         {/* Footer */}
         <View style={s.footer}>

@@ -42,6 +42,31 @@ export async function POST(req: NextRequest) {
       })
     }
 
+    // Check of partner nog actief is of binnen grace period valt
+    const { data: partner } = await supabase
+      .from('partners')
+      .select('is_active, deactivated_at')
+      .eq('id', session.partnerId)
+      .single()
+
+    if (!partner?.is_active) {
+      if (partner?.deactivated_at) {
+        const graceEnd = new Date(partner.deactivated_at)
+        graceEnd.setMonth(graceEnd.getMonth() + 3)
+        if (new Date() > graceEnd) {
+          return NextResponse.json({
+            valid: false,
+            message: 'De samenwerking met dit partneraccount is beëindigd. Codes zijn niet meer geldig.',
+          })
+        }
+      } else {
+        return NextResponse.json({
+          valid: false,
+          message: 'Dit partneraccount is niet actief.',
+        })
+      }
+    }
+
     // Check of al eerder geverifieerd
     if (partnerCode.is_verified) {
       return NextResponse.json({

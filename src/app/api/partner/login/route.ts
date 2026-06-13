@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const supabase = createServiceClient()
     const { data: partner, error } = await supabase
       .from('partners')
-      .select('id, email, password_hash, name, business_name, is_active')
+      .select('id, email, password_hash, name, business_name, is_active, deactivated_at')
       .eq('email', email.toLowerCase())
       .single()
 
@@ -26,7 +26,17 @@ export async function POST(req: NextRequest) {
     }
 
     if (!partner.is_active) {
-      return NextResponse.json({ error: 'Dit account is niet actief. Neem contact op met hallo@startthuisverpleging.be' }, { status: 403 })
+      // Grace period: 3 maanden na deactivatie mag partner nog inloggen
+      if (partner.deactivated_at) {
+        const graceEnd = new Date(partner.deactivated_at)
+        graceEnd.setMonth(graceEnd.getMonth() + 3)
+        if (new Date() > graceEnd) {
+          return NextResponse.json({ error: 'Dit partneraccount is beëindigd. Neem contact op met info@domuscare.be' }, { status: 403 })
+        }
+        // Binnen grace period → inloggen toegestaan
+      } else {
+        return NextResponse.json({ error: 'Dit account is niet actief. Neem contact op met info@domuscare.be' }, { status: 403 })
+      }
     }
 
     const valid = await bcrypt.compare(password, partner.password_hash)

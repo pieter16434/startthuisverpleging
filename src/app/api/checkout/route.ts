@@ -3,11 +3,14 @@ import { mollieClient } from '@/lib/mollie/client'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
+const REFERRAL_CODE = (process.env.REFERRAL_CODE ?? 'VRIEND20').toUpperCase()
+
 const CheckoutSchema = z.object({
   email: z.string().email(),
   first_name: z.string().min(1).max(50),
   last_name: z.string().min(1).max(50),
   province: z.enum(['ANT', 'LIM', 'OVL', 'VBR', 'WVL']).optional(),
+  discount_code: z.string().max(30).optional().transform(s => s?.trim().toUpperCase()),
 })
 
 export async function POST(req: NextRequest) {
@@ -17,6 +20,45 @@ export async function POST(req: NextRequest) {
 
     const supabase = createServiceClient()
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!
+
+    // Valideer kortingscode indien opgegeven
+    let applyDiscount = false
+    let amountCents = 5000
+    let amountEuros = '50.00'
+
+    if (data.discount_code) {
+      if (data.discount_code !== REFERRAL_CODE) {
+        return NextResponse.json({ error: 'Ongeldige kortingscode' }, { status: 400 })
+      }
+
+      // Check of dit e-mailadres de code al gebruikt heeft op een betaalde order
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', data.email.toLowerCase())
+        .maybeSingle()
+
+      if (existingCustomer) {
+        const { data: usedOrder } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('customer_id', existingCustomer.id)
+          .eq('discount_code', REFERRAL_CODE)
+          .eq('status', 'paid')
+          .maybeSingle()
+
+        if (usedOrder) {
+          return NextResponse.json(
+            { error: 'Deze kortingscode is al gebruikt voor dit e-mailadres' },
+            { status: 400 }
+          )
+        }
+      }
+
+      applyDiscount = true
+      amountCents = 4000 // 20% korting op €50
+      amountEuros = '40.00'
+    }
 
     // Koper aanmaken of updaten
     const { data: customer, error: customerError } = await supabase
@@ -40,8 +82,9 @@ export async function POST(req: NextRequest) {
       .from('orders')
       .insert({
         customer_id: customer.id,
-        amount_cents: 5000,
+        amount_cents: amountCents,
         status: 'pending',
+        ...(applyDiscount ? { discount_code: REFERRAL_CODE } : {}),
       })
       .select('id')
       .single()
@@ -50,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     // Mollie betaling aanmaken
     const payment = await mollieClient.payments.create({
-      amount: { currency: 'EUR', value: '50.00' },
+      amount: { currency: 'EUR', value: amountEuros },
       description: 'Gids — Zelfstandig thuisverpleegkundige worden in Vlaanderen',
       redirectUrl: `${baseUrl}/checkout/success?order_id=${order.id}`,
       webhookUrl: `${baseUrl}/api/webhooks/mollie`,
