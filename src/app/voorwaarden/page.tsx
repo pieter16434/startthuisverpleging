@@ -16,7 +16,7 @@ export default function VoorwaardenPage() {
       <p>
         <strong>Vitalion Ascent BV</strong><br />
         Handelend onder de naam <em>startthuisverpleging</em><br />
-        E-mail: <a href="mailto:hallo@startthuisverpleging.be" style={{ color: '#B65436' }}>hallo@startthuisverpleging.be</a><br />
+        E-mail: <a href="mailto:info@domuscare.be" style={{ color: '#B65436' }}>info@domuscare.be</a><br />
         Website: <a href="https://startthuisverpleging.be" style={{ color: '#B65436' }}>startthuisverpleging.be</a>
       </p>
 
@@ -43,7 +43,7 @@ export default function VoorwaardenPage() {
 
       <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 8 }}>5. Levering</h2>
       <p>
-        Na bevestiging van de betaling ontvangt de koper automatisch een e-mail met de downloadlink. Dit gebeurt doorgaans binnen de 5 minuten. Bij problemen: neem contact op via <a href="mailto:hallo@startthuisverpleging.be" style={{ color: '#B65436' }}>hallo@startthuisverpleging.be</a>.
+        Na bevestiging van de betaling ontvangt de koper automatisch een e-mail met de downloadlink. Dit gebeurt doorgaans binnen de 5 minuten. Bij problemen: neem contact op via <a href="mailto:info@domuscare.be" style={{ color: '#B65436' }}>info@domuscare.be</a>.
       </p>
 
       <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 8 }}>6. Herroepingsrecht en terugbetaling</h2>
@@ -71,7 +71,7 @@ export default function VoorwaardenPage() {
 
       <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 8 }}>10. Contact</h2>
       <p>
-        Voor vragen over je bestelling of deze voorwaarden: <a href="mailto:hallo@startthuisverpleging.be" style={{ color: '#B65436' }}>hallo@startthuisverpleging.be</a>
+        Voor vragen over je bestelling of deze voorwaarden: <a href="mailto:info@domuscare.be" style={{ color: '#B65436' }}>info@domuscare.be</a>
       </p>
 
       <hr style={{ marginTop: 48, borderColor: '#D8D0C0' }} />

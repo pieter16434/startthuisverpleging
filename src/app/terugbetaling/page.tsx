@@ -19,7 +19,7 @@ export default function TerugbetalingPage() {
 
       <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 8 }}>Hoe een terugbetaling aanvragen?</h2>
       <ol style={{ paddingLeft: 20, marginTop: 8 }}>
-        <li>Stuur een e-mail naar <a href="mailto:hallo@startthuisverpleging.be" style={{ color: '#B65436' }}>hallo@startthuisverpleging.be</a></li>
+        <li>Stuur een e-mail naar <a href="mailto:info@domuscare.be" style={{ color: '#B65436' }}>info@domuscare.be</a></li>
         <li>Vermeld het e-mailadres waarmee u besteld heeft</li>
         <li>Geef kort aan wat u verwacht had maar niet vond</li>
       </ol>
@@ -39,7 +39,7 @@ export default function TerugbetalingPage() {
 
       <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 8 }}>Contact</h2>
       <p>
-        Vragen? Stuur een e-mail naar <a href="mailto:hallo@startthuisverpleging.be" style={{ color: '#B65436' }}>hallo@startthuisverpleging.be</a>. Wij reageren doorgaans binnen 1 werkdag.
+        Vragen? Stuur een e-mail naar <a href="mailto:info@domuscare.be" style={{ color: '#B65436' }}>info@domuscare.be</a>. Wij reageren doorgaans binnen 1 werkdag.
       </p>
 
       <hr style={{ marginTop: 48, borderColor: '#D8D0C0' }} />
