@@ -8,7 +8,14 @@ type CustomerRow = {
   last_name: string
   email: string
   marketing_consent: boolean
-} | null
+}
+
+function getCustomer(raw: unknown): CustomerRow | null {
+  // Supabase typt many-to-one joins soms als array, maar geeft op runtime een object terug
+  const c = Array.isArray(raw) ? raw[0] : raw
+  if (!c || typeof c !== 'object') return null
+  return c as CustomerRow
+}
 
 export async function GET(req: NextRequest) {
   const session = await getAdminSession()
@@ -29,27 +36,27 @@ export async function GET(req: NextRequest) {
   // Dedupliceer op e-mail (meest recente aankoop eerst door sort hierboven)
   const seen = new Set<string>()
   const unique = (paidOrders ?? []).filter(o => {
-    const c = o.customers as CustomerRow
+    const c = getCustomer(o.customers)
     if (!c?.email || seen.has(c.email)) return false
     seen.add(c.email)
     return true
   })
 
   const filtered = filter === 'consent'
-    ? unique.filter(o => (o.customers as CustomerRow)?.marketing_consent)
+    ? unique.filter(o => getCustomer(o.customers)?.marketing_consent)
     : unique
 
   if (format === 'json') {
     return NextResponse.json({
       total: unique.length,
-      with_consent: unique.filter(o => (o.customers as CustomerRow)?.marketing_consent).length,
+      with_consent: unique.filter(o => getCustomer(o.customers)?.marketing_consent).length,
     })
   }
 
   // CSV met BOM zodat Excel de accenten correct toont
   const header = ['Voornaam', 'Achternaam', 'E-mail', 'Aankoopdatum', 'Marketingtoestemming'].join(';')
   const rows = filtered.map(o => {
-    const c = o.customers as CustomerRow
+    const c = getCustomer(o.customers)
     if (!c) return ''
     const date = new Date(o.paid_at ?? o.created_at).toLocaleDateString('nl-BE')
     return [c.first_name, c.last_name, c.email, date, c.marketing_consent ? 'Ja' : 'Nee'].join(';')
