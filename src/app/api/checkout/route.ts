@@ -11,6 +11,7 @@ const CheckoutSchema = z.object({
   last_name: z.string().min(1).max(50),
   province: z.enum(['ANT', 'LIM', 'OVL', 'VBR', 'WVL']).optional(),
   discount_code: z.string().max(30).optional().transform(s => s?.trim().toUpperCase()),
+  marketing_consent: z.boolean().optional().default(false),
 })
 
 export async function POST(req: NextRequest) {
@@ -61,6 +62,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Koper aanmaken of updaten
+    // marketing_consent wordt alleen op true gezet (nooit terug naar false via checkout)
     const { data: customer, error: customerError } = await supabase
       .from('customers')
       .upsert(
@@ -69,6 +71,7 @@ export async function POST(req: NextRequest) {
           first_name: data.first_name,
           last_name: data.last_name,
           province: data.province ?? null,
+          ...(data.marketing_consent ? { marketing_consent: true } : {}),
         },
         { onConflict: 'email', ignoreDuplicates: false }
       )

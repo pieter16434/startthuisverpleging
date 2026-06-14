@@ -2329,6 +2329,14 @@
         <div class="co-coupon-msg" id="co-coupon-msg"></div>
       </div>
 
+      <!-- GDPR opt-in -->
+      <div style="margin:10px 0 12px;">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:var(--ink-mute);line-height:1.45;">
+          <input type="checkbox" id="co-consent" style="margin-top:2px;width:15px;height:15px;accent-color:var(--clay);flex-shrink:0;">
+          <span>Ja, ik wil op de hoogte gehouden worden van toekomstige aanbiedingen en updates via e-mail. Je kan je altijd uitschrijven.</span>
+        </label>
+      </div>
+
       <div class="co-error" id="co-error"></div>
       <button type="submit" class="co-submit" id="co-submit-btn">
         Betaal €50 — Ga naar betaling →
@@ -2583,8 +2591,9 @@
   function closeModal() {
     overlay.classList.remove("open");
     document.body.style.overflow = "";
-    // Reset kortingscode staat
+    // Reset staat
     discountApplied = false;
+    document.getElementById("co-consent").checked = false;
     document.getElementById("co-coupon").value = "";
     document.getElementById("co-coupon-row").classList.remove("open");
     document.getElementById("co-coupon-msg").className = "co-coupon-msg";
@@ -2670,7 +2679,8 @@
     submitBtn.textContent = "Even wachten…";
 
     try {
-      const payload = { first_name, last_name, email, province: province || undefined };
+      const marketing_consent = document.getElementById("co-consent").checked;
+      const payload = { first_name, last_name, email, province: province || undefined, marketing_consent };
       if (discountApplied) payload.discount_code = REFERRAL_CODE;
 
       const res = await fetch("/api/checkout", {

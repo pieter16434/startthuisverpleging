@@ -50,7 +50,7 @@ function Pill({ active }: { active: boolean }) {
 
 export default function AdminDashboard() {
   const router = useRouter()
-  const [tab, setTab] = useState<'partners' | 'orders' | 'invoicing'>('partners')
+  const [tab, setTab] = useState<'partners' | 'orders' | 'invoicing' | 'emails'>('partners')
   const [partners, setPartners] = useState<Partner[]>([])
   const [orders, setOrders] = useState<Order[]>([])
   const [orderStats, setOrderStats] = useState({ total: 0, revenue: 0, pdfPending: 0, revenueThisMonth: 0, revenueLastMonth: 0 })
@@ -65,6 +65,7 @@ export default function AdminDashboard() {
   const [successMsg, setSuccessMsg] = useState('')
   const [invoicingData, setInvoicingData] = useState<Record<string, { name: string; business_name: string; province: string; fee: number; months: Record<string, { count: number; amount: number }> }>>({})
   const [invoicingLoaded, setInvoicingLoaded] = useState(false)
+  const [emailStats, setEmailStats] = useState<{ total: number; with_consent: number } | null>(null)
 
   // Nieuw partner form
   const emptyForm = { name: '', business_name: '', email: '', password: '', province: '', service_type: '', discount_description: '', fee_per_customer: '', notes: '', vat_number: '', billing_address: '' }
@@ -206,10 +207,18 @@ export default function AdminDashboard() {
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 28, background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 10, padding: 6, width: 'fit-content' }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 28, background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 10, padding: 6, width: 'fit-content', flexWrap: 'wrap' }}>
           <button style={tabStyle('partners')} onClick={() => setTab('partners')}>Partners ({partners.length})</button>
           <button style={tabStyle('orders')} onClick={() => setTab('orders')}>Bestellingen ({paidOrders.length})</button>
           <button style={tabStyle('invoicing')} onClick={() => setTab('invoicing')}>Facturatie</button>
+          <button style={tabStyle('emails')} onClick={() => {
+            setTab('emails')
+            if (!emailStats) {
+              fetch('/api/admin/export-emails?format=json')
+                .then(r => r.json())
+                .then(d => setEmailStats(d))
+            }
+          }}>E-maillijst</button>
         </div>
 
         {/* ── TAB: PARTNERS ── */}
@@ -536,6 +545,62 @@ export default function AdminDashboard() {
             </div>
           )
         })()}
+
+        {/* ── TAB: E-MAILLIJST ── */}
+        {tab === 'emails' && (
+          <div>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: '#1A1A17', marginBottom: 4 }}>E-maillijst kopers</h2>
+            <p style={{ color: '#6E6B62', fontSize: 14, marginBottom: 24 }}>
+              Exporteer de e-mailadressen van betalende klanten als CSV-bestand. Importeer dit in Mailchimp, Brevo of een ander e-mailtool.
+            </p>
+
+            {/* Stat cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px,1fr))', gap: 14, marginBottom: 28 }}>
+              <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 12, padding: '18px 20px' }}>
+                <div style={{ fontSize: 32, fontWeight: 700, color: '#2A3D2E', fontFamily: 'Georgia, serif' }}>
+                  {emailStats ? emailStats.total : '…'}
+                </div>
+                <div style={{ fontSize: 12, color: '#6E6B62', marginTop: 2 }}>Totale kopers</div>
+              </div>
+              <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 12, padding: '18px 20px' }}>
+                <div style={{ fontSize: 32, fontWeight: 700, color: '#B65436', fontFamily: 'Georgia, serif' }}>
+                  {emailStats ? emailStats.with_consent : '…'}
+                </div>
+                <div style={{ fontSize: 12, color: '#6E6B62', marginTop: 2 }}>Expliciete toestemming</div>
+              </div>
+            </div>
+
+            {/* Download knoppen */}
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 28 }}>
+              <a
+                href="/api/admin/export-emails?filter=consent"
+                download
+                style={{ background: '#2A3D2E', color: '#fff', borderRadius: 8, padding: '12px 20px', fontSize: 14, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+              >
+                ↓ Download met toestemming (veiligst)
+              </a>
+              <a
+                href="/api/admin/export-emails?filter=all"
+                download
+                style={{ background: '#FBF8F2', color: '#2A3D2E', border: '1.5px solid #2A3D2E', borderRadius: 8, padding: '12px 20px', fontSize: 14, fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}
+              >
+                ↓ Download alle kopers
+              </a>
+            </div>
+
+            {/* GDPR uitleg */}
+            <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderLeft: '3px solid #B65436', borderRadius: 10, padding: '20px 24px', maxWidth: 680 }}>
+              <p style={{ fontWeight: 700, fontSize: 14, color: '#1A1A17', marginBottom: 10 }}>GDPR — wat mag je sturen?</p>
+              <div style={{ fontSize: 13, color: '#3A3A33', lineHeight: 1.6, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <p><strong style={{ color: '#2A3D2E' }}>Met toestemming (groen vinkje bij bestelling):</strong> deze klanten kozen actief voor e-mails. Je mag hen onbeperkt mailing sturen, zolang je altijd een uitschrijflink voorziet.</p>
+                <p><strong style={{ color: '#6E6B62' }}>Alle kopers (gerechtvaardigd belang):</strong> als bestaande klant mag je hen ook mailen over gelijkaardige producten/diensten — bv. nieuwe gids, kortingsactie, update. Verplicht: altijd een duidelijke uitschrijflink in de mail. Gebruik dit niet voor ongerelateerde reclame.</p>
+                <p style={{ fontSize: 12, color: '#8A9588', borderTop: '1px solid #D8D0C0', paddingTop: 8, marginTop: 4 }}>
+                  Zet in elke marketingmail: &ldquo;Wil je geen e-mails meer ontvangen? Stuur een bericht naar info@domuscare.be&rdquo; of gebruik de uitschrijflink van je e-mailtool.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
       </main>
     </div>
