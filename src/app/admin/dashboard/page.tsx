@@ -59,7 +59,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editPartner, setEditPartner] = useState<Partner | null>(null)
-  const [editPassword, setEditPassword] = useState('')
+  const [inviteLink, setInviteLink] = useState<{ partnerId: string; name: string; url: string } | null>(null)
   const [formError, setFormError] = useState('')
   const [formLoading, setFormLoading] = useState(false)
   const [successMsg, setSuccessMsg] = useState('')
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
   const [emailStats, setEmailStats] = useState<{ total: number; with_consent: number } | null>(null)
 
   // Nieuw partner form
-  const emptyForm = { name: '', business_name: '', email: '', password: '', province: '', service_type: '', discount_description: '', fee_per_customer: '', notes: '', vat_number: '', billing_address: '' }
+  const emptyForm = { name: '', business_name: '', email: '', province: '', service_type: '', discount_description: '', fee_per_customer: '', notes: '', vat_number: '', billing_address: '' }
   const [form, setForm] = useState(emptyForm)
 
   const loadData = useCallback(async () => {
@@ -107,7 +107,10 @@ export default function AdminDashboard() {
       if (!res.ok) { setFormError(data.error); return }
       setShowAddForm(false); setForm(emptyForm)
       setSuccessMsg(`Partner "${data.partner.name}" aangemaakt ✓`)
-      setTimeout(() => setSuccessMsg(''), 4000)
+      if (data.invite_url) {
+        setInviteLink({ partnerId: data.partner.id, name: data.partner.name, url: data.invite_url })
+      }
+      setTimeout(() => setSuccessMsg(''), 8000)
       loadData()
     } catch { setFormError('Aanmaken mislukt') }
     finally { setFormLoading(false) }
@@ -137,17 +140,21 @@ export default function AdminDashboard() {
           service_type: editPartner.service_type,
           vat_number: editPartner.vat_number,
           billing_address: editPartner.billing_address,
-          ...(editPassword ? { password: editPassword } : {}),
         }),
       })
       if (!res.ok) { setFormError('Opslaan mislukt'); return }
       setEditPartner(null)
-      setEditPassword('')
       setSuccessMsg('Partner bijgewerkt ✓')
       setTimeout(() => setSuccessMsg(''), 3000)
       loadData()
     } catch { setFormError('Opslaan mislukt') }
     finally { setFormLoading(false) }
+  }
+
+  async function handleGenerateInvite(p: Partner) {
+    const res = await fetch(`/api/admin/partners/${p.id}/invite`, { method: 'POST' })
+    const data = await res.json()
+    if (res.ok) setInviteLink({ partnerId: p.id, name: p.name, url: data.url })
   }
 
   // UI helpers
@@ -184,8 +191,35 @@ export default function AdminDashboard() {
 
         {/* Succesmelding */}
         {successMsg && (
-          <div style={{ background: '#E8F5E9', border: '1px solid #A5D6A7', borderRadius: 8, padding: '12px 18px', color: '#2A3D2E', fontSize: 14, fontWeight: 600, marginBottom: 20 }}>
+          <div style={{ background: '#E8F5E9', border: '1px solid #A5D6A7', borderRadius: 8, padding: '12px 18px', color: '#2A3D2E', fontSize: 14, fontWeight: 600, marginBottom: 12 }}>
             {successMsg}
+          </div>
+        )}
+
+        {/* Uitnodigingslink */}
+        {inviteLink && (
+          <div style={{ background: '#FBF8F2', border: '2px solid #2A3D2E', borderRadius: 12, padding: '20px 24px', marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <p style={{ fontWeight: 700, fontSize: 14, color: '#1A1A17', margin: 0 }}>
+                Uitnodigingslink voor {inviteLink.name} <span style={{ fontWeight: 400, color: '#6E6B62', fontSize: 12 }}>(7 dagen geldig)</span>
+              </p>
+              <button onClick={() => setInviteLink(null)} style={{ background: 'none', border: 'none', color: '#6E6B62', fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: 0 }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <code style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 6, padding: '8px 12px', fontSize: 12, flex: 1, minWidth: 0, wordBreak: 'break-all', color: '#3A3A33' }}>
+                {inviteLink.url}
+              </code>
+              <button
+                onClick={() => navigator.clipboard.writeText(inviteLink.url).then(() => { const b = document.getElementById('copy-btn'); if (b) { b.textContent = 'Gekopieerd ✓'; setTimeout(() => { if (b) b.textContent = 'Kopieer link' }, 2000) } })}
+                id="copy-btn"
+                style={{ background: '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+              >
+                Kopieer link
+              </button>
+            </div>
+            <p style={{ fontSize: 12, color: '#6E6B62', marginTop: 10, marginBottom: 0 }}>
+              Stuur deze link naar de partner. Via de link stellen zij zelf hun wachtwoord in. Werkt ook als de partner zijn wachtwoord vergeten is.
+            </p>
           </div>
         )}
 
@@ -244,7 +278,6 @@ export default function AdminDashboard() {
                       { label: 'Naam contactpersoon', key: 'name', placeholder: 'Jan Janssen', req: true },
                       { label: 'Bedrijfsnaam', key: 'business_name', placeholder: 'Janssen Boekhouding', req: true },
                       { label: 'E-mailadres (login)', key: 'email', placeholder: 'jan@janssen.be', type: 'email', req: true },
-                      { label: 'Wachtwoord', key: 'password', placeholder: 'Minimaal 6 tekens', type: 'password', req: true },
                       { label: 'Type dienst', key: 'service_type', placeholder: 'Boekhouder / Verzekeringsmakelaar / …', req: true },
                       { label: 'Facturatiebedrag per klant (€)', key: 'fee_per_customer', placeholder: '25', type: 'number', req: true },
                       { label: 'Ondernemings- / BTW-nummer', key: 'vat_number', placeholder: 'BE0123.456.789', req: false },
@@ -322,8 +355,9 @@ export default function AdminDashboard() {
                         <input value={editPartner.billing_address ?? ''} onChange={e => setEditPartner({ ...editPartner, billing_address: e.target.value })} placeholder="Kerkstraat 1, 3500 Hasselt" style={inputStyle} />
                       </div>
                       <div style={{ borderTop: '1px solid #D8D0C0', paddingTop: 14, marginTop: 4 }}>
-                        <label style={labelStyle}>Nieuw wachtwoord <span style={{ color: '#9E9B91', fontWeight: 400, textTransform: 'none' }}>(optioneel — alleen invullen om te resetten)</span></label>
-                        <input type="password" value={editPassword} onChange={e => setEditPassword(e.target.value)} placeholder="Minimaal 6 tekens" style={inputStyle} />
+                        <p style={{ fontSize: 13, color: '#6E6B62', margin: 0 }}>
+                          Wachtwoord resetten? Sla eerst op, klik dan op <strong>&ldquo;Uitnodigingslink&rdquo;</strong> op de partnerkaart — de partner stelt zelf een nieuw wachtwoord in via de link.
+                        </p>
                       </div>
                       {formError && <p style={{ color: '#B65436', fontSize: 13 }}>{formError}</p>}
                       <button type="submit" disabled={formLoading} style={{ background: '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -364,9 +398,12 @@ export default function AdminDashboard() {
                           </div>
                           <div style={{ fontSize: 11, color: '#6E6B62' }}>te factureren</div>
                         </div>
-                        <div style={{ display: 'flex', gap: 8 }}>
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           <button onClick={() => { setEditPartner(p); setFormError('') }} style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#3A3A33' }}>
                             Bewerken
+                          </button>
+                          <button onClick={() => handleGenerateInvite(p)} style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#3A3A33' }}>
+                            Uitnodigingslink
                           </button>
                           <button onClick={() => handleToggleActive(p)} style={{ background: p.is_active ? '#FEE9E7' : '#E8F5E9', border: `1px solid ${p.is_active ? '#F5C6C0' : '#A5D6A7'}`, borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: p.is_active ? '#B65436' : '#2A3D2E' }}>
                             {p.is_active ? 'Deactiveer' : 'Activeer'}

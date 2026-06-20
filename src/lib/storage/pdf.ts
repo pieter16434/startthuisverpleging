@@ -40,4 +40,5 @@ export async function pdfExists(storagePath: string): Promise<boolean> {
  * Upload via: Supabase Dashboard → Storage → guides bucket
  */
 export const GUIDE_PATH = 'main-guide.pdf'
+export const GUIDE_PRINT_PATH = 'main-guide-print.pdf'
 export const CODEBOOK_PATH = (province: string) => `codebooks/${province}.pdf`

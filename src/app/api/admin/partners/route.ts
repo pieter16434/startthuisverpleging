@@ -2,14 +2,13 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getAdminSession } from '@/lib/admin/auth'
-import bcrypt from 'bcryptjs'
+import { randomBytes } from 'crypto'
 import { z } from 'zod'
 
 const PartnerSchema = z.object({
   name: z.string().min(1).max(100),
   business_name: z.string().min(1).max(100),
   email: z.string().email(),
-  password: z.string().min(6),
   province: z.enum(['ANT', 'LIM', 'OVL', 'VBR', 'WVL']),
   service_type: z.string().min(1).max(100),
   discount_description: z.string().min(1).max(500),
@@ -64,7 +63,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const data = PartnerSchema.parse(body)
 
-    const password_hash = await bcrypt.hash(data.password, 12)
+    // Genereer uitnodigingstoken — partner stelt zelf wachtwoord in via de link
+    const inviteToken = randomBytes(32).toString('hex')
+    const inviteExpires = new Date()
+    inviteExpires.setDate(inviteExpires.getDate() + 7)
+
     const supabase = createServiceClient()
 
     const { data: partner, error } = await supabase
@@ -73,7 +76,9 @@ export async function POST(req: NextRequest) {
         name: data.name,
         business_name: data.business_name,
         email: data.email.toLowerCase(),
-        password_hash,
+        password_hash: null,
+        invite_token: inviteToken,
+        invite_token_expires_at: inviteExpires.toISOString(),
         province: data.province,
         service_type: data.service_type,
         discount_description: data.discount_description,
@@ -93,7 +98,8 @@ export async function POST(req: NextRequest) {
       throw error
     }
 
-    return NextResponse.json({ ok: true, partner })
+    const inviteUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/partner/instellen?token=${inviteToken}`
+    return NextResponse.json({ ok: true, partner, invite_url: inviteUrl })
   } catch (err) {
     console.error('[admin/partners POST]', err)
     if (err instanceof z.ZodError) {

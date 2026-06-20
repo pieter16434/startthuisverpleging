@@ -3,7 +3,7 @@ import { mollieClient } from '@/lib/mollie/client'
 import { createServiceClient } from '@/lib/supabase/server'
 import { resend } from '@/lib/resend/client'
 import { generateCodebookPdf, type CodebookData } from '@/lib/pdf/codebook'
-import { getSignedPdfUrl, GUIDE_PATH } from '@/lib/storage/pdf'
+import { getSignedPdfUrl, GUIDE_PATH, GUIDE_PRINT_PATH } from '@/lib/storage/pdf'
 
 const PROVINCES: Record<string, string> = {
   ANT: 'Antwerpen', LIM: 'Limburg', OVL: 'Oost-Vlaanderen',
@@ -118,6 +118,7 @@ export async function POST(req: NextRequest) {
 
     // ── 4. Controleer of hoofdgids al geüpload is ────────────────────────────
     const guideUrl = await getSignedPdfUrl(GUIDE_PATH)
+    const guidePrintUrl = await getSignedPdfUrl(GUIDE_PRINT_PATH)
 
     // ── 5. Sla PDF-URL op in order ───────────────────────────────────────────
     if (guideUrl) {
@@ -168,7 +169,7 @@ export async function POST(req: NextRequest) {
                           <p style="margin:0 0 4px;font-size:12px;color:#6E6B62;text-transform:uppercase;letter-spacing:1px;font-weight:600;">Jouw aankoop</p>
                           <p style="margin:0 0 8px;font-size:15px;color:#1A1A17;font-weight:600;">Gids: Zelfstandig thuisverpleegkundige worden in Vlaanderen</p>
                           <p style="margin:0;font-size:13px;color:#6E6B62;">
-                            Betaald: <strong style="color:#2A3D2E;">€ 50,00</strong>
+                            Betaald: <strong style="color:#2A3D2E;">€ ${(order.amount_cents / 100).toFixed(2).replace('.', ',')}</strong>
                             &nbsp;·&nbsp; Order: <code style="font-family:monospace;font-size:12px;">${orderId.slice(0, 8).toUpperCase()}</code>
                           </p>
                         </td>
@@ -178,7 +179,7 @@ export async function POST(req: NextRequest) {
                     ${hasGuide ? `
                     <!-- Download: Hoofdgids -->
                     <p style="margin:0 0 8px;font-size:13px;color:#6E6B62;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Jouw bestanden</p>
-                    <table cellpadding="0" cellspacing="0" style="margin-bottom:12px;width:100%;">
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom:10px;width:100%;">
                       <tr>
                         <td style="background:#2A3D2E;border-radius:10px;padding:14px 24px;">
                           <a href="${guideUrl}" style="color:#E8D08A;font-size:15px;font-weight:700;text-decoration:none;">
@@ -187,6 +188,18 @@ export async function POST(req: NextRequest) {
                         </td>
                       </tr>
                     </table>
+                    ${guidePrintUrl ? `
+                    <!-- Download: Printversie -->
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom:12px;width:100%;">
+                      <tr>
+                        <td style="background:#4A5E4E;border-radius:10px;padding:12px 24px;">
+                          <a href="${guidePrintUrl}" style="color:#D8D0C0;font-size:14px;font-weight:600;text-decoration:none;">
+                            🖨 Download printversie (minder inkt) →
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    ` : ''}
 
                     ${codebookUrl ? `
                     <!-- Download: Codeboek -->

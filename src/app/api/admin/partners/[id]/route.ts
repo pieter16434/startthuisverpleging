@@ -2,7 +2,6 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getAdminSession } from '@/lib/admin/auth'
-import bcrypt from 'bcryptjs'
 
 // PATCH — partner updaten
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -40,9 +39,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
     if (body.vat_number !== undefined) update.vat_number = body.vat_number
     if (body.billing_address !== undefined) update.billing_address = body.billing_address
-    if (body.password) {
-      update.password_hash = await bcrypt.hash(body.password, 12)
-    }
 
     const { error } = await supabase.from('partners').update(update).eq('id', params.id)
     if (error) throw error

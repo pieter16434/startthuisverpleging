@@ -39,6 +39,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    if (!partner.password_hash) {
+      return NextResponse.json({ error: 'Je hebt nog geen wachtwoord ingesteld. Gebruik de uitnodigingslink die je per e-mail ontvangen hebt.' }, { status: 401 })
+    }
+
     const valid = await bcrypt.compare(password, partner.password_hash)
     if (!valid) {
       return NextResponse.json({ error: 'Ongeldig e-mailadres of wachtwoord' }, { status: 401 })
