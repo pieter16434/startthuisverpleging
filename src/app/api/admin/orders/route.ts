@@ -10,7 +10,7 @@ export async function GET() {
   const supabase = createServiceClient()
   const { data: orders } = await supabase
     .from('orders')
-    .select('id, amount_cents, status, created_at, paid_at, pdf_main_url, customers(first_name, last_name, email, province)')
+    .select('id, amount_cents, status, created_at, paid_at, pdf_main_url, invoice_number, customers(first_name, last_name, email, province)')
     .order('created_at', { ascending: false })
     .limit(200)
 

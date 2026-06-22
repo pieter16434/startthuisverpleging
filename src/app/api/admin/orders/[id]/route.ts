@@ -1,9 +1,34 @@
 export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getAdminSession } from '@/lib/admin/auth'
 import { resend } from '@/lib/resend/client'
 import { getSignedPdfUrl, GUIDE_PATH, CODEBOOK_PATH } from '@/lib/storage/pdf'
+
+// PATCH /api/admin/orders/[id] — pas status of bedrag aan
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const session = await getAdminSession()
+  if (!session) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  const body = await req.json()
+  const schema = z.object({
+    status: z.enum(['pending', 'paid', 'refunded', 'failed']).optional(),
+    amount_cents: z.number().int().min(0).max(100000).optional(),
+  })
+  const parsed = schema.safeParse(body)
+  if (!parsed.success) return NextResponse.json({ error: 'Ongeldige gegevens' }, { status: 400 })
+
+  const updates: Record<string, unknown> = {}
+  if (parsed.data.status !== undefined) updates.status = parsed.data.status
+  if (parsed.data.amount_cents !== undefined) updates.amount_cents = parsed.data.amount_cents
+
+  const supabase = createServiceClient()
+  const { error } = await supabase.from('orders').update(updates).eq('id', params.id)
+  if (error) return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
+
+  return NextResponse.json({ ok: true })
+}
 
 // POST /api/admin/orders/[id] — stuur PDF handmatig naar klant
 export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -126,8 +151,7 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
                     <tr>
                       <td>
                         <p style="margin:0;font-size:13px;color:#6E6B62;">
-                          Pieter Vanermen &amp; Jonas Piron<br>
-                          <a href="mailto:hallo@startthuisverpleging.be" style="color:#B65436;">hallo@startthuisverpleging.be</a>
+                          Pieter Vanermen &amp; Jonas Piron
                         </p>
                       </td>
                     </tr>

@@ -22,7 +22,7 @@ type Partner = {
 }
 type Order = {
   id: string; amount_cents: number; status: string; created_at: string; paid_at: string | null
-  pdf_main_url: string | null
+  pdf_main_url: string | null; invoice_number: string | null
   customers: { first_name: string; last_name: string; email: string; province: string }
 }
 
@@ -66,6 +66,9 @@ export default function AdminDashboard() {
   const [invoicingData, setInvoicingData] = useState<Record<string, { name: string; business_name: string; province: string; fee: number; months: Record<string, { count: number; amount: number }> }>>({})
   const [invoicingLoaded, setInvoicingLoaded] = useState(false)
   const [emailStats, setEmailStats] = useState<{ total: number; with_consent: number } | null>(null)
+  const [editOrder, setEditOrder] = useState<{ id: string; status: string; amount_euros: string; name: string } | null>(null)
+  const [editOrderError, setEditOrderError] = useState('')
+  const [editOrderLoading, setEditOrderLoading] = useState(false)
 
   // Nieuw partner form
   const emptyForm = { name: '', business_name: '', email: '', province: '', service_type: '', discount_description: '', fee_per_customer: '', notes: '', vat_number: '', billing_address: '' }
@@ -155,6 +158,34 @@ export default function AdminDashboard() {
     const res = await fetch(`/api/admin/partners/${p.id}/invite`, { method: 'POST' })
     const data = await res.json()
     if (res.ok) setInviteLink({ partnerId: p.id, name: p.name, url: data.url })
+  }
+
+  async function handleSaveOrder(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editOrder) return
+    setEditOrderError(''); setEditOrderLoading(true)
+    try {
+      const amount_cents = Math.round(parseFloat(editOrder.amount_euros.replace(',', '.')) * 100)
+      if (isNaN(amount_cents) || amount_cents < 0) { setEditOrderError('Ongeldig bedrag'); return }
+      const res = await fetch(`/api/admin/orders/${editOrder.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: editOrder.status, amount_cents }),
+      })
+      if (!res.ok) { setEditOrderError('Opslaan mislukt'); return }
+      setEditOrder(null)
+      setSuccessMsg('Bestelling bijgewerkt ✓')
+      setTimeout(() => setSuccessMsg(''), 3000)
+      loadData()
+    } catch { setEditOrderError('Opslaan mislukt') }
+    finally { setEditOrderLoading(false) }
+  }
+
+  async function downloadInvoice(orderId: string) {
+    const res = await fetch(`/api/admin/orders/${orderId}/invoice`)
+    if (!res.ok) { alert('Factuur niet gevonden. Mogelijk is deze bestelling van voor de factuur-functie.'); return }
+    const { url } = await res.json()
+    window.open(url, '_blank')
   }
 
   // UI helpers
@@ -427,17 +458,17 @@ export default function AdminDashboard() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                   <thead>
                     <tr style={{ background: '#F1ECE0', borderBottom: '2px solid #D8D0C0' }}>
-                      {['Klant', 'E-mail', 'Provincie', 'Bedrag', 'Status', 'Datum', 'PDF'].map(h => (
+                      {['Klant', 'E-mail', 'Provincie', 'Bedrag', 'Status', 'Datum', 'Factuur', 'PDF', ''].map(h => (
                         <th key={h} style={{ textAlign: 'left', padding: '12px 16px', color: '#6E6B62', fontWeight: 600, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {orders.length === 0 && (
-                      <tr><td colSpan={7} style={{ padding: '32px', textAlign: 'center', color: '#6E6B62' }}>Nog geen bestellingen</td></tr>
+                      <tr><td colSpan={9} style={{ padding: '32px', textAlign: 'center', color: '#6E6B62' }}>Nog geen bestellingen</td></tr>
                     )}
                     {pdfMsg && (
-                      <tr><td colSpan={7} style={{ padding: '10px 16px', background: '#E8F5E9', color: '#2A3D2E', fontSize: 13, fontWeight: 600 }}>{pdfMsg}</td></tr>
+                      <tr><td colSpan={9} style={{ padding: '10px 16px', background: '#E8F5E9', color: '#2A3D2E', fontSize: 13, fontWeight: 600 }}>{pdfMsg}</td></tr>
                     )}
                     {orders.map((o, i) => (
                       <tr key={o.id} style={{ borderBottom: '1px solid #EDE9E0', background: i % 2 === 0 ? 'transparent' : '#F7F3EA' }}>
@@ -452,6 +483,16 @@ export default function AdminDashboard() {
                         </td>
                         <td style={{ padding: '11px 16px', color: '#6E6B62' }}>
                           {new Date(o.paid_at ?? o.created_at).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </td>
+                        <td style={{ padding: '11px 16px' }}>
+                          {o.invoice_number ? (
+                            <button
+                              onClick={() => downloadInvoice(o.id)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#B65436', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', padding: 0, textDecoration: 'underline' }}
+                            >
+                              {o.invoice_number}
+                            </button>
+                          ) : <span style={{ color: '#D8D0C0', fontSize: 12 }}>—</span>}
                         </td>
                         <td style={{ padding: '11px 16px' }}>
                           {o.status === 'paid' ? (
@@ -479,6 +520,14 @@ export default function AdminDashboard() {
                               </button>
                             )
                           ) : <span style={{ color: '#D8D0C0', fontSize: 12 }}>—</span>}
+                        </td>
+                        <td style={{ padding: '11px 16px' }}>
+                          <button
+                            onClick={() => setEditOrder({ id: o.id, status: o.status, amount_euros: (o.amount_cents / 100).toFixed(2).replace('.', ','), name: `${o.customers.first_name} ${o.customers.last_name}` })}
+                            style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', color: '#3A3A33' }}
+                          >
+                            Bewerken
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -640,6 +689,53 @@ export default function AdminDashboard() {
         )}
 
       </main>
+
+      {/* ── MODAL: BESTELLING BEWERKEN ── */}
+      {editOrder && (
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setEditOrder(null) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        >
+          <div style={{ background: '#FBF8F2', borderRadius: 16, padding: '32px', width: '100%', maxWidth: 440, position: 'relative' }}>
+            <button onClick={() => setEditOrder(null)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#6E6B62', lineHeight: 1 }}>✕</button>
+            <h3 style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: '#1A1A17', marginBottom: 4 }}>Bestelling bewerken</h3>
+            <p style={{ fontSize: 13, color: '#6E6B62', marginBottom: 24 }}>{editOrder.name}</p>
+            <form onSubmit={handleSaveOrder}>
+              <label style={labelStyle}>Status</label>
+              <select
+                value={editOrder.status}
+                onChange={e => setEditOrder({ ...editOrder, status: e.target.value })}
+                style={inputStyle}
+              >
+                <option value="pending">In afwachting</option>
+                <option value="paid">Betaald</option>
+                <option value="refunded">Terugbetaald</option>
+                <option value="failed">Mislukt</option>
+              </select>
+              <label style={labelStyle}>Bedrag (€)</label>
+              <input
+                type="text"
+                value={editOrder.amount_euros}
+                onChange={e => setEditOrder({ ...editOrder, amount_euros: e.target.value })}
+                placeholder="50,00"
+                style={inputStyle}
+              />
+              <p style={{ fontSize: 12, color: '#8A9588', marginBottom: 16, marginTop: -8 }}>
+                Dit past enkel het bedrag in de administratie aan — de Mollie-betaling zelf wijzigt niet.
+              </p>
+              {editOrderError && <p style={{ color: '#B65436', fontSize: 13, marginBottom: 12 }}>{editOrderError}</p>}
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="submit" disabled={editOrderLoading} style={{ background: '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: editOrderLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+                  {editOrderLoading ? 'Opslaan…' : 'Opslaan ✓'}
+                </button>
+                <button type="button" onClick={() => setEditOrder(null)} style={{ background: 'transparent', border: '1px solid #D8D0C0', borderRadius: 8, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', color: '#6E6B62' }}>
+                  Annuleer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
