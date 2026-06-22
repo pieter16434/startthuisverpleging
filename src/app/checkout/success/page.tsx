@@ -43,7 +43,7 @@ export default function SuccessPage() {
             Wat nu?
           </p>
           {[
-            { icon: '📧', text: 'Je krijgt een bevestigingsmail op het adres dat je invulde.' },
+            { icon: '📧', text: 'Je krijgt een bevestigingsmail op het adres dat je invulde. Controleer ook je spammap als je niets ziet.' },
             { icon: '📄', text: 'Zodra jouw gids klaar is sturen we de downloadlink door. Dit duurt normaal niet lang.' },
             { icon: '🛡️', text: '30 dagen geld-terug-garantie. Geen vragen, geen gedoe.' },
           ].map((item, i) => (
@@ -53,13 +53,6 @@ export default function SuccessPage() {
             </div>
           ))}
         </div>
-
-        <p style={{ color: '#6E6B62', fontSize: 14, marginBottom: 24 }}>
-          Vragen? Mail ons op{' '}
-          <a href="mailto:hallo@startthuisverpleging.be" style={{ color: '#B65436' }}>
-            hallo@startthuisverpleging.be
-          </a>
-        </p>
 
         <a href="/" style={{
           display: 'inline-block', padding: '13px 28px',

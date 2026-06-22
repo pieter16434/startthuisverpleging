@@ -55,7 +55,7 @@ export default function CancelledPage() {
 
         <p style={{ marginTop: 28, color: '#6E6B62', fontSize: 14 }}>
           Liever via mail betalen of een vraag?{' '}
-          <a href="mailto:hallo@startthuisverpleging.be" style={{ color: '#B65436' }}>
+          <a href="mailto:info@domuscare.be" style={{ color: '#B65436' }}>
             Contacteer ons
           </a>
         </p>

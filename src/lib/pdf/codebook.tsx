@@ -347,7 +347,7 @@ function CodebookDocument({ data }: { data: CodebookData }) {
 
         {/* Footer */}
         <View style={s.footer}>
-          <Text style={s.footerText}>startthuisverpleging.be · hallo@startthuisverpleging.be</Text>
+          <Text style={s.footerText}>startthuisverpleging.be</Text>
           <Text style={s.footerText}>Persoonlijk document · Niet overdraagbaar</Text>
         </View>
 

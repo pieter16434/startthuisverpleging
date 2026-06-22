@@ -247,7 +247,7 @@ export async function POST(req: NextRequest) {
                         <td>
                           <p style="margin:0;font-size:13px;color:#6E6B62;">
                             Pieter Vanermen &amp; Jonas Piron<br>
-                            <a href="mailto:hallo@startthuisverpleging.be" style="color:#B65436;">hallo@startthuisverpleging.be</a>
+                            <a href="mailto:info@domuscare.be" style="color:#B65436;">info@domuscare.be</a>
                             &nbsp;·&nbsp;
                             <a href="https://startthuisverpleging.be/terugbetaling" style="color:#8A9588;">Terugbetalingsbeleid</a>
                           </p>
