@@ -3,6 +3,7 @@ import { mollieClient } from '@/lib/mollie/client'
 import { createServiceClient } from '@/lib/supabase/server'
 import { resend } from '@/lib/resend/client'
 import { generateCodebookPdf, type CodebookData } from '@/lib/pdf/codebook'
+import { generateInvoicePdf, type InvoiceData } from '@/lib/pdf/invoice'
 import { getSignedPdfUrl, GUIDE_PATH, GUIDE_PRINT_PATH } from '@/lib/storage/pdf'
 
 const PROVINCES: Record<string, string> = {
@@ -116,6 +117,45 @@ export async function POST(req: NextRequest) {
       .createSignedUrl(codebookPath, 60 * 60 * 24 * 7)
     const codebookUrl = codebookSigned?.signedUrl ?? null
 
+    // ── 3b. Genereer factuur ─────────────────────────────────────────────────
+    const invoiceYear = new Date().getFullYear()
+    const { count: invoiceCount } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .not('invoice_number', 'is', null)
+    const invoiceNumber = `VIT-${invoiceYear}-${String((invoiceCount ?? 0) + 1).padStart(4, '0')}`
+
+    await supabase.from('orders').update({ invoice_number: invoiceNumber }).eq('id', orderId)
+
+    const invoiceData: InvoiceData = {
+      invoice_number: invoiceNumber,
+      invoice_date: new Date().toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }),
+      customer_first_name: customer.first_name,
+      customer_last_name: customer.last_name,
+      customer_email: customer.email,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      customer_address_street: (customer as any).address_street ?? null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      customer_address_postal_code: (customer as any).address_postal_code ?? null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      customer_address_city: (customer as any).address_city ?? null,
+      amount_cents: order.amount_cents,
+      order_short_id: orderId.slice(0, 8).toUpperCase(),
+    }
+
+    const invoiceBuffer = await generateInvoicePdf(invoiceData)
+
+    const invoicePath = `invoices/${orderId}.pdf`
+    await supabase.storage.from('guides').upload(invoicePath, invoiceBuffer, {
+      contentType: 'application/pdf',
+      upsert: true,
+    })
+
+    const { data: invoiceSigned } = await supabase.storage
+      .from('guides')
+      .createSignedUrl(invoicePath, 60 * 60 * 24 * 7)
+    const invoiceUrl = invoiceSigned?.signedUrl ?? null
+
     // ── 4. Controleer of hoofdgids al geüpload is ────────────────────────────
     const guideUrl = await getSignedPdfUrl(GUIDE_PATH)
     const guidePrintUrl = await getSignedPdfUrl(GUIDE_PRINT_PATH)
@@ -217,6 +257,19 @@ export async function POST(req: NextRequest) {
                     </p>
                     ` : ''}
 
+                    ${invoiceUrl ? `
+                    <!-- Factuur -->
+                    <table cellpadding="0" cellspacing="0" style="margin-bottom:8px;width:100%;">
+                      <tr>
+                        <td style="border:1.5px solid #D8D0C0;border-radius:10px;padding:12px 24px;background:#FBF8F2;">
+                          <a href="${invoiceUrl}" style="color:#3A3A33;font-size:13px;font-weight:600;text-decoration:none;">
+                            🧾 Download jouw factuur (${invoiceNumber}) →
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    <p style="margin:0 0 20px;font-size:11px;color:#8A9588;">Factuur op naam van ${customer.first_name} ${customer.last_name} · Vitalion Ascent BV · Vrijgesteld van btw</p>
+                    ` : ''}
                     <p style="margin:0 0 24px;font-size:13px;color:#8A9588;">
                       ⏱ Deze downloadlinks zijn 7 dagen geldig. Sla de bestanden op na het downloaden.
                     </p>

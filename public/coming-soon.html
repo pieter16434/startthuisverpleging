@@ -2349,6 +2349,28 @@
           <option value="WVL">West-Vlaanderen</option>
         </select>
       </div>
+      <!-- Factuurgegevens (optioneel) -->
+      <div class="co-field" style="margin-bottom:14px;">
+        <button type="button" class="co-coupon-toggle" id="co-invoice-toggle">+ Factuurgegevens toevoegen (optioneel)</button>
+        <div id="co-invoice-section" style="display:none;margin-top:10px;">
+          <p style="font-size:12px;color:var(--ink-mute);margin:0 0 10px;line-height:1.45;">Vul in als je een factuur op jouw naam wil ontvangen om later in te brengen als startende zelfstandige.</p>
+          <div class="co-field">
+            <label for="co-street">Straat en huisnummer</label>
+            <input type="text" id="co-street" name="address_street" placeholder="Kerkstraat 1" autocomplete="street-address">
+          </div>
+          <div class="co-row">
+            <div class="co-field">
+              <label for="co-postal">Postcode</label>
+              <input type="text" id="co-postal" name="address_postal_code" placeholder="1000" autocomplete="postal-code" maxlength="10">
+            </div>
+            <div class="co-field">
+              <label for="co-city">Gemeente</label>
+              <input type="text" id="co-city" name="address_city" placeholder="Brussel" autocomplete="address-level2">
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Kortingscode -->
       <div class="co-field" style="margin-bottom:10px;">
         <button type="button" class="co-coupon-toggle" id="co-coupon-toggle">Heb je een kortingscode?</button>
@@ -2630,9 +2652,23 @@
     document.getElementById("co-coupon-msg").textContent = "";
     submitBtn.textContent = "Betaal €50 — Ga naar betaling →";
     coLabel.innerHTML = 'Bestelling · <s style="opacity:0.55;font-size:13px;">€85</s> <strong style="color:#2A3D2E;">€50</strong> introductieprijs';
+    document.getElementById("co-street").value = "";
+    document.getElementById("co-postal").value = "";
+    document.getElementById("co-city").value = "";
+    document.getElementById("co-invoice-section").style.display = "none";
+    document.getElementById("co-invoice-toggle").textContent = "+ Factuurgegevens toevoegen (optioneel)";
     errorBox.className = "co-error";
     errorBox.textContent = "";
   }
+
+  document.getElementById("co-invoice-toggle").addEventListener("click", () => {
+    const section = document.getElementById("co-invoice-section");
+    const visible = section.style.display !== "none";
+    section.style.display = visible ? "none" : "block";
+    document.getElementById("co-invoice-toggle").textContent = visible
+      ? "+ Factuurgegevens toevoegen (optioneel)"
+      : "− Factuurgegevens verbergen";
+  });
 
   document.getElementById("co-coupon-toggle").addEventListener("click", () => {
     const row = document.getElementById("co-coupon-row");
@@ -2689,10 +2725,13 @@
     errorBox.className = "co-error";
     errorBox.textContent = "";
 
-    const first_name = document.getElementById("co-first").value.trim();
-    const last_name  = document.getElementById("co-last").value.trim();
-    const email      = document.getElementById("co-email").value.trim();
-    const province   = document.getElementById("co-province").value;
+    const first_name         = document.getElementById("co-first").value.trim();
+    const last_name          = document.getElementById("co-last").value.trim();
+    const email              = document.getElementById("co-email").value.trim();
+    const province           = document.getElementById("co-province").value;
+    const address_street     = document.getElementById("co-street").value.trim();
+    const address_postal_code = document.getElementById("co-postal").value.trim();
+    const address_city       = document.getElementById("co-city").value.trim();
 
     if (!first_name || !last_name) {
       errorBox.textContent = "Vul je voornaam en achternaam in.";
@@ -2712,6 +2751,9 @@
       const marketing_consent = document.getElementById("co-consent").checked;
       const payload = { first_name, last_name, email, province: province || undefined, marketing_consent };
       if (discountApplied) payload.discount_code = REFERRAL_CODE;
+      if (address_street) payload.address_street = address_street;
+      if (address_postal_code) payload.address_postal_code = address_postal_code;
+      if (address_city) payload.address_city = address_city;
 
       const res = await fetch("/api/checkout", {
         method: "POST",

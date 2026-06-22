@@ -12,6 +12,9 @@ const CheckoutSchema = z.object({
   province: z.enum(['ANT', 'LIM', 'OVL', 'VBR', 'WVL']).optional(),
   discount_code: z.string().max(30).optional().transform(s => s?.trim().toUpperCase()),
   marketing_consent: z.boolean().optional().default(false),
+  address_street: z.string().max(150).optional().transform(s => s?.trim() || undefined),
+  address_postal_code: z.string().max(20).optional().transform(s => s?.trim() || undefined),
+  address_city: z.string().max(100).optional().transform(s => s?.trim() || undefined),
 })
 
 export async function POST(req: NextRequest) {
@@ -72,6 +75,9 @@ export async function POST(req: NextRequest) {
           last_name: data.last_name,
           province: data.province ?? null,
           ...(data.marketing_consent ? { marketing_consent: true } : {}),
+          ...(data.address_street ? { address_street: data.address_street } : {}),
+          ...(data.address_postal_code ? { address_postal_code: data.address_postal_code } : {}),
+          ...(data.address_city ? { address_city: data.address_city } : {}),
         },
         { onConflict: 'email', ignoreDuplicates: false }
       )
