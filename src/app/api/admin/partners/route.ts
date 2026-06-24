@@ -9,7 +9,7 @@ const PartnerSchema = z.object({
   name: z.string().min(1).max(100),
   business_name: z.string().min(1).max(100),
   email: z.string().email(),
-  province: z.enum(['ANT', 'LIM', 'OVL', 'VBR', 'WVL']),
+  province: z.enum(['ANT', 'LIM', 'OVL', 'VBR', 'WVL', 'VLA']),
   service_type: z.string().min(1).max(100),
   discount_description: z.string().min(1).max(500),
   fee_per_customer: z.number().min(0),

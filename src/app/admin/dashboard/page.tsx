@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 
 const PROVINCES: Record<string, string> = {
   ANT: 'Antwerpen', LIM: 'Limburg', OVL: 'Oost-Vlaanderen',
-  VBR: 'Vlaams-Brabant', WVL: 'West-Vlaanderen',
+  VBR: 'Vlaams-Brabant', WVL: 'West-Vlaanderen', VLA: 'Vlaanderen',
 }
 const STATUS_LABELS: Record<string, string> = {
   pending: 'In afwachting', paid: 'Betaald', refunded: 'Terugbetaald', failed: 'Mislukt',
@@ -69,6 +69,8 @@ export default function AdminDashboard() {
   const [editOrder, setEditOrder] = useState<{ id: string; status: string; amount_euros: string; name: string } | null>(null)
   const [editOrderError, setEditOrderError] = useState('')
   const [editOrderLoading, setEditOrderLoading] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState<Partner | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   // Nieuw partner form
   const emptyForm = { name: '', business_name: '', email: '', province: '', service_type: '', discount_description: '', fee_per_customer: '', notes: '', vat_number: '', billing_address: '' }
@@ -158,6 +160,21 @@ export default function AdminDashboard() {
     const res = await fetch(`/api/admin/partners/${p.id}/invite`, { method: 'POST' })
     const data = await res.json()
     if (res.ok) setInviteLink({ partnerId: p.id, name: p.name, url: data.url })
+  }
+
+  async function handleDeletePartner() {
+    if (!deleteConfirm) return
+    setDeleteLoading(true)
+    try {
+      const res = await fetch(`/api/admin/partners/${deleteConfirm.id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) { alert(data.error ?? 'Verwijderen mislukt'); return }
+      setDeleteConfirm(null)
+      setSuccessMsg(`Partner "${deleteConfirm.business_name}" verwijderd ✓`)
+      setTimeout(() => setSuccessMsg(''), 4000)
+      loadData()
+    } catch { alert('Verwijderen mislukt') }
+    finally { setDeleteLoading(false) }
   }
 
   async function handleSaveOrder(e: React.FormEvent) {
@@ -323,7 +340,8 @@ export default function AdminDashboard() {
                       <label style={labelStyle}>Provincie</label>
                       <select value={form.province} onChange={e => setField('province', e.target.value)} required style={{ ...inputStyle }}>
                         <option value="">— Kies provincie —</option>
-                        {Object.entries(PROVINCES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                        {Object.entries(PROVINCES).filter(([k]) => k !== 'VLA').map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                        <option value="VLA">Vlaanderen — alle provincies</option>
                       </select>
                     </div>
                     <div>
@@ -439,6 +457,11 @@ export default function AdminDashboard() {
                           <button onClick={() => handleToggleActive(p)} style={{ background: p.is_active ? '#FEE9E7' : '#E8F5E9', border: `1px solid ${p.is_active ? '#F5C6C0' : '#A5D6A7'}`, borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: p.is_active ? '#B65436' : '#2A3D2E' }}>
                             {p.is_active ? 'Deactiveer' : 'Activeer'}
                           </button>
+                          {!p.is_active && (
+                            <button onClick={() => setDeleteConfirm(p)} style={{ background: '#FEE9E7', border: '1px solid #F5C6C0', borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#c0392b' }}>
+                              Verwijderen
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -689,6 +712,37 @@ export default function AdminDashboard() {
         )}
 
       </main>
+
+      {/* ── MODAL: PARTNER VERWIJDEREN ── */}
+      {deleteConfirm && (
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setDeleteConfirm(null) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        >
+          <div style={{ background: '#FBF8F2', borderRadius: 16, padding: '32px', width: '100%', maxWidth: 420, position: 'relative' }}>
+            <button onClick={() => setDeleteConfirm(null)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#6E6B62', lineHeight: 1 }}>✕</button>
+            <h3 style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: '#1A1A17', marginBottom: 8 }}>Partner verwijderen</h3>
+            <p style={{ fontSize: 14, color: '#3A3A33', marginBottom: 6 }}>
+              Je staat op het punt <strong>{deleteConfirm.business_name}</strong> ({deleteConfirm.name}) permanent te verwijderen.
+            </p>
+            <p style={{ fontSize: 13, color: '#B65436', marginBottom: 24, background: '#FEE9E7', border: '1px solid #F5C6C0', borderRadius: 8, padding: '10px 14px' }}>
+              Dit verwijdert ook alle bijhorende partnerscodes uit de database. Dit kan <strong>niet ongedaan</strong> gemaakt worden.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={handleDeletePartner}
+                disabled={deleteLoading}
+                style={{ background: '#c0392b', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: deleteLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+              >
+                {deleteLoading ? 'Verwijderen…' : 'Ja, verwijder definitief'}
+              </button>
+              <button onClick={() => setDeleteConfirm(null)} style={{ background: 'transparent', border: '1px solid #D8D0C0', borderRadius: 8, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', color: '#6E6B62' }}>
+                Annuleer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── MODAL: BESTELLING BEWERKEN ── */}
       {editOrder && (

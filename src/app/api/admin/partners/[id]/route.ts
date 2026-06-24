@@ -50,6 +50,31 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
+// DELETE — partner permanent verwijderen (alleen als inactief)
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  const session = await getAdminSession()
+  if (!session) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  const supabase = createServiceClient()
+
+  const { data: partner } = await supabase
+    .from('partners')
+    .select('id, is_active')
+    .eq('id', params.id)
+    .single()
+
+  if (!partner) return NextResponse.json({ error: 'Partner niet gevonden' }, { status: 404 })
+  if (partner.is_active) return NextResponse.json({ error: 'Deactiveer de partner eerst' }, { status: 400 })
+
+  // Verwijder gekoppelde codes eerst (foreign key constraint)
+  await supabase.from('partner_codes').delete().eq('partner_id', params.id)
+
+  const { error } = await supabase.from('partners').delete().eq('id', params.id)
+  if (error) return NextResponse.json({ error: 'Verwijderen mislukt' }, { status: 500 })
+
+  return NextResponse.json({ ok: true })
+}
+
 // GET — detailpagina één partner (codes overzicht)
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getAdminSession()

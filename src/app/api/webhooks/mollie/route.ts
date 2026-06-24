@@ -8,7 +8,7 @@ import { getSignedPdfUrl, GUIDE_PATH, GUIDE_PRINT_PATH } from '@/lib/storage/pdf
 
 const PROVINCES: Record<string, string> = {
   ANT: 'Antwerpen', LIM: 'Limburg', OVL: 'Oost-Vlaanderen',
-  VBR: 'Vlaams-Brabant', WVL: 'West-Vlaanderen',
+  VBR: 'Vlaams-Brabant', WVL: 'West-Vlaanderen', VLA: 'Vlaanderen',
 }
 
 // Genereer een unieke partnercode: STH-LIM-A3B9K2
@@ -62,27 +62,28 @@ export async function POST(req: NextRequest) {
     let partners: PartnerRow[] = []
     const codeMap: Record<string, string> = {} // partner_id → code
 
-    if (customer.province) {
-      const { data: activePartners } = await supabase
-        .from('partners')
-        .select('id, business_name, name, service_type, discount_description')
-        .eq('province', customer.province)
-        .eq('is_active', true)
+    // Haal provinciale partners op + Vlaanderen-brede partners (VLA) — die gaan naar elk codeboek
+    const provincesToQuery = customer.province ? [customer.province, 'VLA'] : ['VLA']
+    const { data: activePartners } = await supabase
+      .from('partners')
+      .select('id, business_name, name, service_type, discount_description')
+      .in('province', provincesToQuery)
+      .eq('is_active', true)
 
-      partners = activePartners ?? []
+    partners = activePartners ?? []
 
-      for (const partner of partners) {
-        let code = generateCode(customer.province)
-        for (let attempt = 0; attempt < 5; attempt++) {
-          const { error } = await supabase.from('partner_codes').insert({
-            partner_id: partner.id,
-            order_id: orderId,
-            customer_id: customer.id,
-            code,
-          })
-          if (!error) { codeMap[partner.id] = code; break }
-          code = generateCode(customer.province)
-        }
+    const codeProvince = customer.province ?? 'VLA'
+    for (const partner of partners) {
+      let code = generateCode(codeProvince)
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const { error } = await supabase.from('partner_codes').insert({
+          partner_id: partner.id,
+          order_id: orderId,
+          customer_id: customer.id,
+          code,
+        })
+        if (!error) { codeMap[partner.id] = code; break }
+        code = generateCode(codeProvince)
       }
     }
 
