@@ -34,6 +34,7 @@ const Schema = z.object({
   discount_description: z.string().min(1, 'Beschrijving is verplicht').max(500),
   vat_number: z.string().min(1, 'BTW-nummer is verplicht').max(50),
   billing_address: z.string().min(1, 'Facturatieadres is verplicht').max(300),
+  fee_per_customer: z.number().min(25, 'Minimum vergoeding is €25'),
   password: z.string().min(8, 'Wachtwoord moet minimaal 8 tekens bevatten'),
 })
 
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
       province: data.province,
       service_type: data.service_type,
       discount_description: data.discount_description,
-      fee_per_customer: 0,
+      fee_per_customer: data.fee_per_customer,
       vat_number: data.vat_number,
       billing_address: data.billing_address,
       is_active: true,

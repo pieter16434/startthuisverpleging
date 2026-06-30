@@ -61,6 +61,7 @@ function OnboardingContent() {
     name: '', business_name: '', email: '', province: '',
     service_type: '', discount_description: '',
     vat_number: '', billing_address: '',
+    fee_per_customer: '',
     password: '', confirm: '',
   })
 
@@ -86,7 +87,7 @@ function OnboardingContent() {
       const res = await fetch('/api/partner/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, ...form }),
+        body: JSON.stringify({ token, ...form, fee_per_customer: parseFloat(form.fee_per_customer) }),
       })
       const data = await res.json()
       if (!res.ok) { setSubmitError(data.error); return }
@@ -178,6 +179,19 @@ function OnboardingContent() {
         <div style={fieldWrap}>
           <label style={labelStyle}>Facturatieadres</label>
           <input type="text" required value={form.billing_address} onChange={e => setField('billing_address', e.target.value)} placeholder="Kerkstraat 1, 3500 Hasselt" style={inputStyle} />
+        </div>
+        <div style={fieldWrap}>
+          <label style={labelStyle}>Vergoeding per doorverwezen klant (€)</label>
+          <input
+            type="number" required min={25} step="0.01"
+            value={form.fee_per_customer}
+            onChange={e => setField('fee_per_customer', e.target.value)}
+            placeholder="25"
+            style={inputStyle}
+          />
+          <p style={{ fontSize: 12, color: '#8A9588', marginTop: 5, marginBottom: 0, lineHeight: 1.5 }}>
+            Dit is het bedrag dat jij betaalt aan startthuisverpleging voor elke klant die jouw code gebruikt — zoals onderling afgesproken. Minimum €25.
+          </p>
         </div>
 
         {/* Sectie: Aanbod in codeboek */}
