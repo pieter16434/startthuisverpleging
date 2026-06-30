@@ -29,7 +29,7 @@ const Schema = z.object({
   name: z.string().min(1, 'Naam is verplicht').max(100),
   business_name: z.string().min(1, 'Bedrijfsnaam is verplicht').max(100),
   email: z.string().email('Ongeldig e-mailadres'),
-  province: z.enum(['ANT', 'LIM', 'OVL', 'VBR', 'WVL', 'VLA'], { errorMap: () => ({ message: 'Kies een provincie' }) }),
+  province: z.enum(['ANT', 'LIM', 'OVL', 'VBR', 'WVL', 'VLA']),
   service_type: z.string().min(1, 'Type dienst is verplicht').max(100),
   discount_description: z.string().min(1, 'Beschrijving is verplicht').max(500),
   vat_number: z.string().min(1, 'BTW-nummer is verplicht').max(50),
