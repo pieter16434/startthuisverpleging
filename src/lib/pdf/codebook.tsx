@@ -10,6 +10,7 @@ export type CodebookPartner = {
   name: string
   service_type: string
   discount_description: string
+  is_product?: boolean
 }
 
 export type CodebookData = {
@@ -307,9 +308,9 @@ function CodebookDocument({ data }: { data: CodebookData }) {
                   <Text style={s.partnerName}>{partner.business_name}</Text>
                   <Text style={s.partnerType}>{partner.service_type} · {partner.name}</Text>
                 </View>
-                <View style={s.codeBadge}>
-                  <Text style={s.codeLabel}>Jouw code</Text>
-                  <Text style={s.codeValue}>{partner.code}</Text>
+                <View style={[s.codeBadge, partner.is_product ? { backgroundColor: C.clay } : {}]}>
+                  <Text style={s.codeLabel}>{partner.is_product ? 'Kortingscode' : 'Jouw code'}</Text>
+                  <Text style={[s.codeValue, partner.is_product ? { fontSize: 12, letterSpacing: 1 } : {}]}>{partner.code}</Text>
                 </View>
               </View>
               <View style={s.discountBox}>

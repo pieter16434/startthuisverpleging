@@ -58,22 +58,34 @@ export async function POST(req: NextRequest) {
     const customer = order.customers
 
     // ── 2. Genereer partner codes per provincie ──────────────────────────────
-    type PartnerRow = { id: string; business_name: string; name: string; service_type: string; discount_description: string }
-    let partners: PartnerRow[] = []
+    type PartnerRow = { id: string; business_name: string; name: string; service_type: string; discount_description: string; partner_type: string; discount_code: string | null }
     const codeMap: Record<string, string> = {} // partner_id → code
 
-    // Haal provinciale partners op + Vlaanderen-brede partners (VLA) — die gaan naar elk codeboek
+    // Service partners: provinciaal + VLA — unieke code per klant
     const provincesToQuery = customer.province ? [customer.province, 'VLA'] : ['VLA']
-    const { data: activePartners } = await supabase
+    const { data: servicePartners } = await supabase
       .from('partners')
-      .select('id, business_name, name, service_type, discount_description')
+      .select('id, business_name, name, service_type, discount_description, partner_type, discount_code')
       .in('province', provincesToQuery)
       .eq('is_active', true)
+      .eq('partner_type', 'service')
 
-    partners = activePartners ?? []
+    // Product partners: altijd in elk codeboek, vaste kortingscode
+    const { data: productPartners } = await supabase
+      .from('partners')
+      .select('id, business_name, name, service_type, discount_description, partner_type, discount_code')
+      .eq('is_active', true)
+      .eq('partner_type', 'product')
+
+    const partners: PartnerRow[] = [...(servicePartners ?? []), ...(productPartners ?? [])]
 
     const codeProvince = customer.province ?? 'VLA'
     for (const partner of partners) {
+      if (partner.partner_type === 'product') {
+        // Product partner: vaste kortingscode, geen unieke code aanmaken
+        codeMap[partner.id] = partner.discount_code ?? '—'
+        continue
+      }
       let code = generateCode(codeProvince)
       for (let attempt = 0; attempt < 5; attempt++) {
         const { error } = await supabase.from('partner_codes').insert({
@@ -100,6 +112,7 @@ export async function POST(req: NextRequest) {
         name: p.name,
         service_type: p.service_type,
         discount_description: p.discount_description,
+        is_product: p.partner_type === 'product',
       })),
     }
 

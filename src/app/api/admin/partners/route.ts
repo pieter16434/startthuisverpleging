@@ -16,6 +16,8 @@ const PartnerSchema = z.object({
   notes: z.string().optional(),
   vat_number: z.string().max(50).optional(),
   billing_address: z.string().max(300).optional(),
+  partner_type: z.enum(['service', 'product']).optional(),
+  discount_code: z.string().max(50).optional(),
 })
 
 // GET — alle partners ophalen
@@ -30,6 +32,7 @@ export async function GET() {
       id, name, business_name, email, province, service_type,
       discount_description, fee_per_customer, is_active, notes,
       vat_number, billing_address, created_at,
+      partner_type, discount_code,
       partner_codes(count)
     `)
     .order('created_at', { ascending: false })
@@ -64,11 +67,17 @@ export async function POST(req: NextRequest) {
     const data = PartnerSchema.parse(body)
 
     // Genereer uitnodigingstoken — partner stelt zelf wachtwoord in via de link
-    const inviteToken = randomBytes(32).toString('hex')
-    const inviteExpires = new Date()
-    inviteExpires.setDate(inviteExpires.getDate() + 7)
-
     const supabase = createServiceClient()
+    const isProduct = data.partner_type === 'product'
+
+    // Alleen voor service partners: uitnodigingstoken aanmaken
+    let inviteToken: string | null = null
+    let inviteExpires: Date | null = null
+    if (!isProduct) {
+      inviteToken = randomBytes(32).toString('hex')
+      inviteExpires = new Date()
+      inviteExpires.setDate(inviteExpires.getDate() + 7)
+    }
 
     const { data: partner, error } = await supabase
       .from('partners')
@@ -78,7 +87,7 @@ export async function POST(req: NextRequest) {
         email: data.email.toLowerCase(),
         password_hash: null,
         invite_token: inviteToken,
-        invite_token_expires_at: inviteExpires.toISOString(),
+        invite_token_expires_at: inviteExpires?.toISOString() ?? null,
         province: data.province,
         service_type: data.service_type,
         discount_description: data.discount_description,
@@ -87,8 +96,10 @@ export async function POST(req: NextRequest) {
         vat_number: data.vat_number ?? null,
         billing_address: data.billing_address ?? null,
         is_active: true,
+        partner_type: data.partner_type ?? 'service',
+        discount_code: data.discount_code ?? null,
       })
-      .select('id, name, email')
+      .select('id, name, business_name, email')
       .single()
 
     if (error) {
@@ -98,7 +109,9 @@ export async function POST(req: NextRequest) {
       throw error
     }
 
-    const inviteUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/partner/instellen?token=${inviteToken}`
+    const inviteUrl = inviteToken
+      ? `${process.env.NEXT_PUBLIC_BASE_URL}/partner/instellen?token=${inviteToken}`
+      : null
     return NextResponse.json({ ok: true, partner, invite_url: inviteUrl })
   } catch (err) {
     console.error('[admin/partners POST]', err)

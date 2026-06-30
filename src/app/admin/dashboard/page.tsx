@@ -19,6 +19,7 @@ type Partner = {
   is_active: boolean; notes: string | null; created_at: string
   vat_number: string | null; billing_address: string | null
   total_codes: number; verified_codes: number
+  partner_type: 'service' | 'product'; discount_code: string | null
 }
 type Order = {
   id: string; amount_cents: number; status: string; created_at: string; paid_at: string | null
@@ -71,10 +72,17 @@ export default function AdminDashboard() {
   const [editOrderLoading, setEditOrderLoading] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState<Partner | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+  const [onboardingLink, setOnboardingLink] = useState<string | null>(null)
+  const [onboardingLoading, setOnboardingLoading] = useState(false)
+  const [showAddProductForm, setShowAddProductForm] = useState(false)
 
-  // Nieuw partner form
+  // Nieuw service partner form
   const emptyForm = { name: '', business_name: '', email: '', province: '', service_type: '', discount_description: '', fee_per_customer: '', notes: '', vat_number: '', billing_address: '' }
   const [form, setForm] = useState(emptyForm)
+
+  // Nieuw product partner form
+  const emptyProductForm = { business_name: '', contact_name: '', contact_email: '', service_type: '', discount_description: '', discount_code: '', notes: '' }
+  const [productForm, setProductForm] = useState(emptyProductForm)
 
   const loadData = useCallback(async () => {
     const [pRes, oRes] = await Promise.all([
@@ -177,6 +185,48 @@ export default function AdminDashboard() {
     finally { setDeleteLoading(false) }
   }
 
+  async function handleGenerateOnboardingLink() {
+    setOnboardingLoading(true)
+    try {
+      const res = await fetch('/api/admin/partners/onboarding-link', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) setOnboardingLink(data.url)
+      else alert(data.error ?? 'Mislukt')
+    } catch { alert('Mislukt') }
+    finally { setOnboardingLoading(false) }
+  }
+
+  async function handleAddProductPartner(e: React.FormEvent) {
+    e.preventDefault()
+    setFormError(''); setFormLoading(true)
+    try {
+      const res = await fetch('/api/admin/partners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          partner_type: 'product',
+          name: productForm.contact_name,
+          business_name: productForm.business_name,
+          email: productForm.contact_email,
+          province: 'VLA',
+          service_type: productForm.service_type,
+          discount_description: productForm.discount_description,
+          discount_code: productForm.discount_code,
+          fee_per_customer: 0,
+          notes: productForm.notes || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setFormError(data.error); return }
+      setShowAddProductForm(false)
+      setProductForm(emptyProductForm)
+      setSuccessMsg(`Product partner "${data.partner.business_name}" aangemaakt ✓`)
+      setTimeout(() => setSuccessMsg(''), 4000)
+      loadData()
+    } catch { setFormError('Aanmaken mislukt') }
+    finally { setFormLoading(false) }
+  }
+
   async function handleSaveOrder(e: React.FormEvent) {
     e.preventDefault()
     if (!editOrder) return
@@ -244,12 +294,12 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Uitnodigingslink */}
+        {/* Uitnodigingslink (wachtwoord veranderen) */}
         {inviteLink && (
           <div style={{ background: '#FBF8F2', border: '2px solid #2A3D2E', borderRadius: 12, padding: '20px 24px', marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
               <p style={{ fontWeight: 700, fontSize: 14, color: '#1A1A17', margin: 0 }}>
-                Uitnodigingslink voor {inviteLink.name} <span style={{ fontWeight: 400, color: '#6E6B62', fontSize: 12 }}>(7 dagen geldig)</span>
+                Wachtwoord-link voor {inviteLink.name} <span style={{ fontWeight: 400, color: '#6E6B62', fontSize: 12 }}>(7 dagen geldig)</span>
               </p>
               <button onClick={() => setInviteLink(null)} style={{ background: 'none', border: 'none', color: '#6E6B62', fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: 0 }}>✕</button>
             </div>
@@ -266,7 +316,34 @@ export default function AdminDashboard() {
               </button>
             </div>
             <p style={{ fontSize: 12, color: '#6E6B62', marginTop: 10, marginBottom: 0 }}>
-              Stuur deze link naar de partner. Via de link stellen zij zelf hun wachtwoord in. Werkt ook als de partner zijn wachtwoord vergeten is.
+              Stuur deze link naar de partner. Via de link stellen zij een nieuw wachtwoord in.
+            </p>
+          </div>
+        )}
+
+        {/* Onboarding link */}
+        {onboardingLink && (
+          <div style={{ background: '#FBF8F2', border: '2px solid #B65436', borderRadius: 12, padding: '20px 24px', marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <p style={{ fontWeight: 700, fontSize: 14, color: '#1A1A17', margin: 0 }}>
+                Onboarding link — nieuwe partner <span style={{ fontWeight: 400, color: '#6E6B62', fontSize: 12 }}>(7 dagen geldig · eenmalig bruikbaar)</span>
+              </p>
+              <button onClick={() => setOnboardingLink(null)} style={{ background: 'none', border: 'none', color: '#6E6B62', fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: 0 }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <code style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 6, padding: '8px 12px', fontSize: 12, flex: 1, minWidth: 0, wordBreak: 'break-all', color: '#3A3A33' }}>
+                {onboardingLink}
+              </code>
+              <button
+                onClick={() => navigator.clipboard.writeText(onboardingLink).then(() => { const b = document.getElementById('copy-onb-btn'); if (b) { b.textContent = 'Gekopieerd ✓'; setTimeout(() => { if (b) b.textContent = 'Kopieer link' }, 2000) } })}
+                id="copy-onb-btn"
+                style={{ background: '#B65436', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+              >
+                Kopieer link
+              </button>
+            </div>
+            <p style={{ fontSize: 12, color: '#6E6B62', marginTop: 10, marginBottom: 0 }}>
+              Kopieer en plak deze link in jouw eigen e-mail. De partner vult zelf alle gegevens in en stelt meteen een wachtwoord in. Na gebruik is de link ongeldig.
             </p>
           </div>
         )}
@@ -306,14 +383,29 @@ export default function AdminDashboard() {
         {/* ── TAB: PARTNERS ── */}
         {tab === 'partners' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: '#1A1A17' }}>Partners</h2>
-              <button
-                onClick={() => { setShowAddForm(!showAddForm); setForm(emptyForm); setFormError('') }}
-                style={{ background: '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-              >
-                {showAddForm ? '✕ Annuleer' : '+ Partner toevoegen'}
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: '#1A1A17', margin: 0 }}>Partners</h2>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  onClick={handleGenerateOnboardingLink}
+                  disabled={onboardingLoading}
+                  style={{ background: '#FBF8F2', color: '#2A3D2E', border: '1.5px solid #2A3D2E', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: onboardingLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+                >
+                  {onboardingLoading ? '…' : '🔗 Onboarding link'}
+                </button>
+                <button
+                  onClick={() => { setShowAddProductForm(!showAddProductForm); setShowAddForm(false); setFormError('') }}
+                  style={{ background: '#FBF8F2', color: '#B65436', border: '1.5px solid #B65436', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  {showAddProductForm ? '✕ Annuleer' : '+ Product partner'}
+                </button>
+                <button
+                  onClick={() => { setShowAddForm(!showAddForm); setShowAddProductForm(false); setForm(emptyForm); setFormError('') }}
+                  style={{ background: '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                >
+                  {showAddForm ? '✕ Annuleer' : '+ Service partner'}
+                </button>
+              </div>
             </div>
 
             {/* Formulier: nieuwe partner */}
@@ -356,6 +448,52 @@ export default function AdminDashboard() {
                   {formError && <p style={{ color: '#B65436', fontSize: 14, marginBottom: 12 }}>{formError}</p>}
                   <button type="submit" disabled={formLoading} style={{ background: formLoading ? '#8A9588' : '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, padding: '11px 24px', fontSize: 14, fontWeight: 600, cursor: formLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
                     {formLoading ? 'Opslaan…' : 'Partner aanmaken →'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Formulier: product partner */}
+            {showAddProductForm && (
+              <div style={{ background: '#FBF8F2', border: '2px solid #B65436', borderRadius: 16, padding: '28px', marginBottom: 28 }}>
+                <h3 style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: '#1A1A17', marginBottom: 8 }}>Product partner toevoegen</h3>
+                <p style={{ fontSize: 13, color: '#6E6B62', marginBottom: 20 }}>
+                  Product partners verschijnen in elk codeboek met een vaste kortingscode. Geen login, geen unieke codes per klant.
+                </p>
+                <form onSubmit={handleAddProductPartner}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                    <div>
+                      <label style={labelStyle}>Bedrijfsnaam</label>
+                      <input type="text" required value={productForm.business_name} onChange={e => setProductForm(f => ({ ...f, business_name: e.target.value }))} placeholder="Medishop BV" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Kortingscode (vaste code voor alle klanten)</label>
+                      <input type="text" required value={productForm.discount_code} onChange={e => setProductForm(f => ({ ...f, discount_code: e.target.value.toUpperCase() }))} placeholder="MEDISHOP10" style={{ ...inputStyle, fontFamily: 'monospace', letterSpacing: 1 }} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Naam contactpersoon</label>
+                      <input type="text" required value={productForm.contact_name} onChange={e => setProductForm(f => ({ ...f, contact_name: e.target.value }))} placeholder="Jan Janssen" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>E-mail contactpersoon</label>
+                      <input type="email" required value={productForm.contact_email} onChange={e => setProductForm(f => ({ ...f, contact_email: e.target.value }))} placeholder="jan@medishop.be" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Productcategorie</label>
+                      <input type="text" required value={productForm.service_type} onChange={e => setProductForm(f => ({ ...f, service_type: e.target.value }))} placeholder="Medisch materiaal / Verpleegkundig materiaal / …" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Interne notities</label>
+                      <input type="text" value={productForm.notes} onChange={e => setProductForm(f => ({ ...f, notes: e.target.value }))} placeholder="Optioneel" style={inputStyle} />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Wat krijgen klanten? (staat in het codeboek)</label>
+                    <textarea required rows={2} value={productForm.discount_description} onChange={e => setProductForm(f => ({ ...f, discount_description: e.target.value }))} placeholder="Bv. 10% korting op alle verpleegkundige materialen via kortingscode MEDISHOP10" style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
+                  </div>
+                  {formError && <p style={{ color: '#B65436', fontSize: 14, marginBottom: 12 }}>{formError}</p>}
+                  <button type="submit" disabled={formLoading} style={{ background: formLoading ? '#8A9588' : '#B65436', color: '#fff', border: 'none', borderRadius: 8, padding: '11px 24px', fontSize: 14, fontWeight: 600, cursor: formLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+                    {formLoading ? 'Opslaan…' : 'Product partner aanmaken →'}
                   </button>
                 </form>
               </div>
@@ -417,43 +555,73 @@ export default function AdminDashboard() {
                     // Weergave mode
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
                       <div style={{ flex: 1, minWidth: 260 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4, flexWrap: 'wrap' }}>
                           <strong style={{ fontSize: 15, color: '#1A1A17' }}>{p.name}</strong>
                           <span style={{ color: '#6E6B62', fontSize: 14 }}>— {p.business_name}</span>
                           <Pill active={p.is_active} />
+                          {p.partner_type === 'product' ? (
+                            <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#FEF3E2', color: '#B65436', border: '1px solid #F5C6C0' }}>Product partner</span>
+                          ) : (
+                            <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#E8F5E9', color: '#2A3D2E', border: '1px solid #A5D6A7' }}>Service partner</span>
+                          )}
                         </div>
-                        <div style={{ fontSize: 13, color: '#6E6B62', marginBottom: 4 }}>
-                          {p.service_type} · {PROVINCES[p.province]} · {p.email}
-                        </div>
-                        <div style={{ fontSize: 13, color: '#3A3A33', marginBottom: p.notes ? 4 : 0 }}>
-                          Aanbod: {p.discount_description}
-                        </div>
-                        {p.notes && <div style={{ fontSize: 12, color: '#8A9588', fontStyle: 'italic' }}>Notitie: {p.notes}</div>}
-                        {(p.vat_number || p.billing_address) && (
-                          <div style={{ fontSize: 12, color: '#6E6B62', marginTop: 2, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                            {p.vat_number && <span>BTW: <strong>{p.vat_number}</strong></span>}
-                            {p.billing_address && <span>📍 {p.billing_address}</span>}
-                          </div>
+                        {p.partner_type === 'product' ? (
+                          <>
+                            <div style={{ fontSize: 13, color: '#6E6B62', marginBottom: 4 }}>
+                              {p.service_type} · {p.email}
+                            </div>
+                            <div style={{ fontSize: 13, color: '#3A3A33', marginBottom: 4 }}>
+                              Aanbod: {p.discount_description}
+                            </div>
+                            {p.discount_code && (
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#B65436', borderRadius: 6, padding: '4px 10px' }}>
+                                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Kortingscode:</span>
+                                <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: 1 }}>{p.discount_code}</span>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ fontSize: 13, color: '#6E6B62', marginBottom: 4 }}>
+                              {p.service_type} · {PROVINCES[p.province]} · {p.email}
+                            </div>
+                            <div style={{ fontSize: 13, color: '#3A3A33', marginBottom: p.notes ? 4 : 0 }}>
+                              Aanbod: {p.discount_description}
+                            </div>
+                            {p.notes && <div style={{ fontSize: 12, color: '#8A9588', fontStyle: 'italic' }}>Notitie: {p.notes}</div>}
+                            {(p.vat_number || p.billing_address) && (
+                              <div style={{ fontSize: 12, color: '#6E6B62', marginTop: 2, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                                {p.vat_number && <span>BTW: <strong>{p.vat_number}</strong></span>}
+                                {p.billing_address && <span>📍 {p.billing_address}</span>}
+                              </div>
+                            )}
+                          </>
                         )}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                        <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 20, fontWeight: 700, color: '#2A3D2E', fontFamily: 'Georgia, serif' }}>{p.verified_codes}</div>
-                          <div style={{ fontSize: 11, color: '#6E6B62' }}>geverifieerd</div>
-                        </div>
-                        <div style={{ textAlign: 'center' }}>
-                          <div style={{ fontSize: 20, fontWeight: 700, color: '#B65436', fontFamily: 'Georgia, serif' }}>
-                            € {(p.verified_codes * p.fee_per_customer).toFixed(0)}
-                          </div>
-                          <div style={{ fontSize: 11, color: '#6E6B62' }}>te factureren</div>
-                        </div>
+                        {p.partner_type === 'service' && (
+                          <>
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ fontSize: 20, fontWeight: 700, color: '#2A3D2E', fontFamily: 'Georgia, serif' }}>{p.verified_codes}</div>
+                              <div style={{ fontSize: 11, color: '#6E6B62' }}>geverifieerd</div>
+                            </div>
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ fontSize: 20, fontWeight: 700, color: '#B65436', fontFamily: 'Georgia, serif' }}>
+                                € {(p.verified_codes * p.fee_per_customer).toFixed(0)}
+                              </div>
+                              <div style={{ fontSize: 11, color: '#6E6B62' }}>te factureren</div>
+                            </div>
+                          </>
+                        )}
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                           <button onClick={() => { setEditPartner(p); setFormError('') }} style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#3A3A33' }}>
                             Bewerken
                           </button>
-                          <button onClick={() => handleGenerateInvite(p)} style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#3A3A33' }}>
-                            Uitnodigingslink
-                          </button>
+                          {p.partner_type === 'service' && (
+                            <button onClick={() => handleGenerateInvite(p)} style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#3A3A33' }}>
+                              Wachtwoord veranderen
+                            </button>
+                          )}
                           <button onClick={() => handleToggleActive(p)} style={{ background: p.is_active ? '#FEE9E7' : '#E8F5E9', border: `1px solid ${p.is_active ? '#F5C6C0' : '#A5D6A7'}`, borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: p.is_active ? '#B65436' : '#2A3D2E' }}>
                             {p.is_active ? 'Deactiveer' : 'Activeer'}
                           </button>
