@@ -234,6 +234,62 @@ const s = StyleSheet.create({
     marginTop: 4,
   },
 
+  // Sociale media
+  socialBox: {
+    backgroundColor: C.green,
+    borderRadius: 8,
+    padding: 18,
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  socialLabel: {
+    fontSize: 9,
+    color: C.butter,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 6,
+  },
+  socialTitle: {
+    fontSize: 13,
+    fontFamily: 'Helvetica-Bold',
+    color: '#ffffff',
+    marginBottom: 6,
+  },
+  socialDesc: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.72)',
+    lineHeight: 1.55,
+    marginBottom: 12,
+  },
+  socialRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 6,
+    padding: 8,
+    marginBottom: 6,
+  },
+  socialBadge: {
+    backgroundColor: C.butter,
+    borderRadius: 4,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    marginRight: 10,
+    minWidth: 64,
+    alignItems: 'center',
+  },
+  socialBadgeText: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    color: C.green,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  socialUrl: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.75)',
+  },
+
   // Footer
   footer: {
     marginTop: 24,
@@ -343,6 +399,27 @@ function CodebookDocument({ data }: { data: CodebookData }) {
             <Text style={s.referralBadgeLabel}>Kortingscode voor een vriend</Text>
             <Text style={s.referralBadgeCode}>VRIEND20</Text>
             <Text style={s.referralBadgeNote}>20% korting · Gebruiken bij aankoop op startthuisverpleging.be</Text>
+          </View>
+        </View>
+
+        {/* Sociale media */}
+        <View style={s.socialBox}>
+          <Text style={s.socialLabel}>Volg ons · Exclusieve voordelen</Text>
+          <Text style={s.socialTitle}>Blijf op de hoogte via sociale media</Text>
+          <Text style={s.socialDesc}>
+            Volg ons op Instagram, Facebook of TikTok en ontvang als eerste eenmalige kortingen en aanbiedingen die we enkel via onze sociale media delen.
+          </Text>
+          <View style={s.socialRow}>
+            <View style={s.socialBadge}><Text style={s.socialBadgeText}>Instagram</Text></View>
+            <Text style={s.socialUrl}>@startthuisverpleging</Text>
+          </View>
+          <View style={s.socialRow}>
+            <View style={s.socialBadge}><Text style={s.socialBadgeText}>Facebook</Text></View>
+            <Text style={s.socialUrl}>Start Thuisverpleging</Text>
+          </View>
+          <View style={[s.socialRow, { marginBottom: 0 }]}>
+            <View style={s.socialBadge}><Text style={s.socialBadgeText}>TikTok</Text></View>
+            <Text style={s.socialUrl}>@startthuisverpleging</Text>
           </View>
         </View>
 
