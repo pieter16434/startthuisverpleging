@@ -11,6 +11,9 @@ export type CodebookPartner = {
   service_type: string
   discount_description: string
   is_product?: boolean
+  website?: string | null
+  phone?: string | null
+  office_address?: string | null
 }
 
 export type CodebookData = {
@@ -168,6 +171,25 @@ const s = StyleSheet.create({
     fontSize: 11,
     color: C.inkSoft,
     lineHeight: 1.5,
+  },
+
+  // Contactgegevens voor kopers
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  contactLabel: {
+    fontSize: 8,
+    color: C.inkMute,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    minWidth: 40,
+  },
+  contactValue: {
+    fontSize: 10,
+    color: C.inkSoft,
   },
 
   // Instructie
@@ -373,6 +395,29 @@ function CodebookDocument({ data }: { data: CodebookData }) {
                 <Text style={s.discountLabel}>Wat jij krijgt</Text>
                 <Text style={s.discountText}>{partner.discount_description}</Text>
               </View>
+              {(partner.website || partner.phone || partner.office_address) && (
+                <View style={{ marginTop: 8, paddingTop: 8, borderTop: `1 solid ${C.line}` }}>
+                  <Text style={[s.discountLabel, { marginBottom: 4 }]}>Contact</Text>
+                  {partner.website ? (
+                    <View style={s.contactRow}>
+                      <Text style={s.contactLabel}>Web</Text>
+                      <Text style={s.contactValue}>{partner.website}</Text>
+                    </View>
+                  ) : null}
+                  {partner.phone ? (
+                    <View style={s.contactRow}>
+                      <Text style={s.contactLabel}>Tel</Text>
+                      <Text style={s.contactValue}>{partner.phone}</Text>
+                    </View>
+                  ) : null}
+                  {partner.office_address ? (
+                    <View style={s.contactRow}>
+                      <Text style={s.contactLabel}>Adres</Text>
+                      <Text style={s.contactValue}>{partner.office_address}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              )}
             </View>
           ))
         )}

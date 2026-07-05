@@ -18,6 +18,7 @@ type Partner = {
   service_type: string; discount_description: string; fee_per_customer: number
   is_active: boolean; notes: string | null; created_at: string
   vat_number: string | null; billing_address: string | null
+  website: string | null; phone: string | null; office_address: string | null
   total_codes: number; verified_codes: number
   partner_type: 'service' | 'product'; discount_code: string | null
 }
@@ -153,6 +154,9 @@ export default function AdminDashboard() {
           service_type: editPartner.service_type,
           vat_number: editPartner.vat_number,
           billing_address: editPartner.billing_address,
+          website: editPartner.website,
+          phone: editPartner.phone,
+          office_address: editPartner.office_address,
         }),
       })
       if (!res.ok) { setFormError('Opslaan mislukt'); return }
@@ -540,6 +544,23 @@ export default function AdminDashboard() {
                       <div>
                         <label style={labelStyle}>Facturatieadres</label>
                         <input value={editPartner.billing_address ?? ''} onChange={e => setEditPartner({ ...editPartner, billing_address: e.target.value })} placeholder="Kerkstraat 1, 3500 Hasselt" style={inputStyle} />
+                      </div>
+                      <div style={{ borderTop: '1px solid #D8D0C0', paddingTop: 14, marginTop: 4, marginBottom: 4 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 12px' }}>Info voor kopers (zichtbaar in codeboek)</p>
+                      </div>
+                      <div>
+                        <label style={labelStyle}>Website</label>
+                        <input value={editPartner.website ?? ''} onChange={e => setEditPartner({ ...editPartner, website: e.target.value })} placeholder="https://www.jouwbedrijf.be" style={inputStyle} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                        <div>
+                          <label style={labelStyle}>Telefoon kantoor</label>
+                          <input value={editPartner.phone ?? ''} onChange={e => setEditPartner({ ...editPartner, phone: e.target.value })} placeholder="+32 11 00 00 00" style={inputStyle} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Adres kantoor</label>
+                          <input value={editPartner.office_address ?? ''} onChange={e => setEditPartner({ ...editPartner, office_address: e.target.value })} placeholder="Kerkstraat 1, 3500 Hasselt" style={inputStyle} />
+                        </div>
                       </div>
                       <div style={{ borderTop: '1px solid #D8D0C0', paddingTop: 14, marginTop: 4 }}>
                         <p style={{ fontSize: 13, color: '#6E6B62', margin: 0 }}>

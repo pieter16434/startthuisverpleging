@@ -62,6 +62,7 @@ function OnboardingContent() {
     service_type: '', discount_description: '',
     vat_number: '', billing_address: '',
     fee_per_customer: '',
+    website: '', phone: '', office_address: '',
     password: '', confirm: '',
   })
 
@@ -216,6 +217,30 @@ function OnboardingContent() {
           <p style={{ fontSize: 12, color: '#8A9588', marginTop: 4, marginBottom: 0 }}>
             Dit is de tekst die klanten zien in hun persoonlijk codeboek.
           </p>
+        </div>
+
+        {/* Sectie: Info voor kopers */}
+        <div style={{ borderBottom: '1px solid #D8D0C0', marginBottom: 20, paddingBottom: 4 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 8px' }}>
+            Info voor kopers van het document
+          </p>
+          <p style={{ fontSize: 12, color: '#8A9588', margin: '0 0 16px', lineHeight: 1.5 }}>
+            Optioneel maar aanbevolen — kopers zien deze gegevens in hun codeboek om jou te kunnen bereiken.
+          </p>
+        </div>
+        <div style={fieldWrap}>
+          <label style={labelStyle}>Website <span style={{ color: '#8A9588', fontWeight: 400, textTransform: 'none', fontSize: 11 }}>(optioneel)</span></label>
+          <input type="url" value={form.website} onChange={e => setField('website', e.target.value)} placeholder="https://www.jouwbedrijf.be" style={inputStyle} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Telefoon kantoor <span style={{ color: '#8A9588', fontWeight: 400, textTransform: 'none', fontSize: 11 }}>(optioneel)</span></label>
+            <input type="tel" value={form.phone} onChange={e => setField('phone', e.target.value)} placeholder="+32 11 00 00 00" style={inputStyle} />
+          </div>
+          <div style={fieldWrap}>
+            <label style={labelStyle}>Adres kantoor <span style={{ color: '#8A9588', fontWeight: 400, textTransform: 'none', fontSize: 11 }}>(optioneel)</span></label>
+            <input type="text" value={form.office_address} onChange={e => setField('office_address', e.target.value)} placeholder="Kerkstraat 1, 3500 Hasselt" style={inputStyle} />
+          </div>
         </div>
 
         {/* Sectie: Wachtwoord */}

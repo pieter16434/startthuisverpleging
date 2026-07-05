@@ -39,6 +39,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
     if (body.vat_number !== undefined) update.vat_number = body.vat_number
     if (body.billing_address !== undefined) update.billing_address = body.billing_address
+    if (body.website !== undefined) update.website = body.website || null
+    if (body.phone !== undefined) update.phone = body.phone || null
+    if (body.office_address !== undefined) update.office_address = body.office_address || null
 
     const { error } = await supabase.from('partners').update(update).eq('id', params.id)
     if (error) throw error

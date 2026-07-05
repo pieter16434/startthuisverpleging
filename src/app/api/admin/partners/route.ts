@@ -31,7 +31,7 @@ export async function GET() {
     .select(`
       id, name, business_name, email, province, service_type,
       discount_description, fee_per_customer, is_active, notes,
-      vat_number, billing_address, created_at,
+      vat_number, billing_address, website, phone, office_address, created_at,
       partner_type, discount_code,
       partner_codes(count)
     `)
