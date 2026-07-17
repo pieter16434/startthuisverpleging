@@ -22,6 +22,18 @@ type Partner = {
   total_codes: number; verified_codes: number
   partner_type: 'service' | 'product'; discount_code: string | null
 }
+type Influencer = {
+  id: string; name: string; email: string; platform: string; social_handle: string
+  profile_url: string | null; discount_code: string; iban: string | null
+  iban_name: string | null; payout_per_use: number; notes: string | null
+  is_active: boolean; deactivated_at: string | null; created_at: string
+  total_uses: number; total_earnings: number
+}
+
+const PLATFORM_LABELS: Record<string, string> = {
+  instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube',
+  facebook: 'Facebook', other: 'Andere',
+}
 type Order = {
   id: string; amount_cents: number; status: string; created_at: string; paid_at: string | null
   pdf_main_url: string | null; invoice_number: string | null
@@ -52,7 +64,7 @@ function Pill({ active }: { active: boolean }) {
 
 export default function AdminDashboard() {
   const router = useRouter()
-  const [tab, setTab] = useState<'partners' | 'orders' | 'invoicing' | 'emails'>('partners')
+  const [tab, setTab] = useState<'partners' | 'orders' | 'invoicing' | 'emails' | 'influencers'>('partners')
   const [partners, setPartners] = useState<Partner[]>([])
   const [orders, setOrders] = useState<Order[]>([])
   const [orderStats, setOrderStats] = useState({ total: 0, revenue: 0, pdfPending: 0, revenueThisMonth: 0, revenueLastMonth: 0 })
@@ -76,6 +88,15 @@ export default function AdminDashboard() {
   const [onboardingLink, setOnboardingLink] = useState<string | null>(null)
   const [onboardingLoading, setOnboardingLoading] = useState(false)
   const [showAddProductForm, setShowAddProductForm] = useState(false)
+
+  // Influencer state
+  const [influencers, setInfluencers] = useState<Influencer[]>([])
+  const [influencersLoaded, setInfluencersLoaded] = useState(false)
+  const [influencerLink, setInfluencerLink] = useState<string | null>(null)
+  const [influencerLinkLoading, setInfluencerLinkLoading] = useState(false)
+  const [editInfluencer, setEditInfluencer] = useState<Influencer | null>(null)
+  const [deleteInfluencerConfirm, setDeleteInfluencerConfirm] = useState<Influencer | null>(null)
+  const [deleteInfluencerLoading, setDeleteInfluencerLoading] = useState(false)
 
   // Nieuw service partner form
   const emptyForm = { name: '', business_name: '', email: '', province: '', service_type: '', discount_description: '', fee_per_customer: '', notes: '', vat_number: '', billing_address: '' }
@@ -187,6 +208,71 @@ export default function AdminDashboard() {
       loadData()
     } catch { alert('Verwijderen mislukt') }
     finally { setDeleteLoading(false) }
+  }
+
+  async function loadInfluencers() {
+    const res = await fetch('/api/admin/influencers')
+    if (res.ok) {
+      const d = await res.json()
+      setInfluencers(d.influencers ?? [])
+      setInfluencersLoaded(true)
+    }
+  }
+
+  async function handleGenerateInfluencerLink() {
+    setInfluencerLinkLoading(true)
+    try {
+      const res = await fetch('/api/admin/influencers', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) setInfluencerLink(data.url)
+      else alert(data.error ?? 'Mislukt')
+    } catch { alert('Mislukt') }
+    finally { setInfluencerLinkLoading(false) }
+  }
+
+  async function handleSaveInfluencer(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editInfluencer) return
+    setFormError(''); setFormLoading(true)
+    try {
+      const res = await fetch(`/api/admin/influencers/${editInfluencer.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editInfluencer.name,
+          email: editInfluencer.email,
+          platform: editInfluencer.platform,
+          social_handle: editInfluencer.social_handle,
+          profile_url: editInfluencer.profile_url,
+          discount_code: editInfluencer.discount_code,
+          iban: editInfluencer.iban,
+          iban_name: editInfluencer.iban_name,
+          notes: editInfluencer.notes,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setFormError(data.error ?? 'Opslaan mislukt'); return }
+      setEditInfluencer(null)
+      setSuccessMsg('Influencer bijgewerkt ✓')
+      setTimeout(() => setSuccessMsg(''), 3000)
+      loadInfluencers()
+    } catch { setFormError('Opslaan mislukt') }
+    finally { setFormLoading(false) }
+  }
+
+  async function handleDeactivateInfluencer() {
+    if (!deleteInfluencerConfirm) return
+    setDeleteInfluencerLoading(true)
+    try {
+      const res = await fetch(`/api/admin/influencers/${deleteInfluencerConfirm.id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!res.ok) { alert(data.error ?? 'Mislukt'); return }
+      setDeleteInfluencerConfirm(null)
+      setSuccessMsg(`Influencer "${deleteInfluencerConfirm.name}" gedeactiveerd ✓`)
+      setTimeout(() => setSuccessMsg(''), 4000)
+      loadInfluencers()
+    } catch { alert('Mislukt') }
+    finally { setDeleteInfluencerLoading(false) }
   }
 
   async function handleGenerateOnboardingLink() {
@@ -382,6 +468,17 @@ export default function AdminDashboard() {
                 .then(d => setEmailStats(d))
             }
           }}>E-maillijst</button>
+          <button style={{ ...tabStyle('influencers'), position: 'relative' }} onClick={() => {
+            setTab('influencers')
+            if (!influencersLoaded) loadInfluencers()
+          }}>
+            Influencers
+            {influencers.length > 0 && (
+              <span style={{ marginLeft: 6, background: '#E8D08A', color: '#2A3D2E', borderRadius: 10, fontSize: 11, fontWeight: 700, padding: '1px 7px' }}>
+                {influencers.length}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* ── TAB: PARTNERS ── */}
@@ -844,6 +941,190 @@ export default function AdminDashboard() {
           )
         })()}
 
+        {/* ── TAB: INFLUENCERS ── */}
+        {tab === 'influencers' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: '#1A1A17', margin: 0 }}>Influencers</h2>
+                <p style={{ color: '#6E6B62', fontSize: 13, marginTop: 4 }}>Elke influencer heeft één kortingscode (20%). Uitbetaling: €20 per verkoop via hun code.</p>
+              </div>
+              <button
+                onClick={handleGenerateInfluencerLink}
+                disabled={influencerLinkLoading}
+                style={{ background: '#E8D08A', color: '#1C2A20', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: influencerLinkLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+              >
+                {influencerLinkLoading ? '…' : '🔗 Influencer onboarding link'}
+              </button>
+            </div>
+
+            {/* Influencer link banner */}
+            {influencerLink && (
+              <div style={{ background: '#FBF8F2', border: '2px solid #E8D08A', borderRadius: 12, padding: '20px 24px', marginBottom: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <p style={{ fontWeight: 700, fontSize: 14, color: '#1A1A17', margin: 0 }}>
+                    Influencer onboarding link <span style={{ fontWeight: 400, color: '#6E6B62', fontSize: 12 }}>(7 dagen geldig · eenmalig)</span>
+                  </p>
+                  <button onClick={() => setInfluencerLink(null)} style={{ background: 'none', border: 'none', color: '#6E6B62', fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: 0 }}>✕</button>
+                </div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <code style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 6, padding: '8px 12px', fontSize: 12, flex: 1, minWidth: 0, wordBreak: 'break-all', color: '#3A3A33' }}>
+                    {influencerLink}
+                  </code>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(influencerLink).then(() => { const b = document.getElementById('copy-inf-btn'); if (b) { b.textContent = 'Gekopieerd ✓'; setTimeout(() => { if (b) b.textContent = 'Kopieer link' }, 2000) } })}
+                    id="copy-inf-btn"
+                    style={{ background: '#E8D08A', color: '#1C2A20', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                  >
+                    Kopieer link
+                  </button>
+                </div>
+                <p style={{ fontSize: 12, color: '#6E6B62', marginTop: 10, marginBottom: 0 }}>
+                  Stuur naar de influencer. Zij vullen zelf hun naam, platform, kortingscode en IBAN in.
+                </p>
+              </div>
+            )}
+
+            {!influencersLoaded ? (
+              <p style={{ color: '#6E6B62' }}>Laden…</p>
+            ) : influencers.length === 0 ? (
+              <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 12, padding: '32px', textAlign: 'center', color: '#6E6B62' }}>
+                Nog geen influencers. Genereer een onboarding link om te beginnen.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {influencers.map(inf => {
+                  const graceEnd = inf.deactivated_at ? (() => { const d = new Date(inf.deactivated_at!); d.setMonth(d.getMonth() + 3); return d })() : null
+                  const inGrace = !inf.is_active && graceEnd && new Date() < graceEnd
+                  const fullyEnded = !inf.is_active && (!graceEnd || new Date() >= graceEnd)
+
+                  return (
+                    <div key={inf.id} style={{ background: '#FBF8F2', border: `1.5px solid ${inGrace ? '#F5C6C0' : fullyEnded ? '#EDE9E0' : '#D8D0C0'}`, borderRadius: 12, padding: '20px 24px', opacity: fullyEnded ? 0.6 : 1 }}>
+                      {editInfluencer?.id === inf.id ? (
+                        // Edit mode
+                        <form onSubmit={handleSaveInfluencer}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                            <strong style={{ fontSize: 16 }}>Influencer bewerken</strong>
+                            <button type="button" onClick={() => { setEditInfluencer(null); setFormError('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6E6B62', fontSize: 20 }}>✕</button>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                            <div>
+                              <label style={labelStyle}>Naam</label>
+                              <input value={editInfluencer.name} onChange={e => setEditInfluencer({ ...editInfluencer, name: e.target.value })} style={inputStyle} />
+                            </div>
+                            <div>
+                              <label style={labelStyle}>E-mailadres</label>
+                              <input type="email" value={editInfluencer.email} onChange={e => setEditInfluencer({ ...editInfluencer, email: e.target.value })} style={inputStyle} />
+                            </div>
+                            <div>
+                              <label style={labelStyle}>Platform</label>
+                              <select value={editInfluencer.platform} onChange={e => setEditInfluencer({ ...editInfluencer, platform: e.target.value })} style={{ ...inputStyle }}>
+                                {Object.entries(PLATFORM_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                              </select>
+                            </div>
+                            <div>
+                              <label style={labelStyle}>Gebruikersnaam / Handle</label>
+                              <input value={editInfluencer.social_handle} onChange={e => setEditInfluencer({ ...editInfluencer, social_handle: e.target.value })} style={inputStyle} />
+                            </div>
+                            <div>
+                              <label style={labelStyle}>Profiellink <span style={{ color: '#9E9B91', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optioneel)</span></label>
+                              <input type="url" value={editInfluencer.profile_url ?? ''} onChange={e => setEditInfluencer({ ...editInfluencer, profile_url: e.target.value })} style={inputStyle} />
+                            </div>
+                            <div>
+                              <label style={labelStyle}>Kortingscode</label>
+                              <input value={editInfluencer.discount_code} onChange={e => setEditInfluencer({ ...editInfluencer, discount_code: e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '') })} style={{ ...inputStyle, fontFamily: 'monospace', letterSpacing: 1 }} />
+                            </div>
+                            <div>
+                              <label style={labelStyle}>IBAN</label>
+                              <input value={editInfluencer.iban ?? ''} onChange={e => setEditInfluencer({ ...editInfluencer, iban: e.target.value })} placeholder="BE12 3456 7890 1234" style={{ ...inputStyle, fontFamily: 'monospace' }} />
+                            </div>
+                            <div>
+                              <label style={labelStyle}>Naam rekeninghouder</label>
+                              <input value={editInfluencer.iban_name ?? ''} onChange={e => setEditInfluencer({ ...editInfluencer, iban_name: e.target.value })} style={inputStyle} />
+                            </div>
+                          </div>
+                          <div>
+                            <label style={labelStyle}>Interne notities</label>
+                            <input value={editInfluencer.notes ?? ''} onChange={e => setEditInfluencer({ ...editInfluencer, notes: e.target.value })} style={inputStyle} />
+                          </div>
+                          {formError && <p style={{ color: '#B65436', fontSize: 13 }}>{formError}</p>}
+                          <button type="submit" disabled={formLoading} style={{ background: '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                            {formLoading ? 'Opslaan…' : 'Opslaan ✓'}
+                          </button>
+                        </form>
+                      ) : (
+                        // Weergave mode
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+                          <div style={{ flex: 1, minWidth: 260 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+                              <strong style={{ fontSize: 15, color: '#1A1A17' }}>{inf.name}</strong>
+                              {/* Platform badge */}
+                              <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#1C2A20', color: '#E8D08A', border: 'none' }}>
+                                {PLATFORM_LABELS[inf.platform] ?? inf.platform}
+                              </span>
+                              {/* Status badge */}
+                              {inf.is_active && (
+                                <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#E8F5E9', color: '#2A3D2E', border: '1px solid #A5D6A7' }}>Actief</span>
+                              )}
+                              {inGrace && (
+                                <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#FEE9E7', color: '#B65436', border: '1px solid #F5C6C0' }}>
+                                  Grace t.e.m. {graceEnd?.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' })}
+                                </span>
+                              )}
+                              {fullyEnded && (
+                                <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#F1ECE0', color: '#6E6B62', border: '1px solid #D8D0C0' }}>Beëindigd</span>
+                              )}
+                              {/* Influencer badge */}
+                              <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#FFF8E1', color: '#B65436', border: '1px solid #E8D08A' }}>Influencer</span>
+                            </div>
+                            <div style={{ fontSize: 13, color: '#6E6B62', marginBottom: 4 }}>
+                              {inf.social_handle} · {inf.email}
+                              {inf.profile_url && <> · <a href={inf.profile_url} target="_blank" rel="noopener noreferrer" style={{ color: '#B65436' }}>profiel ↗</a></>}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: inf.notes ? 4 : 0 }}>
+                              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#1C2A20', borderRadius: 6, padding: '4px 10px' }}>
+                                <span style={{ fontSize: 10, color: 'rgba(232,208,138,0.75)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Code:</span>
+                                <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: '#E8D08A', letterSpacing: 1 }}>{inf.discount_code}</span>
+                              </div>
+                            </div>
+                            {inf.iban && (
+                              <div style={{ fontSize: 12, color: '#6E6B62', marginTop: 4 }}>
+                                IBAN: <strong style={{ fontFamily: 'monospace' }}>{inf.iban}</strong>
+                                {inf.iban_name && <> · {inf.iban_name}</>}
+                              </div>
+                            )}
+                            {inf.notes && <div style={{ fontSize: 12, color: '#8A9588', fontStyle: 'italic', marginTop: 2 }}>Notitie: {inf.notes}</div>}
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ fontSize: 20, fontWeight: 700, color: '#2A3D2E', fontFamily: 'Georgia, serif' }}>{inf.total_uses}</div>
+                              <div style={{ fontSize: 11, color: '#6E6B62' }}>verkopen</div>
+                            </div>
+                            <div style={{ textAlign: 'center' }}>
+                              <div style={{ fontSize: 20, fontWeight: 700, color: '#B65436', fontFamily: 'Georgia, serif' }}>€ {inf.total_earnings}</div>
+                              <div style={{ fontSize: 11, color: '#6E6B62' }}>uitbetaling</div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              <button onClick={() => { setEditInfluencer(inf); setFormError('') }} style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#3A3A33' }}>
+                                Bewerken
+                              </button>
+                              {!fullyEnded && (
+                                <button onClick={() => setDeleteInfluencerConfirm(inf)} style={{ background: '#FEE9E7', border: '1px solid #F5C6C0', borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#B65436' }}>
+                                  {inf.is_active ? 'Deactiveren' : 'Al gedeactiveerd'}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── TAB: E-MAILLIJST ── */}
         {tab === 'emails' && (
           <div>
@@ -926,6 +1207,43 @@ export default function AdminDashboard() {
                 {deleteLoading ? 'Verwijderen…' : 'Ja, verwijder definitief'}
               </button>
               <button onClick={() => setDeleteConfirm(null)} style={{ background: 'transparent', border: '1px solid #D8D0C0', borderRadius: 8, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', color: '#6E6B62' }}>
+                Annuleer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: INFLUENCER DEACTIVEREN ── */}
+      {deleteInfluencerConfirm && (
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setDeleteInfluencerConfirm(null) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        >
+          <div style={{ background: '#FBF8F2', borderRadius: 16, padding: '32px', width: '100%', maxWidth: 460, position: 'relative' }}>
+            <button onClick={() => setDeleteInfluencerConfirm(null)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#6E6B62', lineHeight: 1 }}>✕</button>
+            <h3 style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: '#1A1A17', marginBottom: 8 }}>Influencer deactiveren</h3>
+            <p style={{ fontSize: 14, color: '#3A3A33', marginBottom: 6 }}>
+              Je staat op het punt <strong>{deleteInfluencerConfirm.name}</strong> ({deleteInfluencerConfirm.discount_code}) te deactiveren.
+            </p>
+            <div style={{ fontSize: 13, color: '#3A3A33', background: '#FEF3E2', border: '1px solid #E8D08A', borderRadius: 8, padding: '12px 14px', marginBottom: 20 }}>
+              <strong>Wat er gebeurt:</strong>
+              <ul style={{ marginTop: 8, paddingLeft: 18, lineHeight: 1.7 }}>
+                <li>De kortingscode blijft nog <strong>3 maanden</strong> actief voor aankopen</li>
+                <li>Het influencer portaal blijft toegankelijk voor <strong>3 maanden</strong></li>
+                <li>Na 3 maanden werkt de code niet meer en is het portaal geblokkeerd</li>
+                <li>Historiek en uitbetalingsoverzicht blijft zichtbaar in admin</li>
+              </ul>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={handleDeactivateInfluencer}
+                disabled={deleteInfluencerLoading}
+                style={{ background: '#B65436', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: deleteInfluencerLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+              >
+                {deleteInfluencerLoading ? 'Deactiveren…' : 'Deactiveren bevestigen'}
+              </button>
+              <button onClick={() => setDeleteInfluencerConfirm(null)} style={{ background: 'transparent', border: '1px solid #D8D0C0', borderRadius: 8, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', color: '#6E6B62' }}>
                 Annuleer
               </button>
             </div>

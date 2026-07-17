@@ -29,39 +29,66 @@ export async function POST(req: NextRequest) {
     let applyDiscount = false
     let amountCents = 5000
     let amountEuros = '50.00'
+    let influencerId: string | null = null
 
     if (data.discount_code) {
-      if (data.discount_code !== REFERRAL_CODE) {
-        return NextResponse.json({ error: 'Ongeldige kortingscode' }, { status: 400 })
-      }
-
-      // Check of dit e-mailadres de code al gebruikt heeft op een betaalde order
-      const { data: existingCustomer } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('email', data.email.toLowerCase())
-        .maybeSingle()
-
-      if (existingCustomer) {
-        const { data: usedOrder } = await supabase
-          .from('orders')
+      if (data.discount_code === REFERRAL_CODE) {
+        // Bestaande VRIEND20 referral logica
+        const { data: existingCustomer } = await supabase
+          .from('customers')
           .select('id')
-          .eq('customer_id', existingCustomer.id)
-          .eq('discount_code', REFERRAL_CODE)
-          .eq('status', 'paid')
+          .eq('email', data.email.toLowerCase())
           .maybeSingle()
 
-        if (usedOrder) {
-          return NextResponse.json(
-            { error: 'Deze kortingscode is al gebruikt voor dit e-mailadres' },
-            { status: 400 }
-          )
-        }
-      }
+        if (existingCustomer) {
+          const { data: usedOrder } = await supabase
+            .from('orders')
+            .select('id')
+            .eq('customer_id', existingCustomer.id)
+            .eq('discount_code', REFERRAL_CODE)
+            .eq('status', 'paid')
+            .maybeSingle()
 
-      applyDiscount = true
-      amountCents = 4000 // 20% korting op €50
-      amountEuros = '40.00'
+          if (usedOrder) {
+            return NextResponse.json(
+              { error: 'Deze kortingscode is al gebruikt voor dit e-mailadres' },
+              { status: 400 }
+            )
+          }
+        }
+
+        applyDiscount = true
+        amountCents = 4000
+        amountEuros = '40.00'
+      } else {
+        // Controleer of het een influencer code is (actief of binnen 3 maanden grace period)
+        const { data: influencer } = await supabase
+          .from('influencers')
+          .select('id, is_active, deactivated_at')
+          .eq('discount_code', data.discount_code)
+          .maybeSingle()
+
+        if (!influencer) {
+          return NextResponse.json({ error: 'Ongeldige kortingscode' }, { status: 400 })
+        }
+
+        // Controleer geldigheid: actief OF binnen 3-maanden grace period
+        if (!influencer.is_active) {
+          if (!influencer.deactivated_at) {
+            return NextResponse.json({ error: 'Ongeldige kortingscode' }, { status: 400 })
+          }
+          const graceEnd = new Date(influencer.deactivated_at)
+          graceEnd.setMonth(graceEnd.getMonth() + 3)
+          if (new Date() > graceEnd) {
+            return NextResponse.json({ error: 'Ongeldige kortingscode' }, { status: 400 })
+          }
+        }
+
+        influencerId = influencer.id
+        applyDiscount = true
+        amountCents = 4000
+        amountEuros = '40.00'
+      }
     }
 
     // Koper aanmaken of updaten
@@ -93,7 +120,8 @@ export async function POST(req: NextRequest) {
         customer_id: customer.id,
         amount_cents: amountCents,
         status: 'pending',
-        ...(applyDiscount ? { discount_code: REFERRAL_CODE } : {}),
+        ...(applyDiscount ? { discount_code: data.discount_code } : {}),
+        ...(influencerId ? { influencer_id: influencerId } : {}),
       })
       .select('id')
       .single()
