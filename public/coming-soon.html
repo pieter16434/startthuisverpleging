@@ -2635,6 +2635,7 @@
 
   const REFERRAL_CODE = "VRIEND20";
   let discountApplied = false;
+  let appliedCode = "";
 
   function openModal() {
     overlay.classList.add("open");
@@ -2646,6 +2647,7 @@
     document.body.style.overflow = "";
     // Reset staat
     discountApplied = false;
+    appliedCode = "";
     document.getElementById("co-consent").checked = false;
     document.getElementById("co-coupon").value = "";
     document.getElementById("co-coupon-row").classList.remove("open");
@@ -2679,29 +2681,49 @@
     }
   });
 
-  function applyCoupon() {
+  async function applyCoupon() {
     const input = document.getElementById("co-coupon");
     const msg = document.getElementById("co-coupon-msg");
+    const applyBtn = document.querySelector(".co-coupon-apply");
     const code = input.value.trim().toUpperCase();
 
-    if (code === REFERRAL_CODE) {
-      discountApplied = true;
-      input.style.borderColor = "var(--green)";
-      msg.className = "co-coupon-msg ok";
-      msg.textContent = "✓ 20% korting toegepast — je betaalt €40";
-      submitBtn.textContent = "Betaal €40 — Ga naar betaling →";
-      coLabel.innerHTML = 'Bestelling · <s style="opacity:0.55;font-size:13px;">€85</s> <strong style="color:#2A3D2E;">€40</strong> <span style="background:#2A3D2E;color:#E8D08A;font-size:10px;padding:2px 7px;border-radius:4px;margin-left:4px;font-family:var(--font-mono);">VRIEND20 −20%</span>';
-    } else if (code === "") {
+    if (code === "") {
       discountApplied = false;
+      appliedCode = "";
       input.style.borderColor = "";
       msg.className = "co-coupon-msg";
       msg.textContent = "";
-    } else {
-      discountApplied = false;
-      input.style.borderColor = "#fecaca";
+      return;
+    }
+
+    // Valideer via backend (werkt voor VRIEND20 én influencer codes)
+    applyBtn.disabled = true;
+    applyBtn.textContent = "…";
+    try {
+      const res = await fetch("/api/validate-code?code=" + encodeURIComponent(code));
+      const data = await res.json();
+      if (data.valid) {
+        discountApplied = true;
+        appliedCode = code;
+        input.style.borderColor = "var(--green)";
+        msg.className = "co-coupon-msg ok";
+        msg.textContent = "✓ 20% korting toegepast — je betaalt €40";
+        submitBtn.textContent = "Betaal €40 — Ga naar betaling →";
+        coLabel.innerHTML = 'Bestelling · <s style="opacity:0.55;font-size:13px;">€85</s> <strong style="color:#2A3D2E;">€40</strong> <span style="background:#2A3D2E;color:#E8D08A;font-size:10px;padding:2px 7px;border-radius:4px;margin-left:4px;font-family:var(--font-mono);">' + code + ' −20%</span>';
+      } else {
+        discountApplied = false;
+        appliedCode = "";
+        input.style.borderColor = "#fecaca";
+        msg.className = "co-coupon-msg err";
+        msg.textContent = "Ongeldige kortingscode";
+        submitBtn.textContent = "Betaal €50 — Ga naar betaling →";
+      }
+    } catch {
       msg.className = "co-coupon-msg err";
-      msg.textContent = "Ongeldige kortingscode";
-      submitBtn.textContent = "Betaal €50 — Ga naar betaling →";
+      msg.textContent = "Kon code niet controleren. Probeer opnieuw.";
+    } finally {
+      applyBtn.disabled = false;
+      applyBtn.textContent = "Toepassen";
     }
   }
 
@@ -2751,7 +2773,7 @@
     try {
       const marketing_consent = document.getElementById("co-consent").checked;
       const payload = { first_name, last_name, email, province: province || undefined, marketing_consent };
-      if (discountApplied) payload.discount_code = REFERRAL_CODE;
+      if (discountApplied) payload.discount_code = appliedCode;
       if (address_street) payload.address_street = address_street;
       if (address_postal_code) payload.address_postal_code = address_postal_code;
       if (address_city) payload.address_city = address_city;
