@@ -25,10 +25,18 @@ export async function POST(req: NextRequest) {
     const supabase = createServiceClient()
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!
 
+    // Introductieprijs t.e.m. 30 september 2026 — daarna automatisch €85
+    const INTRO_PRICE_ENDS = new Date('2026-09-30T23:59:59+02:00')
+    const isIntro = new Date() < INTRO_PRICE_ENDS
+    const BASE_CENTS = isIntro ? 5000 : 8500
+    const BASE_EUROS = isIntro ? '50.00' : '85.00'
+    const DISC_CENTS = isIntro ? 4000 : 6800  // 20% korting
+    const DISC_EUROS = isIntro ? '40.00' : '68.00'
+
     // Valideer kortingscode indien opgegeven
     let applyDiscount = false
-    let amountCents = 5000
-    let amountEuros = '50.00'
+    let amountCents = BASE_CENTS
+    let amountEuros = BASE_EUROS
     let influencerId: string | null = null
 
     if (data.discount_code) {
@@ -58,8 +66,8 @@ export async function POST(req: NextRequest) {
         }
 
         applyDiscount = true
-        amountCents = 4000
-        amountEuros = '40.00'
+        amountCents = DISC_CENTS
+        amountEuros = DISC_EUROS
       } else {
         // Controleer of het een influencer code is (actief of binnen 3 maanden grace period)
         const { data: influencer } = await supabase
@@ -86,8 +94,8 @@ export async function POST(req: NextRequest) {
 
         influencerId = influencer.id
         applyDiscount = true
-        amountCents = 4000
-        amountEuros = '40.00'
+        amountCents = DISC_CENTS
+        amountEuros = DISC_EUROS
       }
     }
 

@@ -1696,7 +1696,7 @@
 <div class="launch-banner">
   <div class="lb-inner">
     <span class="lb-dot"></span>
-    <span><strong>Nu beschikbaar.</strong> Introductieprijs — tijdelijk €50 in plaats van €85. Bestel vandaag.</span>
+    <span id="lb-price-text"><strong>Nu beschikbaar.</strong> Introductieprijs t.e.m. 30 sept 2026 — nu €50 in plaats van €85. Bestel vandaag.</span>
   </div>
 </div>
 
@@ -1766,10 +1766,10 @@
 
       <!-- Bestel direct -->
       <div style="margin-top:28px;">
-        <button class="wl-btn" onclick="openModal()">Bestel nu — €50 <span class="arrow">→</span></button>
+        <button class="wl-btn" id="hero-bestel-btn" onclick="openModal()">Bestel nu — €50 <span class="arrow">→</span></button>
         <div class="wl-note" style="margin-top:12px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-          Introductieprijs €50 · 30 dagen geld-terug-garantie
+          <span id="hero-price-note">Introductieprijs €50 t.e.m. 30 sept 2026 · 30 dagen geld-terug-garantie</span>
         </div>
       </div>
 
@@ -1831,6 +1831,8 @@
         <div class="benefit-tag">Hoofddocument · PDF</div>
         <h3>Het stappenplan, A tot Z.</h3>
         <p>Tien hoofdstukken die je begeleiden van je eerste vraag ("kan ik dit eigenlijk?") tot je eerste patiënt. Twee trajecten, vier routes, elf concrete stappen. Geschreven specifiek voor Vlaanderen, getoetst aan de praktijk in 2025, met checklists per traject en concrete tarieven, wetgeving en aanspreekpunten.</p>
+        <p style="margin-top:14px;color:var(--ink-soft);">Wat dit je concreet bespaart: <strong>weken, soms maanden</strong>, aan uitzoekwerk — zelf bellen, vergissen, opnieuw beginnen. Wij doorliepen dat al. Jij hoeft het niet opnieuw te doen.</p>
+        <p style="margin-top:10px;font-family:var(--font-display);font-style:italic;color:var(--green);font-size:16px;"><span id="benefit-price-catchline">€50</span> voor weken — soms maanden — van tijd gewonnen.</p>
       </div>
 
       <div class="benefit benefit-2">
@@ -1911,6 +1913,9 @@
     <p class="mistakes-foot">
       Eén van deze drie fouten vermijden, en de gids heeft zichzelf <strong>4× terugbetaald</strong>.
     </p>
+    <div style="text-align:center;margin-top:36px;">
+      <button onclick="openModal()" style="background:none;border:1.5px solid rgba(247,243,234,0.4);color:var(--cream-soft);border-radius:8px;padding:12px 28px;font-size:15px;font-family:var(--font-body);cursor:pointer;font-weight:600;">Bestel nu — €<span class="dyn-price">50</span> →</button>
+    </div>
   </div>
 </section>
 
@@ -2188,6 +2193,10 @@
       <div class="author-sig-name">— Pieter Vanermen &amp; Jonas Piron</div>
       <div class="author-sig-role">Zelfstandig thuisverpleegkundigen · Domus Care</div>
     </div>
+    <div style="text-align:center;margin-top:40px;">
+      <button onclick="openModal()" style="background:var(--clay);color:#fff;border:none;border-radius:8px;padding:14px 32px;font-size:15px;font-family:var(--font-body);cursor:pointer;font-weight:600;">Bestel nu — €<span class="dyn-price">50</span> →</button>
+      <p style="margin-top:10px;font-size:13px;color:var(--ink-mute);">30 dagen geld-terug-garantie · geen vragen</p>
+    </div>
   </div>
 </section>
 
@@ -2206,20 +2215,20 @@
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Het complete stappenplan als PDF (direct na betaling)</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Codeboek met lokale partners voor jouw provincie</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> 30 dagen geld-terug-garantie — geen vragen</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Tijdelijk €50 — normaal €85</li>
+            <li id="price-list-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Tijdelijk €50 t.e.m. 30 sept 2026 — normaal €85</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Officiële factuur van de PDF — in te brengen als eerste zakelijke kost</li>
           </ul>
         </div>
         <div class="price-card">
-          <div class="price-amount"><span class="currency">€</span>50</div>
-          <div class="price-meta">Introductieprijs · <s style="opacity:0.6;">normaal €85</s> · tijdelijk aanbod</div>
-          <div style="margin:10px 0 0;padding:10px 14px;background:rgba(232,208,138,0.15);border-radius:8px;font-size:12px;color:rgba(255,255,255,0.8);line-height:1.5;text-align:left;">
+          <div class="price-amount"><span class="currency">€</span><span id="price-amount-num">50</span></div>
+          <div class="price-meta" id="price-meta-text">Introductieprijs t.e.m. 30 sept 2026 · <s style="opacity:0.6;">normaal €85</s></div>
+          <div id="price-info-box" style="margin:10px 0 0;padding:10px 14px;background:rgba(232,208,138,0.15);border-radius:8px;font-size:12px;color:rgba(255,255,255,0.8);line-height:1.5;text-align:left;">
             ℹ️ De lagere prijs is omdat we nog niet in elke provincie lokale partners hebben. Zodra het netwerk volledig is, stijgt de prijs naar €85. Wie nu koopt, houdt de introductieprijs.
           </div>
 
           <!-- Bestel nu knop → opent checkout modal -->
           <button class="bestel-btn" id="open-checkout">
-            Bestel nu — €50 <span>→</span>
+            <span id="open-checkout-text">Bestel nu — €50</span> <span>→</span>
           </button>
           <p class="guarantee" style="margin-top:12px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -2322,7 +2331,7 @@
 <div class="co-overlay" id="checkout-overlay" role="dialog" aria-modal="true" aria-label="Bestelling plaatsen">
   <div class="co-modal">
     <button class="co-close" id="close-checkout" aria-label="Sluiten">×</button>
-    <div class="co-label">Bestelling · <s style="opacity:0.55;font-size:13px;">€85</s> <strong style="color:#2A3D2E;">€50</strong> introductieprijs</div>
+    <div class="co-label" id="co-label-div">Bestelling · <s style="opacity:0.55;font-size:13px;">€85</s> <strong style="color:#2A3D2E;">€50</strong> introductieprijs</div>
     <h2 class="co-title">Jouw gids bestellen</h2>
     <form id="checkout-form" novalidate>
       <div class="co-row">
@@ -2534,6 +2543,37 @@
   if (SHOW_PARTNERS)   document.getElementById("partners").setAttribute("data-visible", "true");
 
   /* ============================================================
+     Introductieprijs — automatisch omschakelen na 30 sept 2026
+     Na deze datum gaat de prijs automatisch naar €85 overal.
+  ============================================================ */
+  const INTRO_PRICE_ENDS = new Date('2026-09-30T23:59:59+02:00');
+  const IS_INTRO   = new Date() < INTRO_PRICE_ENDS;
+  const BASE_DISP  = IS_INTRO ? '50'    : '85';
+  const DISC_DISP  = IS_INTRO ? '40'    : '68';
+  const DISC_EUROS = IS_INTRO ? '40.00' : '68.00';
+  const DISC_CENTS = IS_INTRO ? 4000    : 6800;
+
+  if (!IS_INTRO) {
+    const setHtml = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+    const setTxt  = (id, txt)  => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+    const hide    = (id)       => { const el = document.getElementById(id); if (el) el.style.display = 'none'; };
+
+    setHtml('lb-price-text',       '<strong>Nu beschikbaar.</strong> Bestel vandaag — 30 dagen geld-terug-garantie.');
+    setHtml('nav-bestel-btn',      `Bestel nu — €${BASE_DISP} <span class="arrow">→</span>`);
+    setHtml('hero-bestel-btn',     `Bestel nu — €${BASE_DISP} <span class="arrow">→</span>`);
+    setHtml('hero-price-note',     `€${BASE_DISP} · 30 dagen geld-terug-garantie`);
+    setTxt ('price-amount-num',    BASE_DISP);
+    setHtml('price-meta-text',     'Standaardprijs');
+    setTxt ('open-checkout-text',  `Bestel nu — €${BASE_DISP}`);
+    setHtml('co-label-div',        `Bestelling · <strong style="color:#2A3D2E;">€${BASE_DISP}</strong>`);
+    setTxt ('co-submit-btn',       `Betaal €${BASE_DISP} — Ga naar betaling →`);
+    setTxt ('benefit-price-catchline', `€${BASE_DISP}`);
+    setHtml('price-list-item',     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> €${BASE_DISP} — inclusief codeboek en 30 dagen garantie`);
+    hide   ('price-info-box');
+    document.querySelectorAll('.dyn-price').forEach(el => el.textContent = BASE_DISP);
+  }
+
+  /* ============================================================
      Traject toggle (Student vs Ervaren VP)
   ============================================================ */
   document.querySelectorAll('[data-action="toggle-traject"]').forEach(tab => {
@@ -2653,8 +2693,10 @@
     document.getElementById("co-coupon-row").classList.remove("open");
     document.getElementById("co-coupon-msg").className = "co-coupon-msg";
     document.getElementById("co-coupon-msg").textContent = "";
-    submitBtn.textContent = "Betaal €50 — Ga naar betaling →";
-    coLabel.innerHTML = 'Bestelling · <s style="opacity:0.55;font-size:13px;">€85</s> <strong style="color:#2A3D2E;">€50</strong> introductieprijs';
+    submitBtn.textContent = `Betaal €${BASE_DISP} — Ga naar betaling →`;
+    coLabel.innerHTML = IS_INTRO
+      ? 'Bestelling · <s style="opacity:0.55;font-size:13px;">€85</s> <strong style="color:#2A3D2E;">€50</strong> introductieprijs'
+      : `Bestelling · <strong style="color:#2A3D2E;">€${BASE_DISP}</strong>`;
     document.getElementById("co-street").value = "";
     document.getElementById("co-postal").value = "";
     document.getElementById("co-city").value = "";
@@ -2707,16 +2749,16 @@
         appliedCode = code;
         input.style.borderColor = "var(--green)";
         msg.className = "co-coupon-msg ok";
-        msg.textContent = "✓ 20% korting toegepast — je betaalt €40";
-        submitBtn.textContent = "Betaal €40 — Ga naar betaling →";
-        coLabel.innerHTML = 'Bestelling · <s style="opacity:0.55;font-size:13px;">€85</s> <strong style="color:#2A3D2E;">€40</strong> <span style="background:#2A3D2E;color:#E8D08A;font-size:10px;padding:2px 7px;border-radius:4px;margin-left:4px;font-family:var(--font-mono);">' + code + ' −20%</span>';
+        msg.textContent = `✓ 20% korting toegepast — je betaalt €${DISC_DISP}`;
+        submitBtn.textContent = `Betaal €${DISC_DISP} — Ga naar betaling →`;
+        coLabel.innerHTML = `Bestelling · <s style="opacity:0.55;font-size:13px;">€${BASE_DISP}</s> <strong style="color:#2A3D2E;">€${DISC_DISP}</strong> <span style="background:#2A3D2E;color:#E8D08A;font-size:10px;padding:2px 7px;border-radius:4px;margin-left:4px;font-family:var(--font-mono);">${code} −20%</span>`;
       } else {
         discountApplied = false;
         appliedCode = "";
         input.style.borderColor = "#fecaca";
         msg.className = "co-coupon-msg err";
         msg.textContent = "Ongeldige kortingscode";
-        submitBtn.textContent = "Betaal €50 — Ga naar betaling →";
+        submitBtn.textContent = `Betaal €${BASE_DISP} — Ga naar betaling →`;
       }
     } catch {
       msg.className = "co-coupon-msg err";
@@ -2790,7 +2832,7 @@
       errorBox.textContent = err.message || "Er ging iets mis. Probeer opnieuw.";
       errorBox.className = "co-error visible";
       submitBtn.disabled = false;
-      submitBtn.textContent = discountApplied ? "Betaal €40 — Ga naar betaling →" : "Betaal €50 — Ga naar betaling →";
+      submitBtn.textContent = discountApplied ? `Betaal €${DISC_DISP} — Ga naar betaling →` : `Betaal €${BASE_DISP} — Ga naar betaling →`;
     }
   });
 
