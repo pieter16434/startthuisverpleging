@@ -12,6 +12,7 @@ const CheckoutSchema = z.object({
   province: z.enum(['ANT', 'LIM', 'OVL', 'VBR', 'WVL']).optional(),
   discount_code: z.string().max(30).optional().transform(s => s?.trim().toUpperCase()),
   marketing_consent: z.boolean().optional().default(false),
+  digital_consent: z.literal(true, { error: 'Je moet instemmen met de onmiddellijke levering om door te gaan.' }),
   address_street: z.string().max(150).optional().transform(s => s?.trim() || undefined),
   address_postal_code: z.string().max(20).optional().transform(s => s?.trim() || undefined),
   address_city: z.string().max(100).optional().transform(s => s?.trim() || undefined),

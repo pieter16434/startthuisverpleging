@@ -1840,6 +1840,7 @@
         <div class="benefit-tag">Persoonlijk document · PDF</div>
         <h3>Jouw kortingscodes.</h3>
         <p>Per aankoop genereren we een uniek document met persoonlijke codes voor elke partner: boekhouders, verzekeraars, sociaal verzekeringsfonds, medisch materiaal. Eén jaar geldig, eenmalig inwisselbaar per partner.</p>
+        <p style="margin-top:10px;font-size:13px;color:var(--ink-mute);">Partners betalen een activatievergoeding voor elke doorverwezen klant via jouw code.</p>
       </div>
 
       <div class="benefit benefit-3">
@@ -1853,7 +1854,7 @@
         <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         <div class="benefit-tag">30 dagen garantie</div>
         <h3>Niet wat je verwachtte? Geld terug.</h3>
-        <p>Werkt de gids niet voor jou — om welke reden ook — dan storten we je €85 terug. Vraag het wel aan vóór je een kortingscode activeert: eens je daarmee al voordeel haalde, vervalt de garantie. Verder geen formulieren, geen vragen.</p>
+        <p>Werkt de gids niet voor jou — om welke reden ook — dan storten we het door jou betaalde bedrag terug. Vraag het wel aan vóór je een kortingscode activeert: eens je daarmee al voordeel haalde, vervalt de garantie. Eén kort formulier, geen discussie.</p>
       </div>
     </div>
   </div>
@@ -2322,7 +2323,7 @@
     </div>
     <div class="foot-bottom">
       <span>© 2026 startthuisverpleging. Alle rechten voorbehouden.</span>
-      <span>Gemaakt in Vlaanderen.</span>
+      <span style="font-size:12px;color:var(--ink-mute);">Vitalion Ascent BV · Elfenbergstraat 31, 3511 Kuringen · BE 1023.728.595</span>
     </div>
   </div>
 </footer>
@@ -2389,6 +2390,14 @@
           <button type="button" class="co-coupon-apply" onclick="applyCoupon()">Toepassen</button>
         </div>
         <div class="co-coupon-msg" id="co-coupon-msg"></div>
+      </div>
+
+      <!-- Juridisch verplicht vinkje — herroepingsrecht (art. VI.53, 13° WER) -->
+      <div style="margin:16px 0 0;padding:12px 14px;background:#F7F3EA;border:1.5px solid #D8D0C0;border-radius:8px;">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:var(--ink-soft);line-height:1.5;">
+          <input type="checkbox" id="co-digital-consent" style="margin-top:2px;width:15px;height:15px;accent-color:var(--green);flex-shrink:0;" required>
+          <span>Ik verzoek uitdrukkelijk dat de digitale gids <strong>onmiddellijk na betaling</strong> geleverd wordt en bevestig hiermee mijn herroepingsrecht te verliezen zodra de download beschikbaar is (<a href="/voorwaarden" target="_blank" style="color:var(--clay);">art. VI.53, 13° WER</a>).</span>
+        </label>
       </div>
 
       <!-- GDPR opt-in -->
@@ -2688,6 +2697,7 @@
     // Reset staat
     discountApplied = false;
     appliedCode = "";
+    document.getElementById("co-digital-consent").checked = false;
     document.getElementById("co-consent").checked = false;
     document.getElementById("co-coupon").value = "";
     document.getElementById("co-coupon-row").classList.remove("open");
@@ -2808,13 +2818,18 @@
       errorBox.className = "co-error visible";
       return;
     }
+    if (!document.getElementById("co-digital-consent").checked) {
+      errorBox.textContent = "Vink het vakje aan om door te gaan met de bestelling.";
+      errorBox.className = "co-error visible";
+      return;
+    }
 
     submitBtn.disabled = true;
     submitBtn.textContent = "Even wachten…";
 
     try {
       const marketing_consent = document.getElementById("co-consent").checked;
-      const payload = { first_name, last_name, email, province: province || undefined, marketing_consent };
+      const payload = { first_name, last_name, email, province: province || undefined, marketing_consent, digital_consent: true };
       if (discountApplied) payload.discount_code = appliedCode;
       if (address_street) payload.address_street = address_street;
       if (address_postal_code) payload.address_postal_code = address_postal_code;

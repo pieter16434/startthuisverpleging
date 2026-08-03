@@ -14,17 +14,17 @@ export default function TerugbetalingPage() {
 
       <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 8 }}>30 dagen tevredenheidsgarantie</h2>
       <p>
-        Wij geloven sterk in de kwaliteit van onze gids. Indien u niet tevreden bent, kunt u binnen <strong>30 dagen na aankoop</strong> een volledige terugbetaling aanvragen — zonder vragen.
+        Wij geloven sterk in de kwaliteit van onze gids. Indien u niet tevreden bent, kunt u binnen <strong>30 dagen na aankoop</strong> een volledige terugbetaling aanvragen — geen discussie.
       </p>
 
       <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 8 }}>Hoe een terugbetaling aanvragen?</h2>
       <ol style={{ paddingLeft: 20, marginTop: 8 }}>
-        <li>Stuur een e-mail naar <a href="mailto:info@domuscare.be" style={{ color: '#B65436' }}>info@domuscare.be</a></li>
+        <li>Vul het formulier in via de knop onderaan deze pagina (of stuur een e-mail naar <a href="mailto:info@domuscare.be" style={{ color: '#B65436' }}>info@domuscare.be</a>)</li>
         <li>Vermeld het e-mailadres waarmee u besteld heeft</li>
-        <li>Geef kort aan wat u verwacht had maar niet vond</li>
+        <li>Geef optioneel aan wat u anders had verwacht — dit helpt ons de gids te verbeteren</li>
       </ol>
       <p style={{ marginTop: 12 }}>
-        Wij verwerken de terugbetaling binnen <strong>5 werkdagen</strong>. Het bedrag wordt teruggestort op de originele betaalmethode.
+        Wij verwerken de terugbetaling binnen <strong>5 werkdagen</strong>. Het betaalde bedrag wordt teruggestort op de originele betaalmethode.
       </p>
 
       <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 8 }}>Wettelijk herroepingsrecht</h2>

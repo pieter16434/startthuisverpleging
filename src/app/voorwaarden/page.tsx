@@ -15,7 +15,10 @@ export default function VoorwaardenPage() {
       <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 8 }}>1. Identificatie van de verkoper</h2>
       <p>
         <strong>Vitalion Ascent BV</strong><br />
+        Rechtsvorm: Besloten vennootschap (BV)<br />
         Handelend onder de naam <em>startthuisverpleging</em><br />
+        Maatschappelijke zetel: Elfenbergstraat 31, 3511 Kuringen<br />
+        Ondernemingsnummer: BE 1023.728.595<br />
         E-mail: <a href="mailto:info@domuscare.be" style={{ color: '#B65436' }}>info@domuscare.be</a><br />
         Website: <a href="https://startthuisverpleging.be" style={{ color: '#B65436' }}>startthuisverpleging.be</a>
       </p>
@@ -48,10 +51,18 @@ export default function VoorwaardenPage() {
 
       <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 8 }}>6. Herroepingsrecht en terugbetaling</h2>
       <p>
-        Conform artikel VI.53, 13° van het Wetboek van Economisch Recht is het herroepingsrecht <strong>uitgesloten</strong> voor digitale inhoud die niet op een materiële drager wordt geleverd, zodra de levering is begonnen met uitdrukkelijke toestemming van de consument.
+        Conform artikel VI.53, 13° van het Wetboek van Economisch Recht is het herroepingsrecht <strong>uitgesloten</strong> voor digitale inhoud die niet op een materiële drager wordt geleverd, mits cumulatief voldaan is aan de volgende voorwaarden:
+      </p>
+      <ol style={{ paddingLeft: 20, marginTop: 8, lineHeight: 1.7 }}>
+        <li>de consument heeft vóór de aankoop uitdrukkelijk verzocht de uitvoering te starten vóór het verstrijken van de herroepingstermijn;</li>
+        <li>de consument heeft erkend daarmee zijn herroepingsrecht te verliezen;</li>
+        <li>Vitalion Ascent BV heeft deze bevestiging verstrekt per e-mail (conform art. VI.46, §7 WER).</li>
+      </ol>
+      <p style={{ marginTop: 12 }}>
+        Bij elke bestelling via startthuisverpleging wordt uitdrukkelijk om instemming gevraagd via een verplicht aankruisvakje. De bevestigingsmail herneemt deze erkenning. Aan alle drie voorwaarden is voldaan.
       </p>
       <p style={{ marginTop: 12 }}>
-        startthuisverpleging biedt echter vrijwillig een <strong>30 dagen tevredenheidsgarantie</strong> aan. Meer info: <Link href="/terugbetaling" style={{ color: '#B65436' }}>terugbetalingsbeleid</Link>.
+        Onverminderd het voorgaande biedt startthuisverpleging vrijwillig een <strong>30 dagen tevredenheidsgarantie</strong> aan. Meer info: <Link href="/terugbetaling" style={{ color: '#B65436' }}>terugbetalingsbeleid</Link>.
       </p>
 
       <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 8 }}>7. Intellectuele eigendom</h2>

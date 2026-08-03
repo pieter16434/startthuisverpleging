@@ -302,11 +302,16 @@ export async function POST(req: NextRequest) {
                         <td style="background:#2A3D2E;border-radius:10px;padding:16px 20px;">
                           <p style="margin:0;font-size:14px;color:#fff;line-height:1.5;">
                             🛡️ <strong>30 dagen geld-terug-garantie.</strong>
-                            Niet tevreden? Mail ons en we storten het volledige bedrag terug — zonder vragen.
+                            Niet tevreden? Mail ons en we storten het betaalde bedrag terug — één kort formulier, geen discussie.
                           </p>
                         </td>
                       </tr>
                     </table>
+
+                    <!-- Juridische bevestiging herroepingsrecht (art. VI.53, 13° WER) -->
+                    <p style="margin:20px 0 0;font-size:11px;color:#8A9588;line-height:1.6;border-top:1px solid #D8D0C0;padding-top:16px;">
+                      Bij het plaatsen van je bestelling heb je uitdrukkelijk verzocht de digitale inhoud onmiddellijk te leveren en bevestigd hiermee je herroepingsrecht te verliezen zodra de download beschikbaar is (art. VI.53, 13° WER). Vitalion Ascent BV · Elfenbergstraat 31, 3511 Kuringen · BE 1023.728.595
+                    </p>
                   </td>
                 </tr>
 
