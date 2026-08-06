@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Crème achtergrond + donkergroene ring — zoals het logo -->
+  <circle cx="16" cy="16" r="16" fill="#F1ECE0"/>
+  <circle cx="16" cy="16" r="14.75" fill="none" stroke="#2A3D2E" stroke-width="1.5"/>
+  <!-- Medisch kruis in klei (#B65436) — het icoon uit het logo -->
+  <rect x="13.5" y="7.5" width="5" height="17" rx="1.5" fill="#B65436"/>
+  <rect x="7.5" y="13.5" width="17" height="5" rx="1.5" fill="#B65436"/>
+</svg>

@@ -40,9 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="nl-BE">
-      <head>
-        <link rel="icon" type="image/png" href="/favicon.png" />
-      </head>
+      <head></head>
       <body>{children}</body>
     </html>
   )
