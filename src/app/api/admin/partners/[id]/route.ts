@@ -42,6 +42,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (body.website !== undefined) update.website = body.website || null
     if (body.phone !== undefined) update.phone = body.phone || null
     if (body.office_address !== undefined) update.office_address = body.office_address || null
+    if (body.partner_url !== undefined) update.partner_url = body.partner_url || null
 
     const { error } = await supabase.from('partners').update(update).eq('id', params.id)
     if (error) throw error

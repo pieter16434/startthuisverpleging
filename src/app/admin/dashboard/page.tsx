@@ -20,7 +20,7 @@ type Partner = {
   vat_number: string | null; billing_address: string | null
   website: string | null; phone: string | null; office_address: string | null
   total_codes: number; verified_codes: number
-  partner_type: 'service' | 'product'; discount_code: string | null
+  partner_type: 'service' | 'product'; discount_code: string | null; partner_url: string | null
 }
 type Influencer = {
   id: string; name: string; email: string; platform: string; social_handle: string
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
   const [form, setForm] = useState(emptyForm)
 
   // Nieuw product partner form
-  const emptyProductForm = { business_name: '', contact_name: '', contact_email: '', service_type: '', discount_description: '', discount_code: '', notes: '' }
+  const emptyProductForm = { business_name: '', contact_name: '', contact_email: '', service_type: '', discount_description: '', discount_code: '', partner_url: '', notes: '' }
   const [productForm, setProductForm] = useState(emptyProductForm)
 
   const loadData = useCallback(async () => {
@@ -301,7 +301,8 @@ export default function AdminDashboard() {
           province: 'VLA',
           service_type: productForm.service_type,
           discount_description: productForm.discount_description,
-          discount_code: productForm.discount_code,
+          discount_code: productForm.discount_code || undefined,
+          partner_url: productForm.partner_url || undefined,
           fee_per_customer: 0,
           notes: productForm.notes || undefined,
         }),
@@ -568,8 +569,8 @@ export default function AdminDashboard() {
                       <input type="text" required value={productForm.business_name} onChange={e => setProductForm(f => ({ ...f, business_name: e.target.value }))} placeholder="Medishop BV" style={inputStyle} />
                     </div>
                     <div>
-                      <label style={labelStyle}>Kortingscode (vaste code voor alle klanten)</label>
-                      <input type="text" required value={productForm.discount_code} onChange={e => setProductForm(f => ({ ...f, discount_code: e.target.value.toUpperCase() }))} placeholder="MEDISHOP10" style={{ ...inputStyle, fontFamily: 'monospace', letterSpacing: 1 }} />
+                      <label style={labelStyle}>Kortingscode <span style={{ color: '#8A9588', fontWeight: 400 }}>(optioneel)</span></label>
+                      <input type="text" value={productForm.discount_code} onChange={e => setProductForm(f => ({ ...f, discount_code: e.target.value.toUpperCase() }))} placeholder="MEDISHOP10 — leeglaten als partner een link geeft" style={{ ...inputStyle, fontFamily: 'monospace', letterSpacing: 1 }} />
                     </div>
                     <div>
                       <label style={labelStyle}>Naam contactpersoon</label>
@@ -582,6 +583,10 @@ export default function AdminDashboard() {
                     <div>
                       <label style={labelStyle}>Productcategorie</label>
                       <input type="text" required value={productForm.service_type} onChange={e => setProductForm(f => ({ ...f, service_type: e.target.value }))} placeholder="Medisch materiaal / Verpleegkundig materiaal / …" style={inputStyle} />
+                    </div>
+                    <div>
+                      <label style={labelStyle}>Partner URL <span style={{ color: '#8A9588', fontWeight: 400 }}>(optioneel — alternatief voor kortingscode)</span></label>
+                      <input type="url" value={productForm.partner_url} onChange={e => setProductForm(f => ({ ...f, partner_url: e.target.value }))} placeholder="https://shop.medishop.be/thuisverpleging" style={inputStyle} />
                     </div>
                     <div>
                       <label style={labelStyle}>Interne notities</label>
@@ -695,6 +700,11 @@ export default function AdminDashboard() {
                               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: '#B65436', borderRadius: 6, padding: '4px 10px' }}>
                                 <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Kortingscode:</span>
                                 <span style={{ fontFamily: 'monospace', fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: 1 }}>{p.discount_code}</span>
+                              </div>
+                            )}
+                            {!p.discount_code && p.partner_url && (
+                              <div style={{ fontSize: 12, color: '#6E6B62', marginTop: 2 }}>
+                                🔗 <a href={p.partner_url} target="_blank" rel="noopener noreferrer" style={{ color: '#B65436' }}>{p.partner_url}</a>
                               </div>
                             )}
                           </>

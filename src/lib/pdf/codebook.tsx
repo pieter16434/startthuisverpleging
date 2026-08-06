@@ -1,6 +1,6 @@
 import React from 'react'
 import {
-  Document, Page, Text, View, StyleSheet, renderToBuffer,
+  Document, Page, Text, View, StyleSheet, renderToBuffer, Link,
 } from '@react-pdf/renderer'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -11,6 +11,7 @@ export type CodebookPartner = {
   service_type: string
   discount_description: string
   is_product?: boolean
+  partner_url?: string | null
   website?: string | null
   phone?: string | null
   office_address?: string | null
@@ -379,22 +380,40 @@ function CodebookDocument({ data }: { data: CodebookData }) {
             We voegen regelmatig nieuwe partners toe. Je ontvangt een update zodra er partners zijn voor {data.province_label}.
           </Text>
         ) : (
-          data.partners.map((partner) => (
-            <View key={partner.code} style={s.partnerCard}>
+          data.partners.map((partner) => {
+            // Product partner met een link i.p.v. kortingscode
+            const hasUrl = !!(partner.partner_url && partner.code === '—')
+            return (
+            <View key={partner.business_name} style={s.partnerCard}>
               <View style={s.partnerHeader}>
                 <View style={s.partnerInfo}>
                   <Text style={s.partnerName}>{partner.business_name}</Text>
                   <Text style={s.partnerType}>{partner.service_type} · {partner.name}</Text>
                 </View>
-                <View style={[s.codeBadge, partner.is_product ? { backgroundColor: C.clay } : {}]}>
-                  <Text style={s.codeLabel}>{partner.is_product ? 'Kortingscode' : 'Jouw code'}</Text>
-                  <Text style={[s.codeValue, partner.is_product ? { fontSize: 12, letterSpacing: 1 } : {}]}>{partner.code}</Text>
-                </View>
+                {hasUrl ? (
+                  <View style={[s.codeBadge, { backgroundColor: C.clay, minWidth: 110 }]}>
+                    <Text style={s.codeLabel}>Gebruik link</Text>
+                    <Text style={[s.codeValue, { fontSize: 16 }]}>{'→'}</Text>
+                  </View>
+                ) : (
+                  <View style={[s.codeBadge, partner.is_product ? { backgroundColor: C.clay } : {}]}>
+                    <Text style={s.codeLabel}>{partner.is_product ? 'Kortingscode' : 'Jouw code'}</Text>
+                    <Text style={[s.codeValue, partner.is_product ? { fontSize: 12, letterSpacing: 1 } : {}]}>{partner.code}</Text>
+                  </View>
+                )}
               </View>
               <View style={s.discountBox}>
                 <Text style={s.discountLabel}>Wat jij krijgt</Text>
                 <Text style={s.discountText}>{partner.discount_description}</Text>
               </View>
+              {hasUrl && (
+                <View style={{ marginTop: 8, backgroundColor: '#FEF3E2', borderRadius: 6, padding: 10, borderLeft: `3 solid ${C.clay}` }}>
+                  <Text style={[s.discountLabel, { marginBottom: 4, color: C.clay }]}>Jouw link</Text>
+                  <Link src={partner.partner_url!}>
+                    <Text style={[s.discountText, { color: C.clay, fontFamily: 'Helvetica-Bold' }]}>{partner.partner_url}</Text>
+                  </Link>
+                </View>
+              )}
               {(partner.website || partner.phone || partner.office_address) && (
                 <View style={{ marginTop: 8, paddingTop: 8, borderTop: `1 solid ${C.line}` }}>
                   <Text style={[s.discountLabel, { marginBottom: 4 }]}>Contact</Text>
@@ -419,7 +438,8 @@ function CodebookDocument({ data }: { data: CodebookData }) {
                 </View>
               )}
             </View>
-          ))
+            )
+          })
         )}
 
         {/* Instructie onderaan */}
