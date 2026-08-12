@@ -187,7 +187,7 @@ function OnboardingContent() {
             type="number" required min={40} step="0.01"
             value={form.fee_per_customer}
             onChange={e => setField('fee_per_customer', e.target.value)}
-            placeholder="25"
+            placeholder="40"
             style={inputStyle}
           />
           <p style={{ fontSize: 12, color: '#8A9588', marginTop: 5, marginBottom: 0, lineHeight: 1.5 }}>
