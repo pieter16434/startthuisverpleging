@@ -184,14 +184,14 @@ function OnboardingContent() {
         <div style={fieldWrap}>
           <label style={labelStyle}>Vergoeding per doorverwezen klant (€)</label>
           <input
-            type="number" required min={25} step="0.01"
+            type="number" required min={40} step="0.01"
             value={form.fee_per_customer}
             onChange={e => setField('fee_per_customer', e.target.value)}
             placeholder="25"
             style={inputStyle}
           />
           <p style={{ fontSize: 12, color: '#8A9588', marginTop: 5, marginBottom: 0, lineHeight: 1.5 }}>
-            Dit is het bedrag dat jij betaalt aan startthuisverpleging voor elke klant die jouw code gebruikt — zoals onderling afgesproken. Minimum €25.
+            Dit is het bedrag dat jij betaalt aan startthuisverpleging voor elke klant die jouw code gebruikt — zoals onderling afgesproken. Minimum €40.
           </p>
         </div>
 

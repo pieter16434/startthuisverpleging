@@ -34,7 +34,7 @@ const Schema = z.object({
   discount_description: z.string().min(1, 'Beschrijving is verplicht').max(500),
   vat_number: z.string().min(1, 'BTW-nummer is verplicht').max(50),
   billing_address: z.string().min(1, 'Facturatieadres is verplicht').max(300),
-  fee_per_customer: z.number().min(25, 'Minimum vergoeding is €25'),
+  fee_per_customer: z.number().min(40, 'Minimum vergoeding is €40'),
   website: z.string().max(200).optional(),
   phone: z.string().max(50).optional(),
   office_address: z.string().max(300).optional(),
