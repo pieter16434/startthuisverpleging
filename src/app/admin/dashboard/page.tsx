@@ -21,6 +21,8 @@ type Partner = {
   website: string | null; phone: string | null; office_address: string | null
   total_codes: number; verified_codes: number
   partner_type: 'service' | 'product'; discount_code: string | null; partner_url: string | null
+  has_deal2: boolean; deal1_name: string | null; deal2_name: string | null
+  deal2_description: string | null; deal2_fee: number | null
 }
 type Influencer = {
   id: string; name: string; email: string; platform: string; social_handle: string
@@ -178,6 +180,11 @@ export default function AdminDashboard() {
           website: editPartner.website,
           phone: editPartner.phone,
           office_address: editPartner.office_address,
+          has_deal2: editPartner.has_deal2,
+          deal1_name: editPartner.deal1_name,
+          deal2_name: editPartner.deal2_name,
+          deal2_description: editPartner.deal2_description,
+          deal2_fee: editPartner.deal2_fee,
         }),
       })
       if (!res.ok) { setFormError('Opslaan mislukt'); return }
@@ -664,6 +671,45 @@ export default function AdminDashboard() {
                           <input value={editPartner.office_address ?? ''} onChange={e => setEditPartner({ ...editPartner, office_address: e.target.value })} placeholder="Kerkstraat 1, 3500 Hasselt" style={inputStyle} />
                         </div>
                       </div>
+                      {/* Deal2 sectie (alleen service partners) */}
+                      {editPartner.partner_type === 'service' && (
+                        <div style={{ borderTop: '1px solid #D8D0C0', paddingTop: 14, marginTop: 4 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                            <input
+                              type="checkbox"
+                              id={`has_deal2_${editPartner.id}`}
+                              checked={editPartner.has_deal2}
+                              onChange={e => setEditPartner({ ...editPartner, has_deal2: e.target.checked })}
+                              style={{ width: 16, height: 16, accentColor: '#2A3D2E', cursor: 'pointer' }}
+                            />
+                            <label htmlFor={`has_deal2_${editPartner.id}`} style={{ fontSize: 13, fontWeight: 600, color: '#1A1A17', cursor: 'pointer' }}>
+                              Twee deals actief
+                            </label>
+                          </div>
+                          {editPartner.has_deal2 && (
+                            <div style={{ background: '#F1ECE0', borderRadius: 8, padding: '14px', marginBottom: 12 }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                                <div>
+                                  <label style={labelStyle}>Naam deal 1</label>
+                                  <input value={editPartner.deal1_name ?? ''} onChange={e => setEditPartner({ ...editPartner, deal1_name: e.target.value })} placeholder="Eenmanszaak" style={inputStyle} />
+                                </div>
+                                <div>
+                                  <label style={labelStyle}>Naam deal 2</label>
+                                  <input value={editPartner.deal2_name ?? ''} onChange={e => setEditPartner({ ...editPartner, deal2_name: e.target.value })} placeholder="Vennootschap" style={inputStyle} />
+                                </div>
+                              </div>
+                              <div>
+                                <label style={labelStyle}>Aanbod deal 2 (tekst in codeboek)</label>
+                                <textarea value={editPartner.deal2_description ?? ''} onChange={e => setEditPartner({ ...editPartner, deal2_description: e.target.value })} rows={2} style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
+                              </div>
+                              <div>
+                                <label style={labelStyle}>Vergoeding deal 2 per klant (€)</label>
+                                <input type="number" min={0} step="0.01" value={editPartner.deal2_fee ?? ''} onChange={e => setEditPartner({ ...editPartner, deal2_fee: parseFloat(e.target.value) || null })} style={inputStyle} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div style={{ borderTop: '1px solid #D8D0C0', paddingTop: 14, marginTop: 4 }}>
                         <p style={{ fontSize: 13, color: '#6E6B62', margin: 0 }}>
                           Wachtwoord resetten? Sla eerst op, klik dan op <strong>&ldquo;Uitnodigingslink&rdquo;</strong> op de partnerkaart — de partner stelt zelf een nieuw wachtwoord in via de link.
@@ -686,6 +732,11 @@ export default function AdminDashboard() {
                             <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#FEF3E2', color: '#B65436', border: '1px solid #F5C6C0' }}>Product partner</span>
                           ) : (
                             <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#E8F5E9', color: '#2A3D2E', border: '1px solid #A5D6A7' }}>Service partner</span>
+                          )}
+                          {p.has_deal2 && (
+                            <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#EEF0FD', color: '#3949AB', border: '1px solid #C5CAE9' }}>
+                              2 deals: {p.deal1_name || 'Deal 1'} / {p.deal2_name || 'Deal 2'}
+                            </span>
                           )}
                         </div>
                         {p.partner_type === 'product' ? (
@@ -737,7 +788,7 @@ export default function AdminDashboard() {
                               <div style={{ fontSize: 20, fontWeight: 700, color: '#B65436', fontFamily: 'Georgia, serif' }}>
                                 € {(p.verified_codes * p.fee_per_customer).toFixed(0)}
                               </div>
-                              <div style={{ fontSize: 11, color: '#6E6B62' }}>te factureren</div>
+                              <div style={{ fontSize: 11, color: '#6E6B62' }}>te factureren*</div>
                             </div>
                           </>
                         )}

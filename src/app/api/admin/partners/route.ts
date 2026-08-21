@@ -19,6 +19,12 @@ const PartnerSchema = z.object({
   partner_type: z.enum(['service', 'product']).optional(),
   discount_code: z.string().max(50).optional(),
   partner_url: z.string().max(500).optional(),
+  // Dual deal
+  has_deal2: z.boolean().optional(),
+  deal1_name: z.string().max(100).optional(),
+  deal2_name: z.string().max(100).optional(),
+  deal2_description: z.string().max(500).optional(),
+  deal2_fee: z.number().min(0).optional(),
 })
 
 // GET — alle partners ophalen
@@ -34,6 +40,7 @@ export async function GET() {
       discount_description, fee_per_customer, is_active, notes,
       vat_number, billing_address, website, phone, office_address, created_at,
       partner_type, discount_code, partner_url,
+      has_deal2, deal1_name, deal2_name, deal2_description, deal2_fee,
       partner_codes(count)
     `)
     .order('created_at', { ascending: false })
@@ -100,6 +107,11 @@ export async function POST(req: NextRequest) {
         partner_type: data.partner_type ?? 'service',
         discount_code: data.discount_code ?? null,
         partner_url: data.partner_url ?? null,
+        has_deal2: data.has_deal2 ?? false,
+        deal1_name: data.deal1_name ?? null,
+        deal2_name: data.deal2_name ?? null,
+        deal2_description: data.deal2_description ?? null,
+        deal2_fee: data.deal2_fee ?? null,
       })
       .select('id, name, business_name, email')
       .single()

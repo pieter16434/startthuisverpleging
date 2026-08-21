@@ -64,6 +64,9 @@ function OnboardingContent() {
     fee_per_customer: '',
     website: '', phone: '', office_address: '',
     password: '', confirm: '',
+    // Dual deal
+    has_deal2: false,
+    deal1_name: '', deal2_name: '', deal2_description: '', deal2_fee: '',
   })
 
   function setField(k: string, v: string) { setForm(f => ({ ...f, [k]: v })) }
@@ -88,7 +91,11 @@ function OnboardingContent() {
       const res = await fetch('/api/partner/onboarding', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, ...form, fee_per_customer: parseFloat(form.fee_per_customer) }),
+        body: JSON.stringify({
+          token, ...form,
+          fee_per_customer: parseFloat(form.fee_per_customer),
+          deal2_fee: form.has_deal2 && form.deal2_fee ? parseFloat(form.deal2_fee) : undefined,
+        }),
       })
       const data = await res.json()
       if (!res.ok) { setSubmitError(data.error); return }
@@ -218,6 +225,72 @@ function OnboardingContent() {
             Dit is de tekst die klanten zien in hun persoonlijk codeboek.
           </p>
         </div>
+
+        {/* Sectie: Tweede deal (optioneel) */}
+        <div style={{ borderBottom: '1px solid #D8D0C0', marginBottom: 20, paddingBottom: 4 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 12px' }}>
+            Tweede deal (optioneel)
+          </p>
+        </div>
+        <div style={{ ...fieldWrap, marginBottom: 20 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={form.has_deal2}
+              onChange={e => setForm(f => ({ ...f, has_deal2: e.target.checked }))}
+              style={{ width: 18, height: 18, accentColor: '#2A3D2E', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: 14, color: '#1A1A17', fontWeight: 600 }}>
+              Ik bied twee aparte deals aan (bv. eenmanszaak vs. vennootschap)
+            </span>
+          </label>
+          <p style={{ fontSize: 12, color: '#8A9588', marginTop: 6, marginBottom: 0, lineHeight: 1.5 }}>
+            Elke deal krijgt een eigen kortingscode en een eigen vergoeding. Handig als de prijs verschilt per klanttype.
+          </p>
+        </div>
+        {form.has_deal2 && (
+          <div style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 10, padding: '20px', marginBottom: 20 }}>
+            <p style={{ fontSize: 12, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 0.5, margin: '0 0 14px' }}>
+              Benoem beide deals
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+              <div style={fieldWrap}>
+                <label style={labelStyle}>Naam deal 1 <span style={{ color: '#8A9588', fontWeight: 400, textTransform: 'none', fontSize: 11 }}>(bv. &quot;Eenmanszaak&quot;)</span></label>
+                <input type="text" required value={form.deal1_name} onChange={e => setField('deal1_name', e.target.value)} placeholder="Eenmanszaak" style={inputStyle} />
+              </div>
+              <div style={fieldWrap}>
+                <label style={labelStyle}>Naam deal 2 <span style={{ color: '#8A9588', fontWeight: 400, textTransform: 'none', fontSize: 11 }}>(bv. &quot;Vennootschap&quot;)</span></label>
+                <input type="text" required value={form.deal2_name} onChange={e => setField('deal2_name', e.target.value)} placeholder="Vennootschap" style={inputStyle} />
+              </div>
+            </div>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Wat krijgen klanten bij deal 2? (voor het codeboek)</label>
+              <textarea
+                required rows={2}
+                value={form.deal2_description}
+                onChange={e => setField('deal2_description', e.target.value)}
+                placeholder="Bv. Gratis eerste gesprek + 10% korting op boekhouding voor vennootschappen"
+                style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties}
+              />
+            </div>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Vergoeding per klant deal 2 (€)</label>
+              <input
+                type="number" required min={0} step="0.01"
+                value={form.deal2_fee}
+                onChange={e => setField('deal2_fee', e.target.value)}
+                placeholder="0"
+                style={inputStyle}
+              />
+              <p style={{ fontSize: 12, color: '#8A9588', marginTop: 5, marginBottom: 0, lineHeight: 1.5 }}>
+                Dit is wat jij betaalt per geverifieerde klant van deal 2. Mag lager zijn dan deal 1.
+              </p>
+            </div>
+            <p style={{ fontSize: 12, color: '#6E6B62', margin: 0, lineHeight: 1.5 }}>
+              <strong>Opmerking:</strong> De omschrijving van deal 1 is wat je hierboven invulde bij &ldquo;Wat krijgen klanten?&rdquo;. Deal 1 heeft de vergoeding die je bij de vergoedingsrubriek invulde.
+            </p>
+          </div>
+        )}
 
         {/* Sectie: Info voor kopers */}
         <div style={{ borderBottom: '1px solid #D8D0C0', marginBottom: 20, paddingBottom: 4 }}>

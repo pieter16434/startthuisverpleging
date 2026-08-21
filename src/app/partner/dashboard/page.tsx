@@ -7,6 +7,7 @@ type Code = {
   is_verified: boolean
   verified_at: string | null
   created_at: string
+  deal_number: number | null
   customers: { first_name: string; last_name: string }
 }
 
@@ -18,11 +19,20 @@ type DashboardData = {
     service_type: string
     discount_description: string
     fee_per_customer: number
+    has_deal2: boolean
+    deal1_name: string | null
+    deal2_name: string | null
+    deal2_description: string | null
+    deal2_fee: number | null
   }
   stats: {
     totalCodes: number
     verifiedCodes: number
     toInvoice: number
+    deal1Verified: number
+    deal2Verified: number
+    deal1ToInvoice: number
+    deal2ToInvoice: number
   }
   codes: Code[]
   thisMonthCodes: Code[]
@@ -153,20 +163,34 @@ export default function PartnerDashboardPage() {
           {[
             { label: 'Totaal codes uitgegeven', value: stats.totalCodes, color: '#2A3D2E' },
             { label: 'Geverifieerde klanten', value: stats.verifiedCodes, color: '#B65436' },
-            { label: 'Te factureren door startthuisverpleging', value: `€ ${stats.toInvoice.toFixed(2).replace('.', ',')}`, color: '#6E6B62', small: true },
-          ].map(s => (
-            <div key={s.label} style={{
+            { label: 'Te factureren (totaal)', value: `€ ${stats.toInvoice.toFixed(2).replace('.', ',')}`, color: '#6E6B62', small: true },
+          ].map(st => (
+            <div key={st.label} style={{
               background: '#FBF8F2',
               border: '1px solid #D8D0C0',
               borderRadius: 12,
               padding: '20px 24px',
             }}>
-              <div style={{ fontSize: s.small ? 22 : 32, fontWeight: 700, color: s.color, fontFamily: 'Georgia, serif' }}>
-                {s.value}
+              <div style={{ fontSize: st.small ? 22 : 32, fontWeight: 700, color: st.color, fontFamily: 'Georgia, serif' }}>
+                {st.value}
               </div>
-              <div style={{ fontSize: 13, color: '#6E6B62', marginTop: 4 }}>{s.label}</div>
+              <div style={{ fontSize: 13, color: '#6E6B62', marginTop: 4 }}>{st.label}</div>
             </div>
           ))}
+          {partner.has_deal2 && (
+            <>
+              <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 12, padding: '20px 24px' }}>
+                <div style={{ fontSize: 28, fontWeight: 700, color: '#2A3D2E', fontFamily: 'Georgia, serif' }}>{stats.deal1Verified}</div>
+                <div style={{ fontSize: 13, color: '#6E6B62', marginTop: 4 }}>Geverifieerd — {partner.deal1_name || 'Deal 1'}</div>
+                <div style={{ fontSize: 12, color: '#8A9588', marginTop: 2 }}>€ {stats.deal1ToInvoice.toFixed(2).replace('.', ',')} te factureren</div>
+              </div>
+              <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 12, padding: '20px 24px' }}>
+                <div style={{ fontSize: 28, fontWeight: 700, color: '#2A3D2E', fontFamily: 'Georgia, serif' }}>{stats.deal2Verified}</div>
+                <div style={{ fontSize: 13, color: '#6E6B62', marginTop: 4 }}>Geverifieerd — {partner.deal2_name || 'Deal 2'}</div>
+                <div style={{ fontSize: 12, color: '#8A9588', marginTop: 2 }}>€ {stats.deal2ToInvoice.toFixed(2).replace('.', ',')} te factureren</div>
+              </div>
+            </>
+          )}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 40 }}>
@@ -282,7 +306,12 @@ export default function PartnerDashboardPage() {
             </h2>
             <div style={{ background: '#2A3D2E', color: '#E8D08A', borderRadius: 8, padding: '6px 14px', fontSize: 14, fontWeight: 700 }}>
               {thisMonthCodes.length} klant{thisMonthCodes.length !== 1 ? 'en' : ''}
-              {thisMonthCodes.length > 0 && ` · € ${(thisMonthCodes.length * stats.toInvoice / Math.max(stats.verifiedCodes, 1)).toFixed(0).replace('.', ',')}`}
+              {thisMonthCodes.length > 0 && (() => {
+                const deal1Month = thisMonthCodes.filter(c => (c.deal_number ?? 1) === 1).length
+                const deal2Month = thisMonthCodes.filter(c => c.deal_number === 2).length
+                const monthInvoice = deal1Month * partner.fee_per_customer + deal2Month * (partner.deal2_fee ?? 0)
+                return ` · € ${monthInvoice.toFixed(0).replace('.', ',')}`
+              })()}
             </div>
           </div>
           {thisMonthCodes.length === 0 ? (
@@ -294,8 +323,8 @@ export default function PartnerDashboardPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid #D8D0C0' }}>
-                    {['Code', 'Klant', 'Geverifieerd op'].map(h => (
-                      <th key={h} style={{ textAlign: 'left', padding: '8px 12px', color: '#6E6B62', fontWeight: 600, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                    {['Code', partner.has_deal2 ? 'Deal' : null, 'Klant', 'Geverifieerd op'].filter(Boolean).map(h => (
+                      <th key={h!} style={{ textAlign: 'left', padding: '8px 12px', color: '#6E6B62', fontWeight: 600, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -303,6 +332,13 @@ export default function PartnerDashboardPage() {
                   {thisMonthCodes.map((c, i) => (
                     <tr key={c.code} style={{ borderBottom: '1px solid #EDE9E0', background: i % 2 === 0 ? 'transparent' : '#F7F3EA' }}>
                       <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: '#2A3D2E' }}>{c.code}</td>
+                      {partner.has_deal2 && (
+                        <td style={{ padding: '10px 12px' }}>
+                          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600, background: c.deal_number === 2 ? '#EEF0FD' : '#E8F5E9', color: c.deal_number === 2 ? '#3949AB' : '#2A3D2E' }}>
+                            {c.deal_number === 2 ? (partner.deal2_name || 'Deal 2') : (partner.deal1_name || 'Deal 1')}
+                          </span>
+                        </td>
+                      )}
                       <td style={{ padding: '10px 12px', color: '#1A1A17' }}>{c.customers.first_name} {c.customers.last_name}</td>
                       <td style={{ padding: '10px 12px', color: '#6E6B62' }}>
                         {c.verified_at ? new Date(c.verified_at).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' }) : '—'}
@@ -329,8 +365,8 @@ export default function PartnerDashboardPage() {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid #D8D0C0' }}>
-                    {['Code', 'Klant', 'Uitgegeven op', 'Status', 'Geverifieerd op'].map(h => (
-                      <th key={h} style={{ textAlign: 'left', padding: '8px 12px', color: '#6E6B62', fontWeight: 600, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    {['Code', partner.has_deal2 ? 'Deal' : null, 'Klant', 'Uitgegeven op', 'Status', 'Geverifieerd op'].filter(Boolean).map(h => (
+                      <th key={h!} style={{ textAlign: 'left', padding: '8px 12px', color: '#6E6B62', fontWeight: 600, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 }}>
                         {h}
                       </th>
                     ))}
@@ -342,6 +378,13 @@ export default function PartnerDashboardPage() {
                       <td style={{ padding: '10px 12px', fontFamily: 'monospace', fontSize: 13, fontWeight: 600, color: '#2A3D2E' }}>
                         {c.code}
                       </td>
+                      {partner.has_deal2 && (
+                        <td style={{ padding: '10px 12px' }}>
+                          <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 12, fontSize: 11, fontWeight: 600, background: c.deal_number === 2 ? '#EEF0FD' : '#E8F5E9', color: c.deal_number === 2 ? '#3949AB' : '#2A3D2E', border: `1px solid ${c.deal_number === 2 ? '#C5CAE9' : '#A5D6A7'}` }}>
+                            {c.deal_number === 2 ? (partner.deal2_name || 'Deal 2') : (partner.deal1_name || 'Deal 1')}
+                          </span>
+                        </td>
+                      )}
                       <td style={{ padding: '10px 12px', color: '#1A1A17' }}>
                         {c.customers.first_name} {c.customers.last_name}
                       </td>

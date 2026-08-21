@@ -43,6 +43,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (body.phone !== undefined) update.phone = body.phone || null
     if (body.office_address !== undefined) update.office_address = body.office_address || null
     if (body.partner_url !== undefined) update.partner_url = body.partner_url || null
+    if (body.has_deal2 !== undefined) update.has_deal2 = body.has_deal2
+    if (body.deal1_name !== undefined) update.deal1_name = body.deal1_name || null
+    if (body.deal2_name !== undefined) update.deal2_name = body.deal2_name || null
+    if (body.deal2_description !== undefined) update.deal2_description = body.deal2_description || null
+    if (body.deal2_fee !== undefined) update.deal2_fee = body.deal2_fee || null
 
     const { error } = await supabase.from('partners').update(update).eq('id', params.id)
     if (error) throw error
@@ -94,12 +99,15 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
   const { data: codes } = await supabase
     .from('partner_codes')
-    .select('code, is_verified, verified_at, created_at, customers(first_name, last_name, email)')
+    .select('code, is_verified, verified_at, created_at, deal_number, customers(first_name, last_name, email)')
     .eq('partner_id', params.id)
     .order('created_at', { ascending: false })
 
-  const verified = codes?.filter(c => c.is_verified).length ?? 0
-  const toInvoice = verified * Number(partner?.fee_per_customer ?? 0)
+  const deal1Verified = codes?.filter(c => c.is_verified && (c.deal_number ?? 1) === 1).length ?? 0
+  const deal2Verified = codes?.filter(c => c.is_verified && c.deal_number === 2).length ?? 0
+  const verified = deal1Verified + deal2Verified
+  const toInvoice = deal1Verified * Number(partner?.fee_per_customer ?? 0)
+    + deal2Verified * Number((partner as unknown as { deal2_fee?: number })?.deal2_fee ?? 0)
 
-  return NextResponse.json({ partner, codes: codes ?? [], stats: { verified, toInvoice } })
+  return NextResponse.json({ partner, codes: codes ?? [], stats: { verified, toInvoice, deal1Verified, deal2Verified } })
 }

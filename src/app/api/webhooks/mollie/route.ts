@@ -58,14 +58,22 @@ export async function POST(req: NextRequest) {
     const customer = order.customers
 
     // ── 2. Genereer partner codes per provincie ──────────────────────────────
-    type PartnerRow = { id: string; business_name: string; name: string; service_type: string; discount_description: string; partner_type: string; discount_code: string | null; partner_url: string | null; website: string | null; phone: string | null; office_address: string | null }
-    const codeMap: Record<string, string> = {} // partner_id → code
+    type PartnerRow = {
+      id: string; business_name: string; name: string; service_type: string
+      discount_description: string; partner_type: string; discount_code: string | null
+      partner_url: string | null; website: string | null; phone: string | null
+      office_address: string | null
+      has_deal2: boolean; deal1_name: string | null; deal2_name: string | null
+      deal2_description: string | null; deal2_fee: number | null
+    }
+    const codeMap: Record<string, string> = {}  // partner_id → deal1 code
+    const code2Map: Record<string, string> = {} // partner_id → deal2 code
 
     // Service partners: provinciaal + VLA — unieke code per klant
     const provincesToQuery = customer.province ? [customer.province, 'VLA'] : ['VLA']
     const { data: servicePartners } = await supabase
       .from('partners')
-      .select('id, business_name, name, service_type, discount_description, partner_type, discount_code, partner_url, website, phone, office_address')
+      .select('id, business_name, name, service_type, discount_description, partner_type, discount_code, partner_url, website, phone, office_address, has_deal2, deal1_name, deal2_name, deal2_description, deal2_fee')
       .in('province', provincesToQuery)
       .eq('is_active', true)
       .eq('partner_type', 'service')
@@ -73,7 +81,7 @@ export async function POST(req: NextRequest) {
     // Product partners: altijd in elk codeboek, vaste kortingscode
     const { data: productPartners } = await supabase
       .from('partners')
-      .select('id, business_name, name, service_type, discount_description, partner_type, discount_code, partner_url, website, phone, office_address')
+      .select('id, business_name, name, service_type, discount_description, partner_type, discount_code, partner_url, website, phone, office_address, has_deal2, deal1_name, deal2_name, deal2_description, deal2_fee')
       .eq('is_active', true)
       .eq('partner_type', 'product')
 
@@ -86,38 +94,59 @@ export async function POST(req: NextRequest) {
         codeMap[partner.id] = partner.discount_code ?? '—'
         continue
       }
+      // Deal 1 code
       let code = generateCode(codeProvince)
       for (let attempt = 0; attempt < 5; attempt++) {
         const { error } = await supabase.from('partner_codes').insert({
-          partner_id: partner.id,
-          order_id: orderId,
-          customer_id: customer.id,
-          code,
+          partner_id: partner.id, order_id: orderId, customer_id: customer.id,
+          code, deal_number: 1,
         })
         if (!error) { codeMap[partner.id] = code; break }
         code = generateCode(codeProvince)
       }
+      // Deal 2 code (alleen bij dual-deal partners)
+      if (partner.has_deal2) {
+        let code2 = generateCode(codeProvince)
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const { error } = await supabase.from('partner_codes').insert({
+            partner_id: partner.id, order_id: orderId, customer_id: customer.id,
+            code: code2, deal_number: 2,
+          })
+          if (!error) { code2Map[partner.id] = code2; break }
+          code2 = generateCode(codeProvince)
+        }
+      }
     }
 
     // ── 3. Genereer codeboek PDF ─────────────────────────────────────────────
+    // Bouw codeboek entries: dual-deal partners krijgen twee aparte kaarten
+    const codebookEntries = partners.flatMap(p => {
+      const base = {
+        business_name: p.business_name,
+        name: p.name,
+        service_type: p.service_type,
+        is_product: p.partner_type === 'product',
+        partner_url: p.partner_url,
+        website: p.website,
+        phone: p.phone,
+        office_address: p.office_address,
+      }
+      if (p.has_deal2 && code2Map[p.id]) {
+        return [
+          { ...base, code: codeMap[p.id] ?? '—', discount_description: p.discount_description, deal_name: p.deal1_name },
+          { ...base, code: code2Map[p.id], discount_description: p.deal2_description ?? p.discount_description, deal_name: p.deal2_name, website: null, phone: null, office_address: null },
+        ]
+      }
+      return [{ ...base, code: codeMap[p.id] ?? '—', discount_description: p.discount_description, deal_name: null }]
+    })
+
     const codebookData: CodebookData = {
       customer_first_name: customer.first_name,
       customer_last_name: customer.last_name,
       province_label: PROVINCES[customer.province] ?? 'Vlaanderen',
       order_short_id: orderId.slice(0, 8).toUpperCase(),
       generated_date: new Date().toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }),
-      partners: partners.map(p => ({
-        code: codeMap[p.id] ?? '—',
-        business_name: p.business_name,
-        name: p.name,
-        service_type: p.service_type,
-        discount_description: p.discount_description,
-        is_product: p.partner_type === 'product',
-        partner_url: p.partner_url,
-        website: p.website,
-        phone: p.phone,
-        office_address: p.office_address,
-      })),
+      partners: codebookEntries,
     }
 
     const codebookBuffer = await generateCodebookPdf(codebookData)

@@ -11,6 +11,7 @@ export type CodebookPartner = {
   service_type: string
   discount_description: string
   is_product?: boolean
+  deal_name?: string | null  // label voor dual-deal partners (bv. "Eenmanszaak")
   partner_url?: string | null
   website?: string | null
   phone?: string | null
@@ -388,7 +389,9 @@ function CodebookDocument({ data }: { data: CodebookData }) {
               <View style={s.partnerHeader}>
                 <View style={s.partnerInfo}>
                   <Text style={s.partnerName}>{partner.business_name}</Text>
-                  <Text style={s.partnerType}>{partner.service_type} · {partner.name}</Text>
+                  <Text style={s.partnerType}>
+                    {partner.service_type}{partner.deal_name ? ` — ${partner.deal_name}` : ''} · {partner.name}
+                  </Text>
                 </View>
                 {hasUrl ? (
                   <View style={[s.codeBadge, { backgroundColor: C.clay, minWidth: 110 }]}>
