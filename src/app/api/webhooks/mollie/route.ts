@@ -118,6 +118,81 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // ── 2b. Genereer organisatie codes ──────────────────────────────────────
+    type OrgRow = {
+      id: string; business_name: string; name: string; service_type: string
+      discount_description: string; fee_per_customer: number; code_mode: string
+      website: string | null; phone: string | null
+    }
+    type OfficeRow = {
+      id: string; organization_id: string; business_name: string; province: string
+      discount_description: string | null; is_active: boolean
+    }
+
+    const { data: activeOrgs } = await supabase
+      .from('organizations')
+      .select('id, business_name, name, service_type, discount_description, fee_per_customer, code_mode, website, phone')
+      .eq('is_active', true)
+
+    const orgCodeMap: Record<string, string> = {} // orgId → code (shared) or orgId_officeId → code (per_office)
+    const orgCodebookEntries: { business_name: string; name: string; service_type: string; discount_description: string; code: string; website: string | null; phone: string | null; is_product: boolean; partner_url: null; office_address: null; deal_name: null }[] = []
+
+    for (const org of (activeOrgs ?? []) as OrgRow[]) {
+      if (org.code_mode === 'shared') {
+        // Eén code per klant voor de gehele org
+        let orgCode = generateCode('ORG')
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const { error } = await supabase.from('organization_codes').insert({
+            organization_id: org.id, office_id: null,
+            order_id: orderId, customer_id: customer.id,
+            code: orgCode,
+          })
+          if (!error) { orgCodeMap[org.id] = orgCode; break }
+          orgCode = generateCode('ORG')
+        }
+        if (orgCodeMap[org.id]) {
+          orgCodebookEntries.push({
+            business_name: org.business_name, name: org.name,
+            service_type: org.service_type, discount_description: org.discount_description,
+            code: orgCodeMap[org.id], website: org.website, phone: org.phone,
+            is_product: false, partner_url: null, office_address: null, deal_name: null,
+          })
+        }
+      } else {
+        // Per kantoor: zoek het kantoor in de provincie van de klant
+        if (!customer.province) continue
+        const { data: officeInProvince } = await supabase
+          .from('offices')
+          .select('id, organization_id, business_name, province, discount_description, is_active')
+          .eq('organization_id', org.id)
+          .eq('province', customer.province)
+          .eq('is_active', true)
+          .single()
+        if (!officeInProvince) continue // geen kantoor in die provincie
+        const office = officeInProvince as OfficeRow
+        const officeKey = `${org.id}_${office.id}`
+        let officeCode = generateCode(customer.province)
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const { error } = await supabase.from('organization_codes').insert({
+            organization_id: org.id, office_id: office.id,
+            order_id: orderId, customer_id: customer.id,
+            code: officeCode,
+          })
+          if (!error) { orgCodeMap[officeKey] = officeCode; break }
+          officeCode = generateCode(customer.province)
+        }
+        if (orgCodeMap[officeKey]) {
+          orgCodebookEntries.push({
+            business_name: office.business_name, name: org.name,
+            service_type: org.service_type,
+            discount_description: office.discount_description ?? org.discount_description,
+            code: orgCodeMap[officeKey], website: null, phone: null,
+            is_product: false, partner_url: null, office_address: null, deal_name: null,
+          })
+        }
+      }
+    }
+
     // ── 3. Genereer codeboek PDF ─────────────────────────────────────────────
     // Bouw codeboek entries: dual-deal partners krijgen twee aparte kaarten
     const codebookEntries = partners.flatMap(p => {
@@ -146,7 +221,7 @@ export async function POST(req: NextRequest) {
       province_label: PROVINCES[customer.province] ?? 'Vlaanderen',
       order_short_id: orderId.slice(0, 8).toUpperCase(),
       generated_date: new Date().toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' }),
-      partners: codebookEntries,
+      partners: [...codebookEntries, ...orgCodebookEntries],
     }
 
     const codebookBuffer = await generateCodebookPdf(codebookData)

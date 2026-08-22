@@ -66,7 +66,7 @@ function Pill({ active }: { active: boolean }) {
 
 export default function AdminDashboard() {
   const router = useRouter()
-  const [tab, setTab] = useState<'partners' | 'orders' | 'invoicing' | 'emails' | 'influencers'>('partners')
+  const [tab, setTab] = useState<'partners' | 'orders' | 'invoicing' | 'emails' | 'influencers' | 'organizations'>('partners')
   const [partners, setPartners] = useState<Partner[]>([])
   const [orders, setOrders] = useState<Order[]>([])
   const [orderStats, setOrderStats] = useState({ total: 0, revenue: 0, pdfPending: 0, revenueThisMonth: 0, revenueLastMonth: 0 })
@@ -90,6 +90,26 @@ export default function AdminDashboard() {
   const [onboardingLink, setOnboardingLink] = useState<string | null>(null)
   const [onboardingLoading, setOnboardingLoading] = useState(false)
   const [showAddProductForm, setShowAddProductForm] = useState(false)
+
+  // Organization state
+  type OrgAdmin = {
+    id: string; name: string; business_name: string; email: string
+    service_type: string; discount_description: string; fee_per_customer: number
+    code_mode: string; offices_have_own_description: boolean; offices_have_own_billing: boolean
+    bundle_invoicing: boolean; vat_number: string | null; billing_address: string | null
+    website: string | null; phone: string | null; notes: string | null
+    is_active: boolean; created_at: string
+    offices: { id: string; business_name: string; province: string; is_active: boolean; verified_codes: number }[]
+    total_verified_codes: number
+  }
+  const [orgs, setOrgs] = useState<OrgAdmin[]>([])
+  const [orgsLoaded, setOrgsLoaded] = useState(false)
+  const [orgLink, setOrgLink] = useState<string | null>(null)
+  const [orgLinkLoading, setOrgLinkLoading] = useState(false)
+  const [officeLinkMap, setOfficeLinkMap] = useState<Record<string, string>>({})
+  const [officeLinkLoading, setOfficeLinkLoading] = useState<string | null>(null)
+  const [editOrg, setEditOrg] = useState<OrgAdmin | null>(null)
+  const [editOrgLoading, setEditOrgLoading] = useState(false)
 
   // Influencer state
   const [influencers, setInfluencers] = useState<Influencer[]>([])
@@ -293,6 +313,73 @@ export default function AdminDashboard() {
     finally { setOnboardingLoading(false) }
   }
 
+  async function loadOrgs() {
+    const res = await fetch('/api/admin/organizations')
+    if (res.ok) {
+      const d = await res.json()
+      setOrgs(d.organizations ?? [])
+      setOrgsLoaded(true)
+    }
+  }
+
+  async function handleGenerateOrgLink() {
+    setOrgLinkLoading(true)
+    try {
+      const res = await fetch('/api/admin/organizations', { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) setOrgLink(data.url)
+      else alert(data.error ?? 'Mislukt')
+    } catch { alert('Mislukt') }
+    finally { setOrgLinkLoading(false) }
+  }
+
+  async function handleGenerateOfficeLink(orgId: string) {
+    setOfficeLinkLoading(orgId)
+    try {
+      const res = await fetch(`/api/admin/organizations/${orgId}/office-link`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) setOfficeLinkMap(m => ({ ...m, [orgId]: data.url }))
+      else alert(data.error ?? 'Mislukt')
+    } catch { alert('Mislukt') }
+    finally { setOfficeLinkLoading(null) }
+  }
+
+  async function handleToggleOrgActive(org: OrgAdmin) {
+    await fetch(`/api/admin/organizations/${org.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: !org.is_active }),
+    })
+    loadOrgs()
+  }
+
+  async function handleSaveOrg(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editOrg) return
+    setEditOrgLoading(true)
+    try {
+      const res = await fetch(`/api/admin/organizations/${editOrg.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notes: editOrg.notes,
+          fee_per_customer: editOrg.fee_per_customer,
+          vat_number: editOrg.vat_number,
+          billing_address: editOrg.billing_address,
+          bundle_invoicing: editOrg.bundle_invoicing,
+          discount_description: editOrg.discount_description,
+          is_active: editOrg.is_active,
+        }),
+      })
+      if (!res.ok) { alert('Opslaan mislukt'); return }
+      setEditOrg(null)
+      setSuccessMsg('Organisatie bijgewerkt ✓')
+      setTimeout(() => setSuccessMsg(''), 3000)
+      loadOrgs()
+    } catch { alert('Opslaan mislukt') }
+    finally { setEditOrgLoading(false) }
+  }
+
   async function handleAddProductPartner(e: React.FormEvent) {
     e.preventDefault()
     setFormError(''); setFormLoading(true)
@@ -484,6 +571,17 @@ export default function AdminDashboard() {
             {influencers.length > 0 && (
               <span style={{ marginLeft: 6, background: '#E8D08A', color: '#2A3D2E', borderRadius: 10, fontSize: 11, fontWeight: 700, padding: '1px 7px' }}>
                 {influencers.length}
+              </span>
+            )}
+          </button>
+          <button style={tabStyle('organizations')} onClick={() => {
+            setTab('organizations')
+            if (!orgsLoaded) loadOrgs()
+          }}>
+            Organisaties
+            {orgs.length > 0 && (
+              <span style={{ marginLeft: 6, background: '#EEF0FD', color: '#3949AB', borderRadius: 10, fontSize: 11, fontWeight: 700, padding: '1px 7px' }}>
+                {orgs.length}
               </span>
             )}
           </button>
@@ -1242,7 +1340,197 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* ── TAB: ORGANISATIES ── */}
+        {tab === 'organizations' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: '#1A1A17', margin: 0 }}>Organisaties</h2>
+                <p style={{ color: '#6E6B62', fontSize: 13, marginTop: 4 }}>Bedrijven met meerdere kantoren (bv. Xerius). Elke org heeft eigen kantooraccounts.</p>
+              </div>
+              <button
+                onClick={handleGenerateOrgLink}
+                disabled={orgLinkLoading}
+                style={{ background: '#3949AB', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: orgLinkLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}
+              >
+                {orgLinkLoading ? '…' : '🔗 Organisatie onboarding link'}
+              </button>
+            </div>
+
+            {/* Org onboarding link banner */}
+            {orgLink && (
+              <div style={{ background: '#FBF8F2', border: '2px solid #3949AB', borderRadius: 12, padding: '20px 24px', marginBottom: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <p style={{ fontWeight: 700, fontSize: 14, color: '#1A1A17', margin: 0 }}>
+                    Organisatie onboarding link <span style={{ fontWeight: 400, color: '#6E6B62', fontSize: 12 }}>(7 dagen geldig · eenmalig)</span>
+                  </p>
+                  <button onClick={() => setOrgLink(null)} style={{ background: 'none', border: 'none', color: '#6E6B62', fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: 0 }}>✕</button>
+                </div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <code style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 6, padding: '8px 12px', fontSize: 12, flex: 1, minWidth: 0, wordBreak: 'break-all', color: '#3A3A33' }}>
+                    {orgLink}
+                  </code>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(orgLink).then(() => { const b = document.getElementById('copy-org-btn'); if (b) { b.textContent = 'Gekopieerd ✓'; setTimeout(() => { if (b) b.textContent = 'Kopieer link' }, 2000) } })}
+                    id="copy-org-btn"
+                    style={{ background: '#3949AB', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                  >
+                    Kopieer link
+                  </button>
+                </div>
+                <p style={{ fontSize: 12, color: '#6E6B62', marginTop: 10, marginBottom: 0 }}>
+                  Organisatie vult naam, aanbod en codemode in. Daarna genereer jij kantoor-links per kantoor.
+                </p>
+              </div>
+            )}
+
+            {/* Org office link banners */}
+            {Object.entries(officeLinkMap).map(([orgId, url]) => {
+              const org = orgs.find(o => o.id === orgId)
+              return (
+                <div key={orgId} style={{ background: '#FBF8F2', border: '2px solid #2A3D2E', borderRadius: 12, padding: '20px 24px', marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                    <p style={{ fontWeight: 700, fontSize: 14, color: '#1A1A17', margin: 0 }}>
+                      Kantoor onboarding link — {org?.business_name ?? orgId} <span style={{ fontWeight: 400, color: '#6E6B62', fontSize: 12 }}>(7 dagen geldig · eenmalig)</span>
+                    </p>
+                    <button onClick={() => setOfficeLinkMap(m => { const n = { ...m }; delete n[orgId]; return n })} style={{ background: 'none', border: 'none', color: '#6E6B62', fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: 0 }}>✕</button>
+                  </div>
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <code style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 6, padding: '8px 12px', fontSize: 12, flex: 1, minWidth: 0, wordBreak: 'break-all', color: '#3A3A33' }}>{url}</code>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(url).then(() => { const b = document.getElementById(`copy-off-btn-${orgId}`); if (b) { b.textContent = 'Gekopieerd ✓'; setTimeout(() => { if (b) b.textContent = 'Kopieer link' }, 2000) } })}
+                      id={`copy-off-btn-${orgId}`}
+                      style={{ background: '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                    >
+                      Kopieer link
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+
+            {!orgsLoaded ? (
+              <p style={{ color: '#6E6B62' }}>Laden…</p>
+            ) : orgs.length === 0 ? (
+              <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 12, padding: '32px', textAlign: 'center', color: '#6E6B62' }}>
+                Nog geen organisaties. Genereer een onboarding link hierboven.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {orgs.map(org => (
+                  <div key={org.id} style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 16, overflow: 'hidden' }}>
+                    {/* Org header */}
+                    <div style={{ padding: '20px 24px', borderBottom: '1px solid #EDE9E0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <h3 style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: '#1A1A17', margin: 0 }}>{org.business_name}</h3>
+                          <Pill active={org.is_active} />
+                          <span style={{ background: '#EEF0FD', color: '#3949AB', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
+                            {org.code_mode === 'shared' ? 'Gedeelde code' : 'Code per kantoor'}
+                          </span>
+                          {org.bundle_invoicing && (
+                            <span style={{ background: '#E8F5E9', color: '#2A3D2E', padding: '2px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700 }}>Facturatie gebundeld</span>
+                          )}
+                        </div>
+                        <p style={{ color: '#6E6B62', fontSize: 13, margin: '4px 0 0' }}>
+                          {org.service_type} · {org.name} · {org.email} · {org.offices.length} kantoren · {org.total_verified_codes} geverifieerde klanten · € {org.fee_per_customer.toFixed(2).replace('.', ',')} p/klant
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => handleGenerateOfficeLink(org.id)}
+                          disabled={officeLinkLoading === org.id}
+                          style={{ background: '#2A3D2E', color: '#fff', border: 'none', borderRadius: 7, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: officeLinkLoading === org.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                        >
+                          {officeLinkLoading === org.id ? '…' : '🔗 Kantoor link'}
+                        </button>
+                        <button
+                          onClick={() => setEditOrg({ ...org })}
+                          style={{ background: 'transparent', border: '1px solid #D8D0C0', borderRadius: 7, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: '#3A3A33' }}
+                        >
+                          Bewerken
+                        </button>
+                        <button
+                          onClick={() => handleToggleOrgActive(org)}
+                          style={{ background: 'transparent', border: `1px solid ${org.is_active ? '#F5C6C0' : '#A5D6A7'}`, borderRadius: 7, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: org.is_active ? '#B65436' : '#2A3D2E' }}
+                        >
+                          {org.is_active ? 'Deactiveren' : 'Activeren'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Kantoren tabel */}
+                    {org.offices.length > 0 && (
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                        <thead>
+                          <tr style={{ background: '#F1ECE0' }}>
+                            {['Kantoor', 'Provincie', 'Status', 'Geverifieerde klanten'].map(h => (
+                              <th key={h} style={{ textAlign: 'left', padding: '8px 20px', color: '#6E6B62', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {org.offices.map((office, i) => (
+                            <tr key={office.id} style={{ borderTop: '1px solid #EDE9E0', background: i % 2 === 0 ? 'transparent' : '#FAFAF7' }}>
+                              <td style={{ padding: '10px 20px', fontWeight: 600, color: '#1A1A17' }}>{office.business_name}</td>
+                              <td style={{ padding: '10px 20px', color: '#6E6B62' }}>{PROVINCES[office.province] ?? office.province}</td>
+                              <td style={{ padding: '10px 20px' }}><Pill active={office.is_active} /></td>
+                              <td style={{ padding: '10px 20px', fontWeight: 700, color: '#2A3D2E' }}>{office.verified_codes}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                    {org.offices.length === 0 && (
+                      <p style={{ padding: '16px 24px', color: '#8A9588', fontSize: 13 }}>
+                        Nog geen kantoren geregistreerd. Genereer een kantoor onboarding link en stuur deze door.
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
       </main>
+
+      {/* ── MODAL: ORGANISATIE BEWERKEN ── */}
+      {editOrg && (
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setEditOrg(null) }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        >
+          <div style={{ background: '#FBF8F2', borderRadius: 16, padding: '32px', width: '100%', maxWidth: 540, position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
+            <button onClick={() => setEditOrg(null)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#6E6B62', lineHeight: 1 }}>✕</button>
+            <h3 style={{ fontFamily: 'Georgia, serif', fontSize: 20, color: '#1A1A17', marginBottom: 20 }}>Organisatie bewerken — {editOrg.business_name}</h3>
+            <form onSubmit={handleSaveOrg}>
+              <label style={labelStyle}>Aanbod tekst</label>
+              <textarea rows={3} value={editOrg.discount_description} onChange={e => setEditOrg(o => o ? { ...o, discount_description: e.target.value } : o)} style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
+              <label style={labelStyle}>Tariefprijs per klant (€)</label>
+              <input type="number" step="0.01" min={0} value={editOrg.fee_per_customer} onChange={e => setEditOrg(o => o ? { ...o, fee_per_customer: parseFloat(e.target.value) || 0 } : o)} style={inputStyle} />
+              <label style={labelStyle}>BTW-nummer</label>
+              <input type="text" value={editOrg.vat_number ?? ''} onChange={e => setEditOrg(o => o ? { ...o, vat_number: e.target.value } : o)} style={inputStyle} />
+              <label style={labelStyle}>Facturatieadres</label>
+              <input type="text" value={editOrg.billing_address ?? ''} onChange={e => setEditOrg(o => o ? { ...o, billing_address: e.target.value } : o)} style={inputStyle} />
+              <label style={labelStyle}>Notities (intern)</label>
+              <textarea rows={2} value={editOrg.notes ?? ''} onChange={e => setEditOrg(o => o ? { ...o, notes: e.target.value } : o)} style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <input type="checkbox" id="bundle_inv" checked={editOrg.bundle_invoicing} onChange={e => setEditOrg(o => o ? { ...o, bundle_invoicing: e.target.checked } : o)} style={{ width: 18, height: 18 }} />
+                <label htmlFor="bundle_inv" style={{ fontSize: 14, color: '#1A1A17', cursor: 'pointer' }}>Facturatie bundelen (alle kantoren → org)</label>
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button type="submit" disabled={editOrgLoading} style={{ background: editOrgLoading ? '#8A9588' : '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: editOrgLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+                  {editOrgLoading ? 'Opslaan…' : 'Opslaan'}
+                </button>
+                <button type="button" onClick={() => setEditOrg(null)} style={{ background: 'transparent', border: '1px solid #D8D0C0', borderRadius: 8, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', color: '#6E6B62' }}>
+                  Annuleer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ── MODAL: PARTNER VERWIJDEREN ── */}
       {deleteConfirm && (
