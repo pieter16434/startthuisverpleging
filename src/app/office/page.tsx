@@ -61,7 +61,7 @@ export default function OfficeLoginPage() {
           </form>
           <p style={{ textAlign: 'center', fontSize: 13, color: '#6E6B62', marginTop: 20, marginBottom: 0 }}>
             Bent u de organisatie?{' '}
-            <a href="/organization" style={{ color: '#B65436' }}>Organisatie login →</a>
+            <a href="/organisatie" style={{ color: '#B65436' }}>Organisatie login →</a>
           </p>
         </div>
         <p style={{ textAlign: 'center', fontSize: 13, color: '#6E6B62', marginTop: 24 }}>

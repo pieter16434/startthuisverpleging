@@ -26,7 +26,7 @@ export default function OrganizationLoginPage() {
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error ?? 'Inloggen mislukt'); return }
-      router.push('/organization/dashboard')
+      router.push('/organisatie/dashboard')
     } catch { setError('Verbindingsfout. Probeer opnieuw.') }
     finally { setLoading(false) }
   }

@@ -26,7 +26,7 @@ export default function OrganizationDashboardPage() {
 
   const load = useCallback(async () => {
     const res = await fetch('/api/organization/dashboard')
-    if (res.status === 401) { router.push('/organization'); return }
+    if (res.status === 401) { router.push('/organisatie'); return }
     const json = await res.json()
     setData(json)
     setLoading(false)
@@ -36,7 +36,7 @@ export default function OrganizationDashboardPage() {
 
   async function handleLogout() {
     await fetch('/api/organization/logout', { method: 'POST' })
-    router.push('/organization')
+    router.push('/organisatie')
   }
 
   if (loading) return (

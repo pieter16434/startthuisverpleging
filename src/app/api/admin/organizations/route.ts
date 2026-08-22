@@ -53,6 +53,6 @@ export async function POST() {
 
   if (error) return NextResponse.json({ error: 'Link aanmaken mislukt' }, { status: 500 })
 
-  const url = `${process.env.NEXT_PUBLIC_BASE_URL}/organization/onboarding?token=${token}`
+  const url = `${process.env.NEXT_PUBLIC_BASE_URL}/organisatie/onboarding?token=${token}`
   return NextResponse.json({ url })
 }

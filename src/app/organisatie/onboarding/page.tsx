@@ -88,7 +88,7 @@ function OnboardingContent() {
       const data = await res.json()
       if (!res.ok) { setSubmitError(data.error); return }
       setDone(true)
-      setTimeout(() => router.push('/organization'), 4000)
+      setTimeout(() => router.push('/organisatie'), 4000)
     } catch { setSubmitError('Verbindingsfout. Probeer opnieuw.') }
     finally { setLoading(false) }
   }
