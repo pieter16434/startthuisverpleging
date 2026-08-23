@@ -27,7 +27,7 @@ export async function GET() {
     // Codes ophalen
     // - per_office modus: codes waar office_id = dit kantoor
     // - shared modus: codes waar verified_by_office_id = dit kantoor (geverifieerd door dit kantoor)
-    let codesQuery = supabase
+    const codesQuery = supabase
       .from('organization_codes')
       .select('code, is_verified, verified_at, created_at, office_id, verified_by_office_id, customers(first_name, last_name)')
       .eq('organization_id', session.organizationId)

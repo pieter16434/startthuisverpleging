@@ -2,10 +2,6 @@
 import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 
-const PROVINCES_LABEL: Record<string, string> = {
-  ANT: 'Antwerpen', LIM: 'Limburg', OVL: 'Oost-Vlaanderen',
-  VBR: 'Vlaams-Brabant', WVL: 'West-Vlaanderen',
-}
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 14px', border: '1.5px solid #D8D0C0', borderRadius: 8,

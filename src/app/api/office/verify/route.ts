@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       valid: true,
       alreadyVerified: false,
-      message: `Code succesvol geverifieerd. De klant ontvangt het voordeel van ${(codeRow.customers as { first_name: string; last_name: string } | null)?.first_name ?? 'de klant'}.`,
+      message: `Code succesvol geverifieerd. De klant ontvangt het voordeel van ${(codeRow.customers as unknown as { first_name: string; last_name: string } | null)?.first_name ?? 'de klant'}.`,
       customer: codeRow.customers,
     })
   } catch (err) {
