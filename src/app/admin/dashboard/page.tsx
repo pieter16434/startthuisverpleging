@@ -91,6 +91,14 @@ export default function AdminDashboard() {
   const [onboardingLoading, setOnboardingLoading] = useState(false)
   const [showAddProductForm, setShowAddProductForm] = useState(false)
 
+  // Teamleden state
+  type TeamMember = { id: string; name: string; email: string; is_active: boolean; created_at: string }
+  const [teamMembersMap, setTeamMembersMap] = useState<Record<string, TeamMember[]>>({})
+  const [teamInviteLinkMap, setTeamInviteLinkMap] = useState<Record<string, string>>({})
+  const [teamInviteLoading, setTeamInviteLoading] = useState<string | null>(null)
+  const [teamDeleteLoading, setTeamDeleteLoading] = useState<string | null>(null)
+  const [teamExpandedMap, setTeamExpandedMap] = useState<Record<string, boolean>>({})
+
   // Organization state
   type OrgAdmin = {
     id: string; name: string; business_name: string; email: string
@@ -235,6 +243,38 @@ export default function AdminDashboard() {
       loadData()
     } catch { alert('Verwijderen mislukt') }
     finally { setDeleteLoading(false) }
+  }
+
+  async function loadTeamMembers(partnerId: string) {
+    const res = await fetch(`/api/admin/partners/${partnerId}`)
+    if (res.ok) {
+      const d = await res.json()
+      setTeamMembersMap(m => ({ ...m, [partnerId]: d.team_members ?? [] }))
+    }
+  }
+
+  async function handleGenerateTeamInvite(partnerId: string) {
+    setTeamInviteLoading(partnerId)
+    try {
+      const res = await fetch(`/api/admin/partners/${partnerId}/team-invite`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) setTeamInviteLinkMap(m => ({ ...m, [partnerId]: data.url }))
+      else alert(data.error ?? 'Mislukt')
+    } catch { alert('Mislukt') }
+    finally { setTeamInviteLoading(null) }
+  }
+
+  async function handleDeleteTeamMember(partnerId: string, memberId: string, name: string) {
+    if (!confirm(`Teamlid "${name}" verwijderen?`)) return
+    setTeamDeleteLoading(memberId)
+    try {
+      const res = await fetch(`/api/admin/partners/${partnerId}/team/${memberId}`, { method: 'DELETE' })
+      if (!res.ok) { alert('Verwijderen mislukt'); return }
+      setTeamMembersMap(m => ({ ...m, [partnerId]: (m[partnerId] ?? []).filter(t => t.id !== memberId) }))
+      setSuccessMsg(`Teamlid "${name}" verwijderd ✓`)
+      setTimeout(() => setSuccessMsg(''), 3000)
+    } catch { alert('Mislukt') }
+    finally { setTeamDeleteLoading(null) }
   }
 
   async function loadInfluencers() {
@@ -899,6 +939,18 @@ export default function AdminDashboard() {
                               Wachtwoord veranderen
                             </button>
                           )}
+                          {p.partner_type === 'service' && (
+                            <button
+                              onClick={() => {
+                                const expanded = !teamExpandedMap[p.id]
+                                setTeamExpandedMap(m => ({ ...m, [p.id]: expanded }))
+                                if (expanded && !teamMembersMap[p.id]) loadTeamMembers(p.id)
+                              }}
+                              style={{ background: '#EEF0FD', border: '1px solid #C5CAE9', borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#3949AB' }}
+                            >
+                              👥 Teamleden
+                            </button>
+                          )}
                           <button onClick={() => handleToggleActive(p)} style={{ background: p.is_active ? '#FEE9E7' : '#E8F5E9', border: `1px solid ${p.is_active ? '#F5C6C0' : '#A5D6A7'}`, borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: p.is_active ? '#B65436' : '#2A3D2E' }}>
                             {p.is_active ? 'Deactiveer' : 'Activeer'}
                           </button>
@@ -909,6 +961,74 @@ export default function AdminDashboard() {
                           )}
                         </div>
                       </div>
+
+                      {/* ── Teamleden sectie ── */}
+                      {teamExpandedMap[p.id] && p.partner_type === 'service' && (
+                        <div style={{ borderTop: '1px solid #EDE9E0', marginTop: 16, paddingTop: 16 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                            <h4 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1A1A17' }}>
+                              Teamleden <span style={{ color: '#6E6B62', fontWeight: 400 }}>({teamMembersMap[p.id]?.length ?? 0})</span>
+                            </h4>
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                              {teamInviteLinkMap[p.id] && (
+                                <div style={{ display: 'flex', gap: 6, alignItems: 'center', background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 8, padding: '6px 10px', maxWidth: 340 }}>
+                                  <code style={{ fontSize: 11, color: '#3A3A33', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                    {teamInviteLinkMap[p.id]}
+                                  </code>
+                                  <button
+                                    onClick={() => navigator.clipboard.writeText(teamInviteLinkMap[p.id]).then(() => { setSuccessMsg('Link gekopieerd ✓'); setTimeout(() => setSuccessMsg(''), 2000) })}
+                                    style={{ background: '#3949AB', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                                  >
+                                    Kopieer
+                                  </button>
+                                </div>
+                              )}
+                              <button
+                                onClick={() => handleGenerateTeamInvite(p.id)}
+                                disabled={teamInviteLoading === p.id}
+                                style={{ background: '#3949AB', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 12, fontWeight: 600, cursor: teamInviteLoading === p.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                              >
+                                {teamInviteLoading === p.id ? '…' : '+ Teamlid uitnodigen'}
+                              </button>
+                            </div>
+                          </div>
+                          {!teamMembersMap[p.id] ? (
+                            <p style={{ color: '#6E6B62', fontSize: 13 }}>Laden…</p>
+                          ) : teamMembersMap[p.id].length === 0 ? (
+                            <p style={{ color: '#8A9588', fontSize: 13, fontStyle: 'italic' }}>Geen teamleden. Genereer een uitnodigingslink om een medewerker toe te voegen.</p>
+                          ) : (
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                              <thead>
+                                <tr style={{ background: '#F1ECE0' }}>
+                                  {['Naam', 'E-mail', 'Aangemaakt', ''].map(h => (
+                                    <th key={h} style={{ textAlign: 'left', padding: '7px 12px', color: '#6E6B62', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {teamMembersMap[p.id].map(m => (
+                                  <tr key={m.id} style={{ borderTop: '1px solid #EDE9E0' }}>
+                                    <td style={{ padding: '8px 12px', fontWeight: 600, color: '#1A1A17' }}>{m.name}</td>
+                                    <td style={{ padding: '8px 12px', color: '#6E6B62' }}>{m.email}</td>
+                                    <td style={{ padding: '8px 12px', color: '#6E6B62', whiteSpace: 'nowrap' }}>
+                                      {new Date(m.created_at).toLocaleDateString('nl-BE', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    </td>
+                                    <td style={{ padding: '8px 12px', textAlign: 'right' }}>
+                                      <button
+                                        onClick={() => handleDeleteTeamMember(p.id, m.id, m.name)}
+                                        disabled={teamDeleteLoading === m.id}
+                                        style={{ background: '#FEE9E7', border: '1px solid #F5C6C0', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: teamDeleteLoading === m.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: '#B65436' }}
+                                      >
+                                        {teamDeleteLoading === m.id ? '…' : 'Verwijder'}
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

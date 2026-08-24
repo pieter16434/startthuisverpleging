@@ -6,8 +6,13 @@ const SECRET = new TextEncoder().encode(
 )
 const COOKIE = 'partner_session'
 
-export async function signPartnerToken(partnerId: string, email: string) {
-  return new SignJWT({ partnerId, email })
+export async function signPartnerToken(
+  partnerId: string,
+  email: string,
+  role: 'owner' | 'member' = 'owner',
+  memberId?: string,
+) {
+  return new SignJWT({ partnerId, email, role, memberId: memberId ?? null })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('8h')
@@ -17,7 +22,7 @@ export async function signPartnerToken(partnerId: string, email: string) {
 export async function verifyPartnerToken(token: string) {
   try {
     const { payload } = await jwtVerify(token, SECRET)
-    return payload as { partnerId: string; email: string }
+    return payload as { partnerId: string; email: string; role: 'owner' | 'member'; memberId: string | null }
   } catch {
     return null
   }

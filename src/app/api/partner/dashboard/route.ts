@@ -46,6 +46,8 @@ export async function GET() {
       stats: { totalCodes, verifiedCodes, toInvoice, deal1Verified, deal2Verified, deal1ToInvoice, deal2ToInvoice },
       codes: codes ?? [],
       thisMonthCodes,
+      role: session.role ?? 'owner',
+      memberEmail: session.role === 'member' ? session.email : null,
     })
   } catch (err) {
     console.error('[partner/dashboard]', err)

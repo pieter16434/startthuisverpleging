@@ -36,6 +36,8 @@ type DashboardData = {
   }
   codes: Code[]
   thisMonthCodes: Code[]
+  role: 'owner' | 'member'
+  memberEmail: string | null
 }
 
 const PROVINCES: Record<string, string> = {
@@ -106,9 +108,70 @@ export default function PartnerDashboardPage() {
   }
 
   if (!data) return null
-  const { partner, stats, codes, thisMonthCodes } = data
+  const { partner, stats, codes, thisMonthCodes, role, memberEmail } = data
+  const isMember = role === 'member'
   const now = new Date()
   const monthLabel = now.toLocaleDateString('nl-BE', { month: 'long', year: 'numeric' })
+
+  // ── Vereenvoudigde weergave voor teamleden (alleen verificatie) ──────
+  if (isMember) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#F1ECE0', fontFamily: '"Bricolage Grotesque", system-ui, sans-serif' }}>
+        <header style={{ background: '#2A3D2E', padding: '0 clamp(20px,4vw,56px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+          <span style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: '#fff', fontWeight: 700 }}>
+            start<span style={{ color: '#E8D08A' }}>thuisverpleging</span>
+            <span style={{ fontSize: 12, color: '#8A9588', fontFamily: 'system-ui', fontWeight: 400, marginLeft: 10 }}>Partnerportaal</span>
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ color: '#D8D0C0', fontSize: 14 }}>
+              {memberEmail}
+              <span style={{ marginLeft: 8, background: '#E8D08A', color: '#1C2A20', borderRadius: 6, fontSize: 11, fontWeight: 700, padding: '2px 8px' }}>Teamlid</span>
+            </span>
+            <button onClick={handleLogout} style={{ background: 'transparent', border: '1px solid #8A9588', color: '#D8D0C0', borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>
+              Uitloggen
+            </button>
+          </div>
+        </header>
+        <main style={{ maxWidth: 600, margin: '60px auto', padding: '0 clamp(20px,4vw,56px)' }}>
+          <div style={{ marginBottom: 28 }}>
+            <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 26, color: '#1A1A17', marginBottom: 4 }}>Code verifiëren</h1>
+            <p style={{ color: '#6E6B62', fontSize: 15, margin: 0 }}>{partner.business_name} — {partner.service_type}</p>
+          </div>
+          <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 16, padding: '32px' }}>
+            <p style={{ color: '#6E6B62', fontSize: 14, marginBottom: 20, lineHeight: 1.6 }}>
+              Voer de code in die de klant toont. Elke code kan slechts eenmaal geverifieerd worden.
+            </p>
+            <form onSubmit={handleVerify} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <input
+                value={codeInput}
+                onChange={e => { setCodeInput(e.target.value.toUpperCase()); setVerifyResult(null) }}
+                placeholder="STH-ANT-XXXXXX"
+                maxLength={20}
+                style={{ flex: '1 1 200px', padding: '12px 16px', border: '1.5px solid #D8D0C0', borderRadius: 8, fontSize: 16, fontWeight: 700, letterSpacing: 2, background: '#fff', color: '#1A1A17', outline: 'none', fontFamily: 'inherit' }}
+              />
+              <button type="submit" disabled={verifyLoading || !codeInput.trim()} style={{ padding: '12px 24px', background: verifyLoading || !codeInput.trim() ? '#8A9588' : '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: verifyLoading || !codeInput.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                {verifyLoading ? 'Bezig…' : 'Verifiëren →'}
+              </button>
+            </form>
+            {verifyResult && (
+              <div style={{ marginTop: 16, padding: '14px 18px', borderRadius: 10, background: verifyResult.valid && !verifyResult.alreadyVerified ? '#E8F5E9' : verifyResult.valid ? '#FFF8E7' : '#FEE9E7', border: `1px solid ${verifyResult.valid && !verifyResult.alreadyVerified ? '#C8E6C9' : verifyResult.valid ? '#E8D08A' : '#F5C6C0'}`, color: verifyResult.valid && !verifyResult.alreadyVerified ? '#2A3D2E' : verifyResult.valid ? '#7A6020' : '#B65436' }}>
+                <p style={{ fontWeight: 700, margin: '0 0 4px', fontSize: 15 }}>{verifyResult.message}</p>
+                {verifyResult.customer && (
+                  <p style={{ margin: 0, fontSize: 14, opacity: 0.85 }}>
+                    Klant: {verifyResult.customer.first_name} {verifyResult.customer.last_name}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          <p style={{ fontSize: 13, color: '#8A9588', marginTop: 20 }}>
+            Vragen? <a href="mailto:info@domuscare.be" style={{ color: '#B65436' }}>info@domuscare.be</a>
+          </p>
+        </main>
+      </div>
+    )
+  }
+  // ── Einde teamlid-weergave ───────────────────────────────────────────
 
   return (
     <div style={{ minHeight: '100vh', background: '#F1ECE0', fontFamily: '"Bricolage Grotesque", system-ui, sans-serif' }}>
@@ -127,7 +190,10 @@ export default function PartnerDashboardPage() {
           <span style={{ fontSize: 12, color: '#8A9588', fontFamily: 'system-ui', fontWeight: 400, marginLeft: 10 }}>Partnerportaal</span>
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ color: '#D8D0C0', fontSize: 14 }}>{partner.name}</span>
+          <span style={{ color: '#D8D0C0', fontSize: 14 }}>
+            {partner.name}
+            {isMember && <span style={{ marginLeft: 8, background: '#E8D08A', color: '#1C2A20', borderRadius: 6, fontSize: 11, fontWeight: 700, padding: '2px 8px' }}>Teamlid</span>}
+          </span>
           <button
             onClick={handleLogout}
             style={{

@@ -81,10 +81,15 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Markeer als geverifieerd
+    // Markeer als geverifieerd (bijhouden wie verifieert: owner of teamlid)
     await supabase
       .from('partner_codes')
-      .update({ is_verified: true, verified_at: new Date().toISOString() })
+      .update({
+        is_verified: true,
+        verified_at: new Date().toISOString(),
+        verified_by_member_id: session.memberId ?? null,
+        verified_by_email: session.email,
+      })
       .eq('id', partnerCode.id)
 
     return NextResponse.json({
