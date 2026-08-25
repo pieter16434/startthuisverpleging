@@ -40,6 +40,25 @@ export async function PATCH(
   }
 }
 
+// GET — kantoor detail incl. teamleden
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: { id: string; officeId: string } }
+) {
+  const session = await getAdminSession()
+  if (!session) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  const supabase = createServiceClient()
+
+  const { data: teamMembers } = await supabase
+    .from('office_team_members')
+    .select('id, name, email, is_active, created_at')
+    .eq('office_id', params.officeId)
+    .order('created_at', { ascending: true })
+
+  return NextResponse.json({ team_members: teamMembers ?? [] })
+}
+
 // DELETE — kantoor permanent verwijderen
 export async function DELETE(
   _req: NextRequest,

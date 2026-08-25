@@ -41,6 +41,8 @@ type OfficeDashData = {
     toInvoice: number
     effectiveFee: number
   }
+  role: 'owner' | 'member'
+  memberEmail: string | null
 }
 
 function fmtDate(s: string | null) {
@@ -100,7 +102,54 @@ export default function OfficeDashboardPage() {
     </div>
   )
   if (!data) return null
-  const { office, org, codes, stats } = data
+  const { office, org, codes, stats, role, memberEmail } = data
+  const isMember = role === 'member'
+
+  // Teamlid: alleen verify widget tonen
+  if (isMember) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#F1ECE0', fontFamily: '"Bricolage Grotesque", system-ui, sans-serif' }}>
+        <header style={{ background: '#2A3D2E', padding: '0 clamp(20px,4vw,56px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: '#fff', fontWeight: 700 }}>
+              start<span style={{ color: '#E8D08A' }}>thuisverpleging</span>
+            </span>
+            <span style={{ fontSize: 12, color: '#8A9588', fontFamily: 'system-ui' }}>Kantoorportaal</span>
+            <span style={{ background: '#3949AB', color: '#fff', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6 }}>Teamlid</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <span style={{ color: '#D8D0C0', fontSize: 13 }}>{memberEmail}</span>
+            <button onClick={handleLogout} style={{ background: 'transparent', border: '1px solid #8A9588', color: '#D8D0C0', borderRadius: 6, padding: '6px 14px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}>Uitloggen</button>
+          </div>
+        </header>
+        <main style={{ maxWidth: 600, margin: '60px auto', padding: '0 clamp(20px,4vw,40px)' }}>
+          <div style={{ background: '#2A3D2E', borderRadius: 12, padding: '14px 18px', marginBottom: 28 }}>
+            <p style={{ fontSize: 11, color: '#8A9588', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 3px' }}>Onderdeel van</p>
+            <p style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: 0 }}>{office.business_name} · {org.business_name}</p>
+          </div>
+          <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 14, padding: '28px 32px' }}>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: '#1A1A17', marginBottom: 6 }}>Code verifiëren</h2>
+            <p style={{ color: '#6E6B62', fontSize: 14, marginBottom: 20 }}>
+              {org.code_mode === 'shared' ? 'Voer de klantcode in. Een gedeelde code kan slechts eenmaal worden geverifieerd.' : 'Voer de klantcode in die voor uw kantoor is aangemaakt.'}
+            </p>
+            <form onSubmit={handleVerify} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <input value={verifyCode} onChange={e => { setVerifyCode(e.target.value.toUpperCase()); setVerifyMsg(null) }} placeholder="ABCD-1234" maxLength={20}
+                style={{ flex: '1 1 200px', padding: '11px 14px', border: '1.5px solid #D8D0C0', borderRadius: 8, fontSize: 16, fontWeight: 700, letterSpacing: 2, background: '#fff', color: '#1A1A17', outline: 'none', fontFamily: 'inherit' }} />
+              <button type="submit" disabled={verifyLoading || !verifyCode.trim()}
+                style={{ padding: '11px 22px', background: verifyLoading || !verifyCode.trim() ? '#8A9588' : '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, fontSize: 15, fontWeight: 600, cursor: verifyLoading || !verifyCode.trim() ? 'not-allowed' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                {verifyLoading ? 'Bezig…' : 'Verifiëren →'}
+              </button>
+            </form>
+            {verifyMsg && (
+              <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 8, fontSize: 14, fontWeight: 500, background: verifyMsg.type === 'ok' ? '#E8F5E9' : '#FEE9E7', color: verifyMsg.type === 'ok' ? '#2A3D2E' : '#B65436', border: `1px solid ${verifyMsg.type === 'ok' ? '#C8E6C9' : '#F5C6C0'}` }}>
+                {verifyMsg.text}
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   const filtered = codes.filter(c => {
     const q = search.toLowerCase()

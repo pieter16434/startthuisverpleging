@@ -63,6 +63,8 @@ export async function POST(req: NextRequest) {
         is_verified: true,
         verified_at: new Date().toISOString(),
         verified_by_office_id: session.officeId,
+        verified_by_member_id: session.memberId ?? null,
+        verified_by_email: session.email,
       })
       .eq('id', codeRow.id)
 

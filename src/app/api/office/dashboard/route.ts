@@ -61,6 +61,8 @@ export async function GET() {
       stats: { totalCodes, verifiedCodes: verifiedCodes.length, toInvoice, effectiveFee },
       codes,
       thisMonthCodes,
+      role: session.role ?? 'owner',
+      memberEmail: session.role === 'member' ? session.email : null,
     })
   } catch (err) {
     console.error('[office/dashboard]', err)

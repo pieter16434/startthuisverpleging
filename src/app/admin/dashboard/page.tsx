@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 const PROVINCES: Record<string, string> = {
@@ -120,6 +120,12 @@ export default function AdminDashboard() {
   const [editOrgLoading, setEditOrgLoading] = useState(false)
   const [officeDeleteLoading, setOfficeDeleteLoading] = useState<string | null>(null)
   const [orgDeleteLoading, setOrgDeleteLoading] = useState<string | null>(null)
+  // Kantoor teamleden state
+  const [officeTeamMembersMap, setOfficeTeamMembersMap] = useState<Record<string, { id: string; name: string; email: string; created_at: string }[]>>({})
+  const [officeTeamExpandedMap, setOfficeTeamExpandedMap] = useState<Record<string, boolean>>({})
+  const [officeTeamInviteLinkMap, setOfficeTeamInviteLinkMap] = useState<Record<string, string>>({})
+  const [officeTeamInviteLoading, setOfficeTeamInviteLoading] = useState<string | null>(null)
+  const [officeTeamDeleteLoading, setOfficeTeamDeleteLoading] = useState<string | null>(null)
 
   // Influencer state
   const [influencers, setInfluencers] = useState<Influencer[]>([])
@@ -413,6 +419,38 @@ export default function AdminDashboard() {
       setTimeout(() => setSuccessMsg(''), 3000)
     } catch { alert('Mislukt') }
     finally { setOrgDeleteLoading(null) }
+  }
+
+  async function loadOfficeTeamMembers(orgId: string, officeId: string) {
+    const res = await fetch(`/api/admin/organizations/${orgId}/offices/${officeId}`)
+    if (res.ok) {
+      const d = await res.json()
+      setOfficeTeamMembersMap(m => ({ ...m, [officeId]: d.team_members ?? [] }))
+    }
+  }
+
+  async function handleGenerateOfficeTeamInvite(orgId: string, officeId: string) {
+    setOfficeTeamInviteLoading(officeId)
+    try {
+      const res = await fetch(`/api/admin/organizations/${orgId}/offices/${officeId}/team-invite`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) setOfficeTeamInviteLinkMap(m => ({ ...m, [officeId]: data.url }))
+      else alert(data.error ?? 'Mislukt')
+    } catch { alert('Mislukt') }
+    finally { setOfficeTeamInviteLoading(null) }
+  }
+
+  async function handleDeleteOfficeTeamMember(orgId: string, officeId: string, memberId: string, name: string) {
+    if (!confirm(`Teamlid "${name}" verwijderen?`)) return
+    setOfficeTeamDeleteLoading(memberId)
+    try {
+      const res = await fetch(`/api/admin/organizations/${orgId}/offices/${officeId}/team/${memberId}`, { method: 'DELETE' })
+      if (!res.ok) { alert('Verwijderen mislukt'); return }
+      setOfficeTeamMembersMap(m => ({ ...m, [officeId]: (m[officeId] ?? []).filter(t => t.id !== memberId) }))
+      setSuccessMsg(`Teamlid "${name}" verwijderd ✓`)
+      setTimeout(() => setSuccessMsg(''), 3000)
+    } catch { alert('Mislukt') }
+    finally { setOfficeTeamDeleteLoading(null) }
   }
 
   async function handleToggleOrgActive(org: OrgAdmin) {
@@ -1631,21 +1669,106 @@ export default function AdminDashboard() {
                         </thead>
                         <tbody>
                           {org.offices.map((office, i) => (
-                            <tr key={office.id} style={{ borderTop: '1px solid #EDE9E0', background: i % 2 === 0 ? 'transparent' : '#FAFAF7' }}>
+                            <React.Fragment key={office.id}>
+                            <tr style={{ borderTop: '1px solid #EDE9E0', background: i % 2 === 0 ? 'transparent' : '#FAFAF7' }}>
                               <td style={{ padding: '10px 20px', fontWeight: 600, color: '#1A1A17' }}>{office.business_name}</td>
                               <td style={{ padding: '10px 20px', color: '#6E6B62' }}>{PROVINCES[office.province] ?? office.province}</td>
                               <td style={{ padding: '10px 20px' }}><Pill active={office.is_active} /></td>
                               <td style={{ padding: '10px 20px', fontWeight: 700, color: '#2A3D2E' }}>{office.verified_codes}</td>
                               <td style={{ padding: '10px 20px', textAlign: 'right' }}>
-                                <button
-                                  onClick={() => handleDeleteOffice(org.id, office.id, office.business_name)}
-                                  disabled={officeDeleteLoading === office.id}
-                                  style={{ background: '#FEE9E7', border: '1px solid #F5C6C0', borderRadius: 6, padding: '4px 12px', fontSize: 12, cursor: officeDeleteLoading === office.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: '#B65436' }}
-                                >
-                                  {officeDeleteLoading === office.id ? '…' : 'Verwijder'}
-                                </button>
+                                <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                                  <button
+                                    onClick={() => {
+                                      const expanded = !officeTeamExpandedMap[office.id]
+                                      setOfficeTeamExpandedMap(m => ({ ...m, [office.id]: expanded }))
+                                      if (expanded) loadOfficeTeamMembers(org.id, office.id)
+                                    }}
+                                    style={{ background: '#EEF0FD', border: '1px solid #C5CAE9', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', color: '#3949AB', whiteSpace: 'nowrap' }}
+                                  >
+                                    👥 Team
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteOffice(org.id, office.id, office.business_name)}
+                                    disabled={officeDeleteLoading === office.id}
+                                    style={{ background: '#FEE9E7', border: '1px solid #F5C6C0', borderRadius: 6, padding: '4px 12px', fontSize: 12, cursor: officeDeleteLoading === office.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: '#B65436' }}
+                                  >
+                                    {officeDeleteLoading === office.id ? '…' : 'Verwijder'}
+                                  </button>
+                                </div>
                               </td>
                             </tr>
+                            {/* Teamleden sectie per kantoor */}
+                            {officeTeamExpandedMap[office.id] && (
+                              <tr>
+                                <td colSpan={5} style={{ padding: '0 20px 16px', background: '#F7F5EF' }}>
+                                  <div style={{ borderTop: '1px solid #EDE9E0', paddingTop: 14 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, flexWrap: 'wrap', gap: 8 }}>
+                                      <span style={{ fontSize: 13, fontWeight: 700, color: '#1A1A17' }}>
+                                        Teamleden <span style={{ color: '#6E6B62', fontWeight: 400 }}>({officeTeamMembersMap[office.id]?.length ?? 0})</span>
+                                      </span>
+                                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                                        {officeTeamInviteLinkMap[office.id] && (
+                                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 8, padding: '5px 10px', maxWidth: 300 }}>
+                                            <code style={{ fontSize: 11, color: '#3A3A33', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                              {officeTeamInviteLinkMap[office.id]}
+                                            </code>
+                                            <button
+                                              onClick={() => navigator.clipboard.writeText(officeTeamInviteLinkMap[office.id]).then(() => { setSuccessMsg('Link gekopieerd ✓'); setTimeout(() => setSuccessMsg(''), 2000) })}
+                                              style={{ background: '#3949AB', color: '#fff', border: 'none', borderRadius: 5, padding: '3px 8px', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                                            >
+                                              Kopieer
+                                            </button>
+                                          </div>
+                                        )}
+                                        <button
+                                          onClick={() => handleGenerateOfficeTeamInvite(org.id, office.id)}
+                                          disabled={officeTeamInviteLoading === office.id}
+                                          style={{ background: '#3949AB', color: '#fff', border: 'none', borderRadius: 6, padding: '5px 12px', fontSize: 12, fontWeight: 600, cursor: officeTeamInviteLoading === office.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}
+                                        >
+                                          {officeTeamInviteLoading === office.id ? '…' : '+ Uitnodigen'}
+                                        </button>
+                                      </div>
+                                    </div>
+                                    {!officeTeamMembersMap[office.id] ? (
+                                      <p style={{ color: '#6E6B62', fontSize: 12 }}>Laden…</p>
+                                    ) : officeTeamMembersMap[office.id].length === 0 ? (
+                                      <p style={{ color: '#8A9588', fontSize: 12, fontStyle: 'italic' }}>Geen teamleden. Genereer een uitnodigingslink.</p>
+                                    ) : (
+                                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                                        <thead>
+                                          <tr style={{ background: '#F1ECE0' }}>
+                                            {['Naam', 'E-mail', 'Aangemaakt', ''].map(h => (
+                                              <th key={h} style={{ textAlign: 'left', padding: '6px 10px', color: '#6E6B62', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
+                                            ))}
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {officeTeamMembersMap[office.id].map(m => (
+                                            <tr key={m.id} style={{ borderTop: '1px solid #EDE9E0' }}>
+                                              <td style={{ padding: '7px 10px', fontWeight: 600, color: '#1A1A17' }}>{m.name}</td>
+                                              <td style={{ padding: '7px 10px', color: '#6E6B62' }}>{m.email}</td>
+                                              <td style={{ padding: '7px 10px', color: '#6E6B62', whiteSpace: 'nowrap' }}>
+                                                {new Date(m.created_at).toLocaleDateString('nl-BE', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                              </td>
+                                              <td style={{ padding: '7px 10px', textAlign: 'right' }}>
+                                                <button
+                                                  onClick={() => handleDeleteOfficeTeamMember(org.id, office.id, m.id, m.name)}
+                                                  disabled={officeTeamDeleteLoading === m.id}
+                                                  style={{ background: '#FEE9E7', border: '1px solid #F5C6C0', borderRadius: 5, padding: '3px 8px', fontSize: 11, cursor: officeTeamDeleteLoading === m.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: '#B65436' }}
+                                                >
+                                                  {officeTeamDeleteLoading === m.id ? '…' : 'Verwijder'}
+                                                </button>
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                            </React.Fragment>
                           ))}
                         </tbody>
                       </table>
