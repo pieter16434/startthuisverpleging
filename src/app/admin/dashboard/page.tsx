@@ -944,7 +944,7 @@ export default function AdminDashboard() {
                               onClick={() => {
                                 const expanded = !teamExpandedMap[p.id]
                                 setTeamExpandedMap(m => ({ ...m, [p.id]: expanded }))
-                                if (expanded && !teamMembersMap[p.id]) loadTeamMembers(p.id)
+                                if (expanded) loadTeamMembers(p.id)
                               }}
                               style={{ background: '#EEF0FD', border: '1px solid #C5CAE9', borderRadius: 6, padding: '6px 12px', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: '#3949AB' }}
                             >

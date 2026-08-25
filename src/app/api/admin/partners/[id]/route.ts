@@ -109,5 +109,11 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   const toInvoice = deal1Verified * Number(partner?.fee_per_customer ?? 0)
     + deal2Verified * Number((partner as unknown as { deal2_fee?: number })?.deal2_fee ?? 0)
 
-  return NextResponse.json({ partner, codes: codes ?? [], stats: { verified, toInvoice, deal1Verified, deal2Verified } })
+  const { data: teamMembers } = await supabase
+    .from('partner_team_members')
+    .select('id, name, email, is_active, created_at')
+    .eq('partner_id', params.id)
+    .order('created_at', { ascending: true })
+
+  return NextResponse.json({ partner, codes: codes ?? [], stats: { verified, toInvoice, deal1Verified, deal2Verified }, team_members: teamMembers ?? [] })
 }
