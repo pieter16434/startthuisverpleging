@@ -39,3 +39,33 @@ export async function PATCH(
     return NextResponse.json({ error: 'Update mislukt' }, { status: 500 })
   }
 }
+
+// DELETE — kantoor permanent verwijderen
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: { id: string; officeId: string } }
+) {
+  const session = await getAdminSession()
+  if (!session) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  const supabase = createServiceClient()
+
+  // Verifieer dat het kantoor bij deze organisatie hoort
+  const { data: office } = await supabase
+    .from('organization_offices')
+    .select('id')
+    .eq('id', params.officeId)
+    .eq('organization_id', params.id)
+    .single()
+
+  if (!office) return NextResponse.json({ error: 'Kantoor niet gevonden' }, { status: 404 })
+
+  const { error } = await supabase
+    .from('organization_offices')
+    .delete()
+    .eq('id', params.officeId)
+
+  if (error) return NextResponse.json({ error: 'Verwijderen mislukt' }, { status: 500 })
+
+  return NextResponse.json({ ok: true })
+}

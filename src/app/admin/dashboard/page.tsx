@@ -118,6 +118,7 @@ export default function AdminDashboard() {
   const [officeLinkLoading, setOfficeLinkLoading] = useState<string | null>(null)
   const [editOrg, setEditOrg] = useState<OrgAdmin | null>(null)
   const [editOrgLoading, setEditOrgLoading] = useState(false)
+  const [officeDeleteLoading, setOfficeDeleteLoading] = useState<string | null>(null)
 
   // Influencer state
   const [influencers, setInfluencers] = useState<Influencer[]>([])
@@ -382,6 +383,22 @@ export default function AdminDashboard() {
       else alert(data.error ?? 'Mislukt')
     } catch { alert('Mislukt') }
     finally { setOfficeLinkLoading(null) }
+  }
+
+  async function handleDeleteOffice(orgId: string, officeId: string, officeName: string) {
+    if (!confirm(`Kantoor "${officeName}" verwijderen?`)) return
+    setOfficeDeleteLoading(officeId)
+    try {
+      const res = await fetch(`/api/admin/organizations/${orgId}/offices/${officeId}`, { method: 'DELETE' })
+      if (!res.ok) { alert('Verwijderen mislukt'); return }
+      setOrgs(prev => prev.map(o => o.id === orgId
+        ? { ...o, offices: o.offices.filter(off => off.id !== officeId) }
+        : o
+      ))
+      setSuccessMsg(`Kantoor "${officeName}" verwijderd ✓`)
+      setTimeout(() => setSuccessMsg(''), 3000)
+    } catch { alert('Mislukt') }
+    finally { setOfficeDeleteLoading(null) }
   }
 
   async function handleToggleOrgActive(org: OrgAdmin) {
@@ -1584,7 +1601,7 @@ export default function AdminDashboard() {
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                         <thead>
                           <tr style={{ background: '#F1ECE0' }}>
-                            {['Kantoor', 'Provincie', 'Status', 'Geverifieerde klanten'].map(h => (
+                            {['Kantoor', 'Provincie', 'Status', 'Geverifieerde klanten', ''].map(h => (
                               <th key={h} style={{ textAlign: 'left', padding: '8px 20px', color: '#6E6B62', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>{h}</th>
                             ))}
                           </tr>
@@ -1596,6 +1613,15 @@ export default function AdminDashboard() {
                               <td style={{ padding: '10px 20px', color: '#6E6B62' }}>{PROVINCES[office.province] ?? office.province}</td>
                               <td style={{ padding: '10px 20px' }}><Pill active={office.is_active} /></td>
                               <td style={{ padding: '10px 20px', fontWeight: 700, color: '#2A3D2E' }}>{office.verified_codes}</td>
+                              <td style={{ padding: '10px 20px', textAlign: 'right' }}>
+                                <button
+                                  onClick={() => handleDeleteOffice(org.id, office.id, office.business_name)}
+                                  disabled={officeDeleteLoading === office.id}
+                                  style={{ background: '#FEE9E7', border: '1px solid #F5C6C0', borderRadius: 6, padding: '4px 12px', fontSize: 12, cursor: officeDeleteLoading === office.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: '#B65436' }}
+                                >
+                                  {officeDeleteLoading === office.id ? '…' : 'Verwijder'}
+                                </button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>

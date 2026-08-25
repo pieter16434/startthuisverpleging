@@ -147,12 +147,12 @@ function OnboardingContent() {
           </div>
           <div style={fieldWrap}>
             <label style={labelStyle}>E-mailadres (wordt uw login)</label>
-            <input type="email" required value={form.email} onChange={e => setField('email', e.target.value)} placeholder="antwerpen@xerius.be" style={inputStyle} />
+            <input type="email" required value={form.email} onChange={e => setField('email', e.target.value)} placeholder="kantoor@hetbedrijf.be" style={inputStyle} />
           </div>
         </div>
         <div style={fieldWrap}>
           <label style={labelStyle}>Naam kantoor</label>
-          <input type="text" required value={form.business_name} onChange={e => setField('business_name', e.target.value)} placeholder="Xerius Antwerpen" style={inputStyle} />
+          <input type="text" required value={form.business_name} onChange={e => setField('business_name', e.target.value)} placeholder="Kantoor Antwerpen" style={inputStyle} />
         </div>
         <div style={fieldWrap}>
           <label style={labelStyle}>Provincie</label>
@@ -173,7 +173,7 @@ function OnboardingContent() {
         </div>
         <div style={fieldWrap}>
           <label style={labelStyle}>Website <span style={{ color: '#8A9588', fontWeight: 400, textTransform: 'none', fontSize: 11 }}>(optioneel)</span></label>
-          <input type="url" value={form.website} onChange={e => setField('website', e.target.value)} placeholder="https://www.xerius.be/antwerpen" style={inputStyle} />
+          <input type="url" value={form.website} onChange={e => setField('website', e.target.value)} placeholder="https://www.hetbedrijf.be/kantoor" style={inputStyle} />
         </div>
 
         {/* Eigen aanbod (indien vereist) */}
