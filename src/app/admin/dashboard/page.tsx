@@ -119,6 +119,7 @@ export default function AdminDashboard() {
   const [editOrg, setEditOrg] = useState<OrgAdmin | null>(null)
   const [editOrgLoading, setEditOrgLoading] = useState(false)
   const [officeDeleteLoading, setOfficeDeleteLoading] = useState<string | null>(null)
+  const [orgDeleteLoading, setOrgDeleteLoading] = useState<string | null>(null)
 
   // Influencer state
   const [influencers, setInfluencers] = useState<Influencer[]>([])
@@ -399,6 +400,19 @@ export default function AdminDashboard() {
       setTimeout(() => setSuccessMsg(''), 3000)
     } catch { alert('Mislukt') }
     finally { setOfficeDeleteLoading(null) }
+  }
+
+  async function handleDeleteOrg(org: OrgAdmin) {
+    if (!confirm(`Organisatie "${org.business_name}" en alle ${org.offices.length} kantoren permanent verwijderen?`)) return
+    setOrgDeleteLoading(org.id)
+    try {
+      const res = await fetch(`/api/admin/organizations/${org.id}`, { method: 'DELETE' })
+      if (!res.ok) { alert('Verwijderen mislukt'); return }
+      setOrgs(prev => prev.filter(o => o.id !== org.id))
+      setSuccessMsg(`Organisatie "${org.business_name}" verwijderd ✓`)
+      setTimeout(() => setSuccessMsg(''), 3000)
+    } catch { alert('Mislukt') }
+    finally { setOrgDeleteLoading(null) }
   }
 
   async function handleToggleOrgActive(org: OrgAdmin) {
@@ -1593,6 +1607,15 @@ export default function AdminDashboard() {
                         >
                           {org.is_active ? 'Deactiveren' : 'Activeren'}
                         </button>
+                        {!org.is_active && (
+                          <button
+                            onClick={() => handleDeleteOrg(org)}
+                            disabled={orgDeleteLoading === org.id}
+                            style={{ background: '#FEE9E7', border: '1px solid #F5C6C0', borderRadius: 7, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: orgDeleteLoading === org.id ? 'not-allowed' : 'pointer', fontFamily: 'inherit', color: '#B65436' }}
+                          >
+                            {orgDeleteLoading === org.id ? '…' : 'Verwijderen'}
+                          </button>
+                        )}
                       </div>
                     </div>
 
