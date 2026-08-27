@@ -19,7 +19,7 @@ export async function GET() {
   // Tel kantoren per organisatie
   const { data: offices } = await supabase
     .from('organization_offices')
-    .select('id, organization_id, business_name, province, is_active, fee_per_customer')
+    .select('id, organization_id, name, business_name, email, province, province_2, is_active, fee_per_customer, phone, website, office_address, discount_description, vat_number, billing_address, notes')
 
   // Tel geverifieerde codes per organisatie
   const { data: verifiedCodes } = await supabase

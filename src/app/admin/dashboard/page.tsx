@@ -107,7 +107,7 @@ export default function AdminDashboard() {
     bundle_invoicing: boolean; vat_number: string | null; billing_address: string | null
     website: string | null; phone: string | null; notes: string | null
     is_active: boolean; created_at: string
-    offices: { id: string; business_name: string; province: string; is_active: boolean; verified_codes: number }[]
+    offices: { id: string; name: string; email: string; business_name: string; province: string; province_2: string | null; is_active: boolean; verified_codes: number; fee_per_customer: number | null; phone: string | null; website: string | null; office_address: string | null; discount_description: string | null; vat_number: string | null; billing_address: string | null; notes: string | null }[]
     total_verified_codes: number
   }
   const [orgs, setOrgs] = useState<OrgAdmin[]>([])
@@ -118,6 +118,9 @@ export default function AdminDashboard() {
   const [officeLinkLoading, setOfficeLinkLoading] = useState<string | null>(null)
   const [editOrg, setEditOrg] = useState<OrgAdmin | null>(null)
   const [editOrgLoading, setEditOrgLoading] = useState(false)
+  type OfficeEdit = OrgAdmin['offices'][number] & { orgId: string; orgHasOwnDesc: boolean; orgHasOwnBilling: boolean }
+  const [editOffice, setEditOffice] = useState<OfficeEdit | null>(null)
+  const [editOfficeLoading, setEditOfficeLoading] = useState(false)
   const [officeDeleteLoading, setOfficeDeleteLoading] = useState<string | null>(null)
   const [orgDeleteLoading, setOrgDeleteLoading] = useState<string | null>(null)
   // Kantoor teamleden state
@@ -390,6 +393,42 @@ export default function AdminDashboard() {
       else alert(data.error ?? 'Mislukt')
     } catch { alert('Mislukt') }
     finally { setOfficeLinkLoading(null) }
+  }
+
+  async function handleSaveOffice() {
+    if (!editOffice) return
+    setEditOfficeLoading(true)
+    try {
+      const res = await fetch(`/api/admin/organizations/${editOffice.orgId}/offices/${editOffice.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editOffice.name,
+          business_name: editOffice.business_name,
+          email: editOffice.email,
+          province: editOffice.province,
+          province_2: editOffice.province_2 || null,
+          phone: editOffice.phone,
+          website: editOffice.website,
+          office_address: editOffice.office_address,
+          discount_description: editOffice.discount_description,
+          fee_per_customer: editOffice.fee_per_customer,
+          vat_number: editOffice.vat_number,
+          billing_address: editOffice.billing_address,
+          notes: editOffice.notes,
+          is_active: editOffice.is_active,
+        }),
+      })
+      if (!res.ok) { alert('Opslaan mislukt'); return }
+      setOrgs(prev => prev.map(o => ({
+        ...o,
+        offices: o.offices.map(off => off.id === editOffice.id ? { ...editOffice } : off),
+      })))
+      setSuccessMsg('Kantoor opgeslagen ✓')
+      setTimeout(() => setSuccessMsg(''), 3000)
+      setEditOffice(null)
+    } catch { alert('Mislukt') }
+    finally { setEditOfficeLoading(false) }
   }
 
   async function handleDeleteOffice(orgId: string, officeId: string, officeName: string) {
@@ -1672,11 +1711,20 @@ export default function AdminDashboard() {
                             <React.Fragment key={office.id}>
                             <tr style={{ borderTop: '1px solid #EDE9E0', background: i % 2 === 0 ? 'transparent' : '#FAFAF7' }}>
                               <td style={{ padding: '10px 20px', fontWeight: 600, color: '#1A1A17' }}>{office.business_name}</td>
-                              <td style={{ padding: '10px 20px', color: '#6E6B62' }}>{PROVINCES[office.province] ?? office.province}</td>
+                              <td style={{ padding: '10px 20px', color: '#6E6B62' }}>
+                                {PROVINCES[office.province] ?? office.province}
+                                {office.province_2 && <span style={{ color: '#3949AB', fontWeight: 600 }}> + {PROVINCES[office.province_2] ?? office.province_2}</span>}
+                              </td>
                               <td style={{ padding: '10px 20px' }}><Pill active={office.is_active} /></td>
                               <td style={{ padding: '10px 20px', fontWeight: 700, color: '#2A3D2E' }}>{office.verified_codes}</td>
                               <td style={{ padding: '10px 20px', textAlign: 'right' }}>
                                 <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                                  <button
+                                    onClick={() => setEditOffice({ ...office, orgId: org.id, orgHasOwnDesc: org.offices_have_own_description, orgHasOwnBilling: org.offices_have_own_billing })}
+                                    style={{ background: 'transparent', border: '1px solid #D8D0C0', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', color: '#3A3A33', whiteSpace: 'nowrap' }}
+                                  >
+                                    Bewerken
+                                  </button>
                                   <button
                                     onClick={() => {
                                       const expanded = !officeTeamExpandedMap[office.id]
@@ -1786,6 +1834,112 @@ export default function AdminDashboard() {
         )}
 
       </main>
+
+      {/* ── MODAL: KANTOOR BEWERKEN ── */}
+      {editOffice && (
+        <div onClick={e => { if (e.target === e.currentTarget) setEditOffice(null) }} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ background: '#FBF8F2', borderRadius: 16, padding: '32px', width: '100%', maxWidth: 560, position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}>
+            <button onClick={() => setEditOffice(null)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#6E6B62', lineHeight: 1 }}>✕</button>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 20, color: '#1A1A17', marginBottom: 20 }}>Kantoor bewerken — {editOffice.business_name}</h2>
+
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 12px', borderBottom: '1px solid #D8D0C0', paddingBottom: 8 }}>Contactgegevens</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Naam contactpersoon</label>
+                <input value={editOffice.name ?? ''} onChange={e => setEditOffice({ ...editOffice, name: e.target.value })} style={inputStyle} />
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>E-mailadres</label>
+                <input type="email" value={editOffice.email ?? ''} onChange={e => setEditOffice({ ...editOffice, email: e.target.value })} style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Naam kantoor</label>
+              <input value={editOffice.business_name ?? ''} onChange={e => setEditOffice({ ...editOffice, business_name: e.target.value })} style={inputStyle} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Provincie</label>
+                <select value={editOffice.province ?? ''} onChange={e => setEditOffice({ ...editOffice, province: e.target.value })} style={inputStyle}>
+                  {Object.entries(PROVINCES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Tweede provincie <span style={{ color: '#8A9588', fontWeight: 400, fontSize: 11, textTransform: 'none' }}>(optioneel)</span></label>
+                <select value={editOffice.province_2 ?? ''} onChange={e => setEditOffice({ ...editOffice, province_2: e.target.value || null })} style={inputStyle}>
+                  <option value="">— Geen —</option>
+                  {Object.entries(PROVINCES).filter(([k]) => k !== editOffice.province).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Telefoon</label>
+                <input value={editOffice.phone ?? ''} onChange={e => setEditOffice({ ...editOffice, phone: e.target.value || null })} placeholder="+32 3 000 00 00" style={inputStyle} />
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Adres kantoor</label>
+                <input value={editOffice.office_address ?? ''} onChange={e => setEditOffice({ ...editOffice, office_address: e.target.value || null })} placeholder="Kerkstraat 1, 3500 Hasselt" style={inputStyle} />
+              </div>
+            </div>
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Website</label>
+              <input value={editOffice.website ?? ''} onChange={e => setEditOffice({ ...editOffice, website: e.target.value || null })} placeholder="https://www.bedrijf.be" style={inputStyle} />
+            </div>
+
+            {editOffice.orgHasOwnDesc && (
+              <>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 1, margin: '16px 0 12px', borderBottom: '1px solid #D8D0C0', paddingBottom: 8 }}>Aanbod</p>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={labelStyle}>Aanbodtekst voor klanten</label>
+                  <textarea rows={3} value={editOffice.discount_description ?? ''} onChange={e => setEditOffice({ ...editOffice, discount_description: e.target.value || null })} style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
+                </div>
+              </>
+            )}
+
+            {editOffice.orgHasOwnBilling && (
+              <>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 1, margin: '16px 0 12px', borderBottom: '1px solid #D8D0C0', paddingBottom: 8 }}>Facturatie kantoor</p>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={labelStyle}>Tarief per klant (€)</label>
+                  <input type="number" min={0} step="0.01" value={editOffice.fee_per_customer ?? ''} onChange={e => setEditOffice({ ...editOffice, fee_per_customer: e.target.value ? parseFloat(e.target.value) : null })} style={inputStyle} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={labelStyle}>BTW-nummer</label>
+                    <input value={editOffice.vat_number ?? ''} onChange={e => setEditOffice({ ...editOffice, vat_number: e.target.value || null })} placeholder="BE0123.456.789" style={inputStyle} />
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={labelStyle}>Facturatieadres</label>
+                    <input value={editOffice.billing_address ?? ''} onChange={e => setEditOffice({ ...editOffice, billing_address: e.target.value || null })} style={inputStyle} />
+                  </div>
+                </div>
+              </>
+            )}
+
+            <p style={{ fontSize: 11, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 1, margin: '16px 0 12px', borderBottom: '1px solid #D8D0C0', paddingBottom: 8 }}>Intern</p>
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Notities (intern)</label>
+              <textarea rows={2} value={editOffice.notes ?? ''} onChange={e => setEditOffice({ ...editOffice, notes: e.target.value || null })} style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, color: '#3A3A33' }}>
+                <input type="checkbox" checked={editOffice.is_active} onChange={e => setEditOffice({ ...editOffice, is_active: e.target.checked })} style={{ width: 16, height: 16, accentColor: '#2A3D2E' }} />
+                Kantoor actief
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={handleSaveOffice} disabled={editOfficeLoading} style={{ flex: 1, padding: '12px', background: editOfficeLoading ? '#8A9588' : '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: editOfficeLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
+                {editOfficeLoading ? 'Opslaan…' : 'Opslaan'}
+              </button>
+              <button onClick={() => setEditOffice(null)} style={{ padding: '12px 20px', background: 'transparent', border: '1px solid #D8D0C0', borderRadius: 8, fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', color: '#6E6B62' }}>
+                Annuleren
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── MODAL: ORGANISATIE BEWERKEN ── */}
       {editOrg && (

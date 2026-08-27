@@ -17,6 +17,11 @@ export async function PATCH(
 
     const update: Record<string, unknown> = {}
     if (body.notes !== undefined) update.notes = body.notes
+    if (body.province !== undefined) update.province = body.province
+    if (body.province_2 !== undefined) update.province_2 = body.province_2 || null
+    if (body.name !== undefined) update.name = body.name
+    if (body.email !== undefined) update.email = body.email
+    if (body.business_name !== undefined) update.business_name = body.business_name
     if (body.fee_per_customer !== undefined) update.fee_per_customer = body.fee_per_customer ?? null
     if (body.discount_description !== undefined) update.discount_description = body.discount_description || null
     if (body.vat_number !== undefined) update.vat_number = body.vat_number || null

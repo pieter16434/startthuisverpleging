@@ -62,7 +62,7 @@ function OnboardingContent() {
   const [org, setOrg] = useState<OrgInfo | null>(null)
 
   const [form, setForm] = useState({
-    name: '', business_name: '', email: '', province: '',
+    name: '', business_name: '', email: '', province: '', province_2: '',
     website: '', phone: '', office_address: '',
     discount_description: '',
     vat_number: '', billing_address: '', fee_per_customer: '',
@@ -159,6 +159,13 @@ function OnboardingContent() {
           <select required value={form.province} onChange={e => setField('province', e.target.value)} style={{ ...inputStyle }}>
             <option value="">— Kies provincie —</option>
             {Object.entries(PROVINCES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          </select>
+        </div>
+        <div style={fieldWrap}>
+          <label style={labelStyle}>Tweede provincie <span style={{ color: '#8A9588', fontWeight: 400, textTransform: 'none', fontSize: 11 }}>(optioneel — voor kantoren actief in meerdere provincies)</span></label>
+          <select value={form.province_2} onChange={e => setField('province_2', e.target.value)} style={{ ...inputStyle }}>
+            <option value="">— Geen tweede provincie —</option>
+            {Object.entries(PROVINCES).filter(([k]) => k !== form.province).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
