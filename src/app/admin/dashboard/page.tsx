@@ -108,7 +108,8 @@ export default function AdminDashboard() {
     bundle_invoicing: boolean; vat_number: string | null; billing_address: string | null
     website: string | null; phone: string | null; notes: string | null
     is_active: boolean; created_at: string
-    offices: { id: string; name: string; email: string; business_name: string; province: string; province_2: string | null; is_active: boolean; verified_codes: number; fee_per_customer: number | null; phone: string | null; website: string | null; office_address: string | null; discount_description: string | null; vat_number: string | null; billing_address: string | null; notes: string | null }[]
+    show_name: boolean
+    offices: { id: string; name: string; email: string; business_name: string; province: string; province_2: string | null; is_active: boolean; verified_codes: number; fee_per_customer: number | null; phone: string | null; website: string | null; office_address: string | null; discount_description: string | null; vat_number: string | null; billing_address: string | null; notes: string | null; show_name: boolean }[]
     total_verified_codes: number
   }
   const [orgs, setOrgs] = useState<OrgAdmin[]>([])
@@ -419,6 +420,7 @@ export default function AdminDashboard() {
           billing_address: editOffice.billing_address,
           notes: editOffice.notes,
           is_active: editOffice.is_active,
+          show_name: editOffice.show_name,
         }),
       })
       if (!res.ok) { alert('Opslaan mislukt'); return }
@@ -519,6 +521,7 @@ export default function AdminDashboard() {
           bundle_invoicing: editOrg.bundle_invoicing,
           discount_description: editOrg.discount_description,
           is_active: editOrg.is_active,
+          show_name: editOrg.show_name,
         }),
       })
       if (!res.ok) { alert('Opslaan mislukt'); return }
@@ -1946,10 +1949,16 @@ export default function AdminDashboard() {
               <label style={labelStyle}>Notities (intern)</label>
               <textarea rows={2} value={editOffice.notes ?? ''} onChange={e => setEditOffice({ ...editOffice, notes: e.target.value || null })} style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
             </div>
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 14 }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, color: '#3A3A33' }}>
                 <input type="checkbox" checked={editOffice.is_active} onChange={e => setEditOffice({ ...editOffice, is_active: e.target.checked })} style={{ width: 16, height: 16, accentColor: '#2A3D2E' }} />
                 Kantoor actief
+              </label>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, color: '#3A3A33' }}>
+                <input type="checkbox" checked={editOffice.show_name ?? true} onChange={e => setEditOffice({ ...editOffice, show_name: e.target.checked })} style={{ width: 16, height: 16, accentColor: '#2A3D2E' }} />
+                Naam contactpersoon vermelden in codeboek
               </label>
             </div>
 
@@ -1985,9 +1994,13 @@ export default function AdminDashboard() {
               <input type="text" value={editOrg.billing_address ?? ''} onChange={e => setEditOrg(o => o ? { ...o, billing_address: e.target.value } : o)} style={inputStyle} />
               <label style={labelStyle}>Notities (intern)</label>
               <textarea rows={2} value={editOrg.notes ?? ''} onChange={e => setEditOrg(o => o ? { ...o, notes: e.target.value } : o)} style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
                 <input type="checkbox" id="bundle_inv" checked={editOrg.bundle_invoicing} onChange={e => setEditOrg(o => o ? { ...o, bundle_invoicing: e.target.checked } : o)} style={{ width: 18, height: 18 }} />
                 <label htmlFor="bundle_inv" style={{ fontSize: 14, color: '#1A1A17', cursor: 'pointer' }}>Facturatie bundelen (alle kantoren → org)</label>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <input type="checkbox" id="org_show_name" checked={editOrg.show_name ?? true} onChange={e => setEditOrg(o => o ? { ...o, show_name: e.target.checked } : o)} style={{ width: 18, height: 18, accentColor: '#2A3D2E' }} />
+                <label htmlFor="org_show_name" style={{ fontSize: 14, color: '#1A1A17', cursor: 'pointer' }}>Naam contactpersoon vermelden in codeboek</label>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button type="submit" disabled={editOrgLoading} style={{ background: editOrgLoading ? '#8A9588' : '#2A3D2E', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: editOrgLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>

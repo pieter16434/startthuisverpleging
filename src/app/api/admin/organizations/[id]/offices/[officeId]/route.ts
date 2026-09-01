@@ -30,6 +30,7 @@ export async function PATCH(
     if (body.website !== undefined) update.website = body.website || null
     if (body.phone !== undefined) update.phone = body.phone || null
     if (body.office_address !== undefined) update.office_address = body.office_address || null
+    if (body.show_name !== undefined) update.show_name = body.show_name
 
     const { error } = await supabase
       .from('organization_offices')
