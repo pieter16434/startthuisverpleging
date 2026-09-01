@@ -48,6 +48,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (body.deal2_name !== undefined) update.deal2_name = body.deal2_name || null
     if (body.deal2_description !== undefined) update.deal2_description = body.deal2_description || null
     if (body.deal2_fee !== undefined) update.deal2_fee = body.deal2_fee || null
+    if (body.show_name !== undefined) update.show_name = body.show_name
 
     const { error } = await supabase.from('partners').update(update).eq('id', params.id)
     if (error) throw error

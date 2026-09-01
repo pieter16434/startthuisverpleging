@@ -39,6 +39,7 @@ const Schema = z.object({
   phone: z.string().max(50).optional(),
   office_address: z.string().max(300).optional(),
   password: z.string().min(8, 'Wachtwoord moet minimaal 8 tekens bevatten'),
+  show_name: z.boolean().optional(),
   // Dual deal (optioneel)
   has_deal2: z.boolean().optional(),
   deal1_name: z.string().max(100).optional(),
@@ -84,6 +85,7 @@ export async function POST(req: NextRequest) {
       phone: data.phone || null,
       office_address: data.office_address || null,
       is_active: true,
+      show_name: data.show_name ?? true,
       partner_type: 'service',
       has_deal2: data.has_deal2 ?? false,
       deal1_name: data.deal1_name || null,

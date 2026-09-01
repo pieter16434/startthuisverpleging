@@ -10,6 +10,7 @@ export type CodebookPartner = {
   name: string
   service_type: string
   discount_description: string
+  show_name?: boolean         // false = naam contactpersoon verbergen in codeboek
   is_product?: boolean
   deal_name?: string | null  // label voor dual-deal partners (bv. "Eenmanszaak")
   partner_url?: string | null
@@ -390,7 +391,7 @@ function CodebookDocument({ data }: { data: CodebookData }) {
                 <View style={s.partnerInfo}>
                   <Text style={s.partnerName}>{partner.business_name}</Text>
                   <Text style={s.partnerType}>
-                    {partner.service_type}{partner.deal_name ? ` — ${partner.deal_name}` : ''} · {partner.name}
+                    {partner.service_type}{partner.deal_name ? ` — ${partner.deal_name}` : ''}{(partner.show_name !== false && partner.name) ? ` · ${partner.name}` : ''}
                   </Text>
                 </View>
                 {hasUrl ? (

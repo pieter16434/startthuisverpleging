@@ -17,9 +17,14 @@ export async function GET() {
     .order('created_at', { ascending: false })
 
   // Tel kantoren per organisatie
-  const { data: offices } = await supabase
+  const { data: offices, error: officesError } = await supabase
     .from('organization_offices')
     .select('id, organization_id, name, business_name, email, province, province_2, is_active, fee_per_customer, phone, website, office_address, discount_description, vat_number, billing_address, notes')
+
+  // Fallback als province_2 nog niet bestaat in de DB (migratie nog niet uitgevoerd)
+  const officeRows = officesError
+    ? ((await supabase.from('organization_offices').select('id, organization_id, name, business_name, email, province, is_active, fee_per_customer, phone, website, office_address, discount_description, vat_number, billing_address, notes')).data ?? [])
+    : (offices ?? [])
 
   // Tel geverifieerde codes per organisatie
   const { data: verifiedCodes } = await supabase
@@ -28,7 +33,8 @@ export async function GET() {
     .eq('is_verified', true)
 
   const result = orgs?.map(org => {
-    const orgOffices = offices?.filter(o => o.organization_id === org.id) ?? []
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const orgOffices = (officeRows as any[])?.filter((o: { organization_id: string }) => o.organization_id === org.id) ?? []
     const orgVerified = verifiedCodes?.filter(c => c.organization_id === org.id).length ?? 0
     return { ...org, offices: orgOffices, verified_codes: orgVerified }
   })

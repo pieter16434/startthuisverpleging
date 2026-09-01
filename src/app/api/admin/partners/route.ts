@@ -19,6 +19,7 @@ const PartnerSchema = z.object({
   partner_type: z.enum(['service', 'product']).optional(),
   discount_code: z.string().max(50).optional(),
   partner_url: z.string().max(500).optional(),
+  show_name: z.boolean().optional(),
   // Dual deal
   has_deal2: z.boolean().optional(),
   deal1_name: z.string().max(100).optional(),
@@ -104,6 +105,7 @@ export async function POST(req: NextRequest) {
         vat_number: data.vat_number ?? null,
         billing_address: data.billing_address ?? null,
         is_active: true,
+        show_name: data.show_name ?? true,
         partner_type: data.partner_type ?? 'service',
         discount_code: data.discount_code ?? null,
         partner_url: data.partner_url ?? null,

@@ -51,6 +51,7 @@ const Schema = z.object({
   vat_number: z.string().max(50).optional(),
   billing_address: z.string().max(300).optional(),
   fee_per_customer: z.number().min(0).optional(),
+  show_name: z.boolean().optional(),
   password: z.string().min(8),
 })
 
@@ -94,6 +95,7 @@ export async function POST(req: NextRequest) {
       password_hash,
       province: data.province,
       province_2: data.province_2 || null,
+      show_name: data.show_name ?? true,
       is_active: true,
       discount_description: data.discount_description || null,
       fee_per_customer: data.fee_per_customer ?? null,

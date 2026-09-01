@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       id: string; business_name: string; name: string; service_type: string
       discount_description: string; partner_type: string; discount_code: string | null
       partner_url: string | null; website: string | null; phone: string | null
-      office_address: string | null
+      office_address: string | null; show_name: boolean
       has_deal2: boolean; deal1_name: string | null; deal2_name: string | null
       deal2_description: string | null; deal2_fee: number | null
     }
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     const provincesToQuery = customer.province ? [customer.province, 'VLA'] : ['VLA']
     const { data: servicePartners } = await supabase
       .from('partners')
-      .select('id, business_name, name, service_type, discount_description, partner_type, discount_code, partner_url, website, phone, office_address, has_deal2, deal1_name, deal2_name, deal2_description, deal2_fee')
+      .select('id, business_name, name, service_type, discount_description, partner_type, discount_code, partner_url, website, phone, office_address, show_name, has_deal2, deal1_name, deal2_name, deal2_description, deal2_fee')
       .in('province', provincesToQuery)
       .eq('is_active', true)
       .eq('partner_type', 'service')
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     // Product partners: altijd in elk codeboek, vaste kortingscode
     const { data: productPartners } = await supabase
       .from('partners')
-      .select('id, business_name, name, service_type, discount_description, partner_type, discount_code, partner_url, website, phone, office_address, has_deal2, deal1_name, deal2_name, deal2_description, deal2_fee')
+      .select('id, business_name, name, service_type, discount_description, partner_type, discount_code, partner_url, website, phone, office_address, show_name, has_deal2, deal1_name, deal2_name, deal2_description, deal2_fee')
       .eq('is_active', true)
       .eq('partner_type', 'product')
 
@@ -122,24 +122,41 @@ export async function POST(req: NextRequest) {
     type OrgRow = {
       id: string; business_name: string; name: string; service_type: string
       discount_description: string; fee_per_customer: number; code_mode: string
-      website: string | null; phone: string | null
+      website: string | null; phone: string | null; show_name: boolean
     }
     type OfficeRow = {
-      id: string; organization_id: string; business_name: string; province: string
+      id: string; organization_id: string; business_name: string
+      province: string; province_2: string | null
       discount_description: string | null; is_active: boolean
+      website: string | null; phone: string | null; show_name: boolean
     }
 
     const { data: activeOrgs } = await supabase
       .from('organizations')
-      .select('id, business_name, name, service_type, discount_description, fee_per_customer, code_mode, website, phone')
+      .select('id, business_name, name, service_type, discount_description, fee_per_customer, code_mode, website, phone, show_name')
       .eq('is_active', true)
 
-    const orgCodeMap: Record<string, string> = {} // orgId → code (shared) or orgId_officeId → code (per_office)
-    const orgCodebookEntries: { business_name: string; name: string; service_type: string; discount_description: string; code: string; website: string | null; phone: string | null; is_product: boolean; partner_url: null; office_address: null; deal_name: null }[] = []
+    // Haal alle actieve kantoren op (één query voor alle orgs)
+    const { data: allOffices } = await supabase
+      .from('organization_offices')
+      .select('id, organization_id, business_name, province, province_2, discount_description, is_active, website, phone, show_name')
+      .eq('is_active', true)
+
+    const orgCodeMap: Record<string, string> = {}
+    const orgCodebookEntries: { business_name: string; name: string; service_type: string; discount_description: string; code: string; show_name: boolean; website: string | null; phone: string | null; is_product: boolean; partner_url: null; office_address: null; deal_name: null }[] = []
 
     for (const org of (activeOrgs ?? []) as OrgRow[]) {
+      const orgOffices = (allOffices ?? []).filter(o => o.organization_id === org.id) as OfficeRow[]
+
       if (org.code_mode === 'shared') {
-        // Eén code per klant voor de gehele org
+        // Eén gedeelde code per klant — maar ALLEEN als de org een kantoor heeft
+        // in de provincie van de klant (primaire of tweede provincie)
+        if (!customer.province) continue
+        const hasOfficeInProvince = orgOffices.some(
+          o => o.province === customer.province || o.province_2 === customer.province
+        )
+        if (!hasOfficeInProvince) continue // org heeft geen kantoor in deze provincie
+
         let orgCode = generateCode('ORG')
         for (let attempt = 0; attempt < 5; attempt++) {
           const { error } = await supabase.from('organization_codes').insert({
@@ -154,22 +171,20 @@ export async function POST(req: NextRequest) {
           orgCodebookEntries.push({
             business_name: org.business_name, name: org.name,
             service_type: org.service_type, discount_description: org.discount_description,
-            code: orgCodeMap[org.id], website: org.website, phone: org.phone,
+            code: orgCodeMap[org.id], show_name: org.show_name,
+            website: org.website, phone: org.phone,
             is_product: false, partner_url: null, office_address: null, deal_name: null,
           })
         }
       } else {
         // Per kantoor: zoek het kantoor in de provincie van de klant
+        // Controleer ook province_2 (kantoor actief in meerdere provincies)
         if (!customer.province) continue
-        const { data: officeInProvince } = await supabase
-          .from('offices')
-          .select('id, organization_id, business_name, province, discount_description, is_active')
-          .eq('organization_id', org.id)
-          .eq('province', customer.province)
-          .eq('is_active', true)
-          .single()
-        if (!officeInProvince) continue // geen kantoor in die provincie
-        const office = officeInProvince as OfficeRow
+        const office = orgOffices.find(
+          o => o.province === customer.province || o.province_2 === customer.province
+        )
+        if (!office) continue // geen kantoor in die provincie
+
         const officeKey = `${org.id}_${office.id}`
         let officeCode = generateCode(customer.province)
         for (let attempt = 0; attempt < 5; attempt++) {
@@ -186,7 +201,8 @@ export async function POST(req: NextRequest) {
             business_name: office.business_name, name: org.name,
             service_type: org.service_type,
             discount_description: office.discount_description ?? org.discount_description,
-            code: orgCodeMap[officeKey], website: null, phone: null,
+            code: orgCodeMap[officeKey], show_name: office.show_name,
+            website: office.website, phone: office.phone,
             is_product: false, partner_url: null, office_address: null, deal_name: null,
           })
         }
@@ -200,6 +216,7 @@ export async function POST(req: NextRequest) {
         business_name: p.business_name,
         name: p.name,
         service_type: p.service_type,
+        show_name: p.show_name,
         is_product: p.partner_type === 'product',
         partner_url: p.partner_url,
         website: p.website,

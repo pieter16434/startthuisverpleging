@@ -66,6 +66,7 @@ function OnboardingContent() {
     website: '', phone: '', office_address: '',
     discount_description: '',
     vat_number: '', billing_address: '', fee_per_customer: '',
+    show_name: true,
     password: '', confirm: '',
   })
 
@@ -149,6 +150,23 @@ function OnboardingContent() {
             <label style={labelStyle}>E-mailadres (wordt uw login)</label>
             <input type="email" required value={form.email} onChange={e => setField('email', e.target.value)} placeholder="kantoor@hetbedrijf.be" style={inputStyle} />
           </div>
+        </div>
+        <div style={{ ...fieldWrap, background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 8, padding: '12px 14px' }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={form.show_name}
+              onChange={e => setForm(f => ({ ...f, show_name: e.target.checked }))}
+              style={{ width: 16, height: 16, marginTop: 2, accentColor: '#2A3D2E', cursor: 'pointer', flexShrink: 0 }}
+            />
+            <div>
+              <span style={{ fontSize: 14, color: '#1A1A17', fontWeight: 600 }}>Vermeld mijn naam in het codeboek</span>
+              <p style={{ fontSize: 12, color: '#6E6B62', margin: '3px 0 0', lineHeight: 1.5 }}>
+                Uw naam (<strong>{form.name || 'Naam contactpersoon'}</strong>) verschijnt in het persoonlijk codeboekje van de klant naast de kantoornaam.
+                Vink dit uit als u enkel de kantoornaam wil tonen.
+              </p>
+            </div>
+          </label>
         </div>
         <div style={fieldWrap}>
           <label style={labelStyle}>Naam kantoor</label>

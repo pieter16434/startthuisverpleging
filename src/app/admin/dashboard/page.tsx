@@ -23,6 +23,7 @@ type Partner = {
   partner_type: 'service' | 'product'; discount_code: string | null; partner_url: string | null
   has_deal2: boolean; deal1_name: string | null; deal2_name: string | null
   deal2_description: string | null; deal2_fee: number | null
+  show_name: boolean
 }
 type Influencer = {
   id: string; name: string; email: string; platform: string; social_handle: string
@@ -140,11 +141,11 @@ export default function AdminDashboard() {
   const [deleteInfluencerLoading, setDeleteInfluencerLoading] = useState(false)
 
   // Nieuw service partner form
-  const emptyForm = { name: '', business_name: '', email: '', province: '', service_type: '', discount_description: '', fee_per_customer: '', notes: '', vat_number: '', billing_address: '' }
+  const emptyForm = { name: '', business_name: '', email: '', province: '', service_type: '', discount_description: '', fee_per_customer: '', notes: '', vat_number: '', billing_address: '', show_name: true }
   const [form, setForm] = useState(emptyForm)
 
   // Nieuw product partner form
-  const emptyProductForm = { business_name: '', contact_name: '', contact_email: '', service_type: '', discount_description: '', discount_code: '', partner_url: '', notes: '' }
+  const emptyProductForm = { business_name: '', contact_name: '', contact_email: '', service_type: '', discount_description: '', discount_code: '', partner_url: '', notes: '', show_name: true }
   const [productForm, setProductForm] = useState(emptyProductForm)
 
   const loadData = useCallback(async () => {
@@ -224,6 +225,7 @@ export default function AdminDashboard() {
           deal2_name: editPartner.deal2_name,
           deal2_description: editPartner.deal2_description,
           deal2_fee: editPartner.deal2_fee,
+          show_name: editPartner.show_name,
         }),
       })
       if (!res.ok) { setFormError('Opslaan mislukt'); return }
@@ -545,6 +547,7 @@ export default function AdminDashboard() {
           discount_description: productForm.discount_description,
           discount_code: productForm.discount_code || undefined,
           partner_url: productForm.partner_url || undefined,
+          show_name: productForm.show_name,
           fee_per_customer: 0,
           notes: productForm.notes || undefined,
         }),
@@ -780,7 +783,7 @@ export default function AdminDashboard() {
                     ].map(f => (
                       <div key={f.key}>
                         <label style={labelStyle}>{f.label}{!f.req && <span style={{ color: '#9E9B91', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}> (optioneel)</span>}</label>
-                        <input type={f.type ?? 'text'} value={form[f.key as keyof typeof form]} onChange={e => setField(f.key, e.target.value)} placeholder={f.placeholder} required={f.req} style={inputStyle} />
+                        <input type={f.type ?? 'text'} value={form[f.key as keyof typeof form] as string} onChange={e => setField(f.key, e.target.value)} placeholder={f.placeholder} required={f.req} style={inputStyle} />
                       </div>
                     ))}
                     <div>
@@ -849,6 +852,18 @@ export default function AdminDashboard() {
                   <div>
                     <label style={labelStyle}>Wat krijgen klanten? (staat in het codeboek)</label>
                     <textarea required rows={2} value={productForm.discount_description} onChange={e => setProductForm(f => ({ ...f, discount_description: e.target.value }))} placeholder="Bv. 10% korting op alle verpleegkundige materialen via kortingscode MEDISHOP10" style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
+                  </div>
+                  <div style={{ margin: '8px 0 12px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <input
+                      type="checkbox"
+                      id="product-show-name"
+                      checked={productForm.show_name}
+                      onChange={e => setProductForm(f => ({ ...f, show_name: e.target.checked }))}
+                      style={{ width: 16, height: 16, accentColor: '#2A3D2E', cursor: 'pointer' }}
+                    />
+                    <label htmlFor="product-show-name" style={{ fontSize: 13, color: '#1A1A17', fontWeight: 600, cursor: 'pointer' }}>
+                      Naam contactpersoon vermelden in codeboek
+                    </label>
                   </div>
                   {formError && <p style={{ color: '#B65436', fontSize: 14, marginBottom: 12 }}>{formError}</p>}
                   <button type="submit" disabled={formLoading} style={{ background: formLoading ? '#8A9588' : '#B65436', color: '#fff', border: 'none', borderRadius: 8, padding: '11px 24px', fontSize: 14, fontWeight: 600, cursor: formLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit' }}>
@@ -957,6 +972,15 @@ export default function AdminDashboard() {
                         </div>
                       )}
                       <div style={{ borderTop: '1px solid #D8D0C0', paddingTop: 14, marginTop: 4 }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 12 }}>
+                          <input
+                            type="checkbox"
+                            checked={editPartner.show_name ?? true}
+                            onChange={e => setEditPartner({ ...editPartner, show_name: e.target.checked })}
+                            style={{ width: 16, height: 16, accentColor: '#2A3D2E', cursor: 'pointer' }}
+                          />
+                          <span style={{ fontSize: 13, color: '#1A1A17', fontWeight: 600 }}>Naam contactpersoon vermelden in codeboek</span>
+                        </label>
                         <p style={{ fontSize: 13, color: '#6E6B62', margin: 0 }}>
                           Wachtwoord resetten? Sla eerst op, klik dan op <strong>&ldquo;Uitnodigingslink&rdquo;</strong> op de partnerkaart — de partner stelt zelf een nieuw wachtwoord in via de link.
                         </p>

@@ -38,6 +38,7 @@ const Schema = z.object({
   billing_address: z.string().max(300).optional(),
   website: z.string().max(200).optional(),
   phone: z.string().max(50).optional(),
+  show_name: z.boolean().optional(),
   password: z.string().min(8),
 })
 
@@ -82,6 +83,7 @@ export async function POST(req: NextRequest) {
       billing_address: data.billing_address || null,
       website: data.website || null,
       phone: data.phone || null,
+      show_name: data.show_name ?? true,
       is_active: true,
     })
 
