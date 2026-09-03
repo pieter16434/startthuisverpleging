@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   // Haal org-info op zodat het formulier context kan tonen
   const { data: org } = await supabase
     .from('organizations')
-    .select('business_name, service_type, discount_description, fee_per_customer, offices_have_own_description, offices_have_own_billing, code_mode')
+    .select('business_name, service_type, discount_description, fee_per_customer, offices_have_own_description, offices_have_own_billing, code_mode, has_deal2, deal1_name, deal2_name, deal2_description, deal2_fee')
     .eq('id', tokenRow.organization_id)
     .single()
 
@@ -52,6 +52,8 @@ const Schema = z.object({
   billing_address: z.string().max(300).optional(),
   fee_per_customer: z.number().min(0).optional(),
   show_name: z.boolean().optional(),
+  deal2_description: z.string().max(500).optional(),
+  deal2_fee: z.number().min(0).optional(),
   password: z.string().min(8),
 })
 
@@ -104,6 +106,8 @@ export async function POST(req: NextRequest) {
       website: data.website || null,
       phone: data.phone || null,
       office_address: data.office_address || null,
+      deal2_description: data.deal2_description || null,
+      deal2_fee: data.deal2_fee ?? null,
     })
 
     if (officeError) {

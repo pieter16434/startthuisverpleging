@@ -56,6 +56,8 @@ function OnboardingContent() {
     vat_number: '', billing_address: '',
     website: '', phone: '',
     show_name: true,
+    has_deal2: false,
+    deal1_name: '', deal2_name: '', deal2_description: '', deal2_fee: '',
     password: '', confirm: '',
   })
 
@@ -80,6 +82,10 @@ function OnboardingContent() {
         body: JSON.stringify({
           token, ...form,
           fee_per_customer: parseFloat(form.fee_per_customer) || 0,
+          deal2_fee: form.has_deal2 && form.deal2_fee ? parseFloat(form.deal2_fee) : undefined,
+          deal1_name: form.has_deal2 && form.deal1_name ? form.deal1_name : undefined,
+          deal2_name: form.has_deal2 && form.deal2_name ? form.deal2_name : undefined,
+          deal2_description: form.has_deal2 && form.deal2_description ? form.deal2_description : undefined,
         }),
       })
       const data = await res.json()
@@ -166,8 +172,44 @@ function OnboardingContent() {
         </div>
         {!form.offices_have_own_description && (
           <div style={fieldWrap}>
-            <label style={labelStyle}>Wat krijgen klanten? (geldt voor alle kantoren)</label>
+            <label style={labelStyle}>
+              {form.has_deal2 ? 'Aanbod deal 1 (geldt voor alle kantoren)' : 'Wat krijgen klanten? (geldt voor alle kantoren)'}
+            </label>
             <textarea required rows={3} value={form.discount_description} onChange={e => setField('discount_description', e.target.value)} placeholder="Bv. Gratis adviesgesprek + optimale verzekeringsdekking voor zelfstandige verpleegkundigen" style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
+          </div>
+        )}
+
+        {/* Tweede deal (optioneel) */}
+        <div style={{ borderBottom: '1px solid #D8D0C0', marginBottom: 16, paddingBottom: 4 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 16px' }}>Tweede deal <span style={{ color: '#8A9588', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optioneel)</span></p>
+        </div>
+        <div style={{ ...fieldWrap, marginBottom: 12 }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+            <input type="checkbox" checked={form.has_deal2} onChange={e => setForm(f => ({ ...f, has_deal2: e.target.checked }))} style={{ width: 16, height: 16, marginTop: 2, accentColor: '#2A3D2E', flexShrink: 0 }} />
+            <div>
+              <span style={{ fontSize: 14, color: '#1A1A17', fontWeight: 600 }}>Ik bied twee aparte deals aan (bv. eenmanszaak vs. vennootschap)</span>
+              <p style={{ fontSize: 12, color: '#6E6B62', margin: '3px 0 0', lineHeight: 1.5 }}>Elke deal krijgt een eigen code en een eigen omschrijving in het codeboek.</p>
+            </div>
+          </label>
+        </div>
+        {form.has_deal2 && (
+          <div style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 10, padding: '16px 18px', marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+              <div style={fieldWrap}>
+                <label style={labelStyle}>Naam deal 1 <span style={{ color: '#8A9588', fontWeight: 400, textTransform: 'none' }}>(optioneel)</span></label>
+                <input type="text" value={form.deal1_name} onChange={e => setField('deal1_name', e.target.value)} placeholder="Bv. Eenmanszaak" style={inputStyle} />
+              </div>
+              <div style={fieldWrap}>
+                <label style={labelStyle}>Naam deal 2 <span style={{ color: '#8A9588', fontWeight: 400, textTransform: 'none' }}>(optioneel)</span></label>
+                <input type="text" value={form.deal2_name} onChange={e => setField('deal2_name', e.target.value)} placeholder="Bv. Vennootschap" style={inputStyle} />
+              </div>
+            </div>
+            {!form.offices_have_own_description && (
+              <div style={{ marginBottom: 0 }}>
+                <label style={labelStyle}>Aanbod deal 2 (geldt voor alle kantoren)</label>
+                <textarea required={form.has_deal2 && !form.offices_have_own_description} rows={3} value={form.deal2_description} onChange={e => setField('deal2_description', e.target.value)} placeholder="Bv. Gratis adviesgesprek + optimale verzekeringsdekking voor vennootschappen" style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
+              </div>
+            )}
           </div>
         )}
 
@@ -203,9 +245,17 @@ function OnboardingContent() {
         </div>
         {!form.offices_have_own_billing && (
           <>
-            <div style={fieldWrap}>
-              <label style={labelStyle}>Leadsfee per klant (€)</label>
-              <input type="number" required min={0} step="0.01" value={form.fee_per_customer} onChange={e => setField('fee_per_customer', e.target.value)} placeholder="40" style={inputStyle} />
+            <div style={{ display: 'grid', gridTemplateColumns: form.has_deal2 ? '1fr 1fr' : '1fr', gap: '0 16px' }}>
+              <div style={fieldWrap}>
+                <label style={labelStyle}>{form.has_deal2 ? 'Leadsfee deal 1 (€)' : 'Leadsfee per klant (€)'}</label>
+                <input type="number" required min={0} step="0.01" value={form.fee_per_customer} onChange={e => setField('fee_per_customer', e.target.value)} placeholder="40" style={inputStyle} />
+              </div>
+              {form.has_deal2 && (
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>Leadsfee deal 2 (€)</label>
+                  <input type="number" required min={0} step="0.01" value={form.deal2_fee} onChange={e => setField('deal2_fee', e.target.value)} placeholder="40" style={inputStyle} />
+                </div>
+              )}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
               <div style={fieldWrap}>
@@ -220,10 +270,20 @@ function OnboardingContent() {
           </>
         )}
         {form.offices_have_own_billing && (
-          <div style={fieldWrap}>
-            <label style={labelStyle}>Standaard leadsfee per klant (€) — kantoren kunnen dit overschrijven</label>
-            <input type="number" min={0} step="0.01" value={form.fee_per_customer} onChange={e => setField('fee_per_customer', e.target.value)} placeholder="0" style={inputStyle} />
-          </div>
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: form.has_deal2 ? '1fr 1fr' : '1fr', gap: '0 16px' }}>
+              <div style={fieldWrap}>
+                <label style={labelStyle}>{form.has_deal2 ? 'Standaard leadsfee deal 1 (€)' : 'Standaard leadsfee per klant (€)'} — kantoren kunnen dit overschrijven</label>
+                <input type="number" min={0} step="0.01" value={form.fee_per_customer} onChange={e => setField('fee_per_customer', e.target.value)} placeholder="0" style={inputStyle} />
+              </div>
+              {form.has_deal2 && (
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>Standaard leadsfee deal 2 (€) — kantoren kunnen dit overschrijven</label>
+                  <input type="number" min={0} step="0.01" value={form.deal2_fee} onChange={e => setField('deal2_fee', e.target.value)} placeholder="0" style={inputStyle} />
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         {/* Contact (optioneel) */}

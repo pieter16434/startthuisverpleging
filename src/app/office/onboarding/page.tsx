@@ -26,6 +26,11 @@ type OrgInfo = {
   offices_have_own_description: boolean
   offices_have_own_billing: boolean
   code_mode: string
+  has_deal2: boolean
+  deal1_name: string | null
+  deal2_name: string | null
+  deal2_description: string | null
+  deal2_fee: number | null
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -65,7 +70,8 @@ function OnboardingContent() {
     name: '', business_name: '', email: '', province: '', province_2: '',
     website: '', phone: '', office_address: '',
     discount_description: '',
-    vat_number: '', billing_address: '', fee_per_customer: '',
+    deal2_description: '',
+    vat_number: '', billing_address: '', fee_per_customer: '', deal2_fee: '',
     show_name: true,
     password: '', confirm: '',
   })
@@ -94,6 +100,14 @@ function OnboardingContent() {
         body.fee_per_customer = parseFloat(form.fee_per_customer)
       } else {
         delete body.fee_per_customer
+      }
+      if (org?.has_deal2 && org.offices_have_own_billing && form.deal2_fee) {
+        body.deal2_fee = parseFloat(form.deal2_fee)
+      } else {
+        delete body.deal2_fee
+      }
+      if (!org?.has_deal2 || !org.offices_have_own_description) {
+        delete body.deal2_description
       }
       const res = await fetch('/api/office/onboarding', {
         method: 'POST',
@@ -208,9 +222,15 @@ function OnboardingContent() {
               <p style={{ fontSize: 11, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 16px' }}>Aanbod voor klanten</p>
             </div>
             <div style={fieldWrap}>
-              <label style={labelStyle}>Wat krijgen klanten van uw kantoor?</label>
+              <label style={labelStyle}>{org.has_deal2 ? `Aanbod deal 1${org.deal1_name ? ` — ${org.deal1_name}` : ''}` : 'Wat krijgen klanten van uw kantoor?'}</label>
               <textarea required rows={3} value={form.discount_description} onChange={e => setField('discount_description', e.target.value)} placeholder="Bv. Gratis adviesgesprek + optimale verzekeringsdekking" style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
             </div>
+            {org.has_deal2 && (
+              <div style={fieldWrap}>
+                <label style={labelStyle}>{`Aanbod deal 2${org.deal2_name ? ` — ${org.deal2_name}` : ''}`}</label>
+                <textarea required rows={3} value={form.deal2_description} onChange={e => setField('deal2_description', e.target.value)} placeholder={org.deal2_description || 'Bv. Gratis adviesgesprek + optimale verzekeringsdekking voor vennootschappen'} style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
+              </div>
+            )}
           </>
         )}
 
@@ -220,9 +240,17 @@ function OnboardingContent() {
             <div style={{ borderBottom: '1px solid #D8D0C0', marginBottom: 20, paddingBottom: 4 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 16px' }}>Facturatie kantoor</p>
             </div>
-            <div style={fieldWrap}>
-              <label style={labelStyle}>Leadsfee per klant (€)</label>
-              <input type="number" required min={0} step="0.01" value={form.fee_per_customer} onChange={e => setField('fee_per_customer', e.target.value)} placeholder={String(org.fee_per_customer || 0)} style={inputStyle} />
+            <div style={{ display: 'grid', gridTemplateColumns: org.has_deal2 ? '1fr 1fr' : '1fr', gap: '0 16px' }}>
+              <div style={fieldWrap}>
+                <label style={labelStyle}>{org.has_deal2 ? `Leadsfee deal 1 (€)${org.deal1_name ? ` — ${org.deal1_name}` : ''}` : 'Leadsfee per klant (€)'}</label>
+                <input type="number" required min={0} step="0.01" value={form.fee_per_customer} onChange={e => setField('fee_per_customer', e.target.value)} placeholder={String(org.fee_per_customer || 0)} style={inputStyle} />
+              </div>
+              {org.has_deal2 && (
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>{`Leadsfee deal 2 (€)${org.deal2_name ? ` — ${org.deal2_name}` : ''}`}</label>
+                  <input type="number" required min={0} step="0.01" value={form.deal2_fee} onChange={e => setField('deal2_fee', e.target.value)} placeholder={String(org.deal2_fee || 0)} style={inputStyle} />
+                </div>
+              )}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
               <div style={fieldWrap}>

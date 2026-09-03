@@ -123,27 +123,31 @@ export async function POST(req: NextRequest) {
       id: string; business_name: string; name: string; service_type: string
       discount_description: string; fee_per_customer: number; code_mode: string
       website: string | null; phone: string | null; show_name: boolean
+      has_deal2: boolean; deal1_name: string | null; deal2_name: string | null
+      deal2_description: string | null; deal2_fee: number | null
     }
     type OfficeRow = {
       id: string; organization_id: string; business_name: string
       province: string; province_2: string | null
       discount_description: string | null; is_active: boolean
       website: string | null; phone: string | null; show_name: boolean
+      deal2_description: string | null; deal2_fee: number | null
     }
 
     const { data: activeOrgs } = await supabase
       .from('organizations')
-      .select('id, business_name, name, service_type, discount_description, fee_per_customer, code_mode, website, phone, show_name')
+      .select('id, business_name, name, service_type, discount_description, fee_per_customer, code_mode, website, phone, show_name, has_deal2, deal1_name, deal2_name, deal2_description, deal2_fee')
       .eq('is_active', true)
 
     // Haal alle actieve kantoren op (één query voor alle orgs)
     const { data: allOffices } = await supabase
       .from('organization_offices')
-      .select('id, organization_id, business_name, province, province_2, discount_description, is_active, website, phone, show_name')
+      .select('id, organization_id, business_name, province, province_2, discount_description, is_active, website, phone, show_name, deal2_description, deal2_fee')
       .eq('is_active', true)
 
     const orgCodeMap: Record<string, string> = {}
-    const orgCodebookEntries: { business_name: string; name: string; service_type: string; discount_description: string; code: string; show_name: boolean; website: string | null; phone: string | null; is_product: boolean; partner_url: null; office_address: null; deal_name: null }[] = []
+    const orgCode2Map: Record<string, string> = {}
+    const orgCodebookEntries: { business_name: string; name: string; service_type: string; discount_description: string; code: string; show_name: boolean; website: string | null; phone: string | null; is_product: boolean; partner_url: null; office_address: null; deal_name: string | null }[] = []
 
     for (const org of (activeOrgs ?? []) as OrgRow[]) {
       const orgOffices = (allOffices ?? []).filter(o => o.organization_id === org.id) as OfficeRow[]
@@ -162,7 +166,7 @@ export async function POST(req: NextRequest) {
           const { error } = await supabase.from('organization_codes').insert({
             organization_id: org.id, office_id: null,
             order_id: orderId, customer_id: customer.id,
-            code: orgCode,
+            code: orgCode, deal_number: 1,
           })
           if (!error) { orgCodeMap[org.id] = orgCode; break }
           orgCode = generateCode('ORG')
@@ -173,8 +177,32 @@ export async function POST(req: NextRequest) {
             service_type: org.service_type, discount_description: org.discount_description,
             code: orgCodeMap[org.id], show_name: org.show_name,
             website: org.website, phone: org.phone,
-            is_product: false, partner_url: null, office_address: null, deal_name: null,
+            is_product: false, partner_url: null, office_address: null,
+            deal_name: org.has_deal2 ? org.deal1_name : null,
           })
+        }
+        // Deal 2 code (shared)
+        if (org.has_deal2 && org.deal2_description) {
+          let orgCode2 = generateCode('ORG')
+          for (let attempt = 0; attempt < 5; attempt++) {
+            const { error } = await supabase.from('organization_codes').insert({
+              organization_id: org.id, office_id: null,
+              order_id: orderId, customer_id: customer.id,
+              code: orgCode2, deal_number: 2,
+            })
+            if (!error) { orgCode2Map[org.id] = orgCode2; break }
+            orgCode2 = generateCode('ORG')
+          }
+          if (orgCode2Map[org.id]) {
+            orgCodebookEntries.push({
+              business_name: org.business_name, name: org.name,
+              service_type: org.service_type, discount_description: org.deal2_description,
+              code: orgCode2Map[org.id], show_name: org.show_name,
+              website: null, phone: null,
+              is_product: false, partner_url: null, office_address: null,
+              deal_name: org.deal2_name,
+            })
+          }
         }
       } else {
         // Per kantoor: zoek het kantoor in de provincie van de klant
@@ -191,7 +219,7 @@ export async function POST(req: NextRequest) {
           const { error } = await supabase.from('organization_codes').insert({
             organization_id: org.id, office_id: office.id,
             order_id: orderId, customer_id: customer.id,
-            code: officeCode,
+            code: officeCode, deal_number: 1,
           })
           if (!error) { orgCodeMap[officeKey] = officeCode; break }
           officeCode = generateCode(customer.province)
@@ -203,8 +231,35 @@ export async function POST(req: NextRequest) {
             discount_description: office.discount_description ?? org.discount_description,
             code: orgCodeMap[officeKey], show_name: office.show_name,
             website: office.website, phone: office.phone,
-            is_product: false, partner_url: null, office_address: null, deal_name: null,
+            is_product: false, partner_url: null, office_address: null,
+            deal_name: org.has_deal2 ? org.deal1_name : null,
           })
+        }
+        // Deal 2 code (per office)
+        const deal2Desc = office.deal2_description ?? org.deal2_description
+        if (org.has_deal2 && deal2Desc) {
+          const officeKey2 = `${org.id}_${office.id}_d2`
+          let officeCode2 = generateCode(customer.province)
+          for (let attempt = 0; attempt < 5; attempt++) {
+            const { error } = await supabase.from('organization_codes').insert({
+              organization_id: org.id, office_id: office.id,
+              order_id: orderId, customer_id: customer.id,
+              code: officeCode2, deal_number: 2,
+            })
+            if (!error) { orgCode2Map[officeKey2] = officeCode2; break }
+            officeCode2 = generateCode(customer.province)
+          }
+          if (orgCode2Map[officeKey2]) {
+            orgCodebookEntries.push({
+              business_name: office.business_name, name: org.name,
+              service_type: org.service_type,
+              discount_description: deal2Desc,
+              code: orgCode2Map[officeKey2], show_name: office.show_name,
+              website: null, phone: null,
+              is_product: false, partner_url: null, office_address: null,
+              deal_name: org.deal2_name,
+            })
+          }
         }
       }
     }

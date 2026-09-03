@@ -31,6 +31,8 @@ export async function PATCH(
     if (body.phone !== undefined) update.phone = body.phone || null
     if (body.office_address !== undefined) update.office_address = body.office_address || null
     if (body.show_name !== undefined) update.show_name = body.show_name
+    if (body.deal2_description !== undefined) update.deal2_description = body.deal2_description || null
+    if (body.deal2_fee !== undefined) update.deal2_fee = body.deal2_fee ?? null
 
     const { error } = await supabase
       .from('organization_offices')

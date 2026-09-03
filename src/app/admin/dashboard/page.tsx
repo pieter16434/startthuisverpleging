@@ -109,7 +109,9 @@ export default function AdminDashboard() {
     website: string | null; phone: string | null; notes: string | null
     is_active: boolean; created_at: string
     show_name: boolean
-    offices: { id: string; name: string; email: string; business_name: string; province: string; province_2: string | null; is_active: boolean; verified_codes: number; fee_per_customer: number | null; phone: string | null; website: string | null; office_address: string | null; discount_description: string | null; vat_number: string | null; billing_address: string | null; notes: string | null; show_name: boolean }[]
+    has_deal2: boolean; deal1_name: string | null; deal2_name: string | null
+    deal2_description: string | null; deal2_fee: number | null
+    offices: { id: string; name: string; email: string; business_name: string; province: string; province_2: string | null; is_active: boolean; verified_codes: number; fee_per_customer: number | null; phone: string | null; website: string | null; office_address: string | null; discount_description: string | null; vat_number: string | null; billing_address: string | null; notes: string | null; show_name: boolean; deal2_description: string | null; deal2_fee: number | null }[]
     total_verified_codes: number
   }
   const [orgs, setOrgs] = useState<OrgAdmin[]>([])
@@ -120,7 +122,7 @@ export default function AdminDashboard() {
   const [officeLinkLoading, setOfficeLinkLoading] = useState<string | null>(null)
   const [editOrg, setEditOrg] = useState<OrgAdmin | null>(null)
   const [editOrgLoading, setEditOrgLoading] = useState(false)
-  type OfficeEdit = OrgAdmin['offices'][number] & { orgId: string; orgHasOwnDesc: boolean; orgHasOwnBilling: boolean }
+  type OfficeEdit = OrgAdmin['offices'][number] & { orgId: string; orgHasOwnDesc: boolean; orgHasOwnBilling: boolean; orgHasDeal2: boolean; orgDeal1Name: string | null; orgDeal2Name: string | null }
   const [editOffice, setEditOffice] = useState<OfficeEdit | null>(null)
   const [editOfficeLoading, setEditOfficeLoading] = useState(false)
   const [officeDeleteLoading, setOfficeDeleteLoading] = useState<string | null>(null)
@@ -421,6 +423,8 @@ export default function AdminDashboard() {
           notes: editOffice.notes,
           is_active: editOffice.is_active,
           show_name: editOffice.show_name,
+          deal2_description: editOffice.deal2_description,
+          deal2_fee: editOffice.deal2_fee,
         }),
       })
       if (!res.ok) { alert('Opslaan mislukt'); return }
@@ -522,6 +526,11 @@ export default function AdminDashboard() {
           discount_description: editOrg.discount_description,
           is_active: editOrg.is_active,
           show_name: editOrg.show_name,
+          has_deal2: editOrg.has_deal2,
+          deal1_name: editOrg.deal1_name,
+          deal2_name: editOrg.deal2_name,
+          deal2_description: editOrg.deal2_description,
+          deal2_fee: editOrg.deal2_fee,
         }),
       })
       if (!res.ok) { alert('Opslaan mislukt'); return }
@@ -1747,7 +1756,7 @@ export default function AdminDashboard() {
                               <td style={{ padding: '10px 20px', textAlign: 'right' }}>
                                 <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                                   <button
-                                    onClick={() => setEditOffice({ ...office, orgId: org.id, orgHasOwnDesc: org.offices_have_own_description, orgHasOwnBilling: org.offices_have_own_billing })}
+                                    onClick={() => setEditOffice({ ...office, orgId: org.id, orgHasOwnDesc: org.offices_have_own_description, orgHasOwnBilling: org.offices_have_own_billing, orgHasDeal2: org.has_deal2, orgDeal1Name: org.deal1_name, orgDeal2Name: org.deal2_name })}
                                     style={{ background: 'transparent', border: '1px solid #D8D0C0', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', color: '#3A3A33', whiteSpace: 'nowrap' }}
                                   >
                                     Bewerken
@@ -1914,6 +1923,12 @@ export default function AdminDashboard() {
               <input value={editOffice.website ?? ''} onChange={e => setEditOffice({ ...editOffice, website: e.target.value || null })} placeholder="https://www.bedrijf.be" style={inputStyle} />
             </div>
 
+            {editOffice.orgHasOwnDesc && editOffice.orgHasDeal2 && (
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Aanbod deal 2{editOffice.orgDeal2Name ? ` — ${editOffice.orgDeal2Name}` : ''}</label>
+                <textarea rows={3} value={editOffice.deal2_description ?? ''} onChange={e => setEditOffice({ ...editOffice, deal2_description: e.target.value || null })} style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
+              </div>
+            )}
             {editOffice.orgHasOwnDesc && (
               <>
                 <p style={{ fontSize: 11, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 1, margin: '16px 0 12px', borderBottom: '1px solid #D8D0C0', paddingBottom: 8 }}>Aanbod</p>
@@ -1927,9 +1942,17 @@ export default function AdminDashboard() {
             {editOffice.orgHasOwnBilling && (
               <>
                 <p style={{ fontSize: 11, fontWeight: 700, color: '#2A3D2E', textTransform: 'uppercase', letterSpacing: 1, margin: '16px 0 12px', borderBottom: '1px solid #D8D0C0', paddingBottom: 8 }}>Facturatie kantoor</p>
-                <div style={{ marginBottom: 14 }}>
-                  <label style={labelStyle}>Tarief per klant (€)</label>
-                  <input type="number" min={0} step="0.01" value={editOffice.fee_per_customer ?? ''} onChange={e => setEditOffice({ ...editOffice, fee_per_customer: e.target.value ? parseFloat(e.target.value) : null })} style={inputStyle} />
+                <div style={{ display: 'grid', gridTemplateColumns: editOffice.orgHasDeal2 ? '1fr 1fr' : '1fr', gap: '0 16px', marginBottom: 14 }}>
+                  <div>
+                    <label style={labelStyle}>{editOffice.orgHasDeal2 ? `Tarief deal 1 (€)${editOffice.orgDeal1Name ? ` — ${editOffice.orgDeal1Name}` : ''}` : 'Tarief per klant (€)'}</label>
+                    <input type="number" min={0} step="0.01" value={editOffice.fee_per_customer ?? ''} onChange={e => setEditOffice({ ...editOffice, fee_per_customer: e.target.value ? parseFloat(e.target.value) : null })} style={inputStyle} />
+                  </div>
+                  {editOffice.orgHasDeal2 && (
+                    <div>
+                      <label style={labelStyle}>{`Tarief deal 2 (€)${editOffice.orgDeal2Name ? ` — ${editOffice.orgDeal2Name}` : ''}`}</label>
+                      <input type="number" min={0} step="0.01" value={editOffice.deal2_fee ?? ''} onChange={e => setEditOffice({ ...editOffice, deal2_fee: e.target.value ? parseFloat(e.target.value) : null })} style={inputStyle} />
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
                   <div style={{ marginBottom: 14 }}>
@@ -1984,10 +2007,43 @@ export default function AdminDashboard() {
             <button onClick={() => setEditOrg(null)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#6E6B62', lineHeight: 1 }}>✕</button>
             <h3 style={{ fontFamily: 'Georgia, serif', fontSize: 20, color: '#1A1A17', marginBottom: 20 }}>Organisatie bewerken — {editOrg.business_name}</h3>
             <form onSubmit={handleSaveOrg}>
-              <label style={labelStyle}>Aanbod tekst</label>
+              <label style={labelStyle}>{editOrg.has_deal2 ? 'Aanbod tekst deal 1' : 'Aanbod tekst'}</label>
               <textarea rows={3} value={editOrg.discount_description} onChange={e => setEditOrg(o => o ? { ...o, discount_description: e.target.value } : o)} style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
-              <label style={labelStyle}>Tariefprijs per klant (€)</label>
-              <input type="number" step="0.01" min={0} value={editOrg.fee_per_customer} onChange={e => setEditOrg(o => o ? { ...o, fee_per_customer: parseFloat(e.target.value) || 0 } : o)} style={inputStyle} />
+              <div style={{ display: 'grid', gridTemplateColumns: editOrg.has_deal2 ? '1fr 1fr' : '1fr', gap: '0 16px' }}>
+                <div>
+                  <label style={labelStyle}>{editOrg.has_deal2 ? 'Tariefprijs deal 1 (€)' : 'Tariefprijs per klant (€)'}</label>
+                  <input type="number" step="0.01" min={0} value={editOrg.fee_per_customer} onChange={e => setEditOrg(o => o ? { ...o, fee_per_customer: parseFloat(e.target.value) || 0 } : o)} style={inputStyle} />
+                </div>
+                {editOrg.has_deal2 && (
+                  <div>
+                    <label style={labelStyle}>Tariefprijs deal 2 (€)</label>
+                    <input type="number" step="0.01" min={0} value={editOrg.deal2_fee ?? ''} onChange={e => setEditOrg(o => o ? { ...o, deal2_fee: parseFloat(e.target.value) || null } : o)} style={inputStyle} />
+                  </div>
+                )}
+              </div>
+              {/* Tweede deal toggle + velden */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, marginTop: 4 }}>
+                <input type="checkbox" id="org_has_deal2" checked={editOrg.has_deal2} onChange={e => setEditOrg(o => o ? { ...o, has_deal2: e.target.checked } : o)} style={{ width: 18, height: 18, accentColor: '#2A3D2E' }} />
+                <label htmlFor="org_has_deal2" style={{ fontSize: 14, color: '#1A1A17', cursor: 'pointer' }}>Twee aparte deals (bv. eenmanszaak vs. vennootschap)</label>
+              </div>
+              {editOrg.has_deal2 && (
+                <div style={{ background: '#F1ECE0', border: '1px solid #D8D0C0', borderRadius: 8, padding: '14px 16px', marginBottom: 12 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={labelStyle}>Naam deal 1 (optioneel)</label>
+                      <input type="text" value={editOrg.deal1_name ?? ''} onChange={e => setEditOrg(o => o ? { ...o, deal1_name: e.target.value || null } : o)} placeholder="Bv. Eenmanszaak" style={inputStyle} />
+                    </div>
+                    <div style={{ marginBottom: 12 }}>
+                      <label style={labelStyle}>Naam deal 2 (optioneel)</label>
+                      <input type="text" value={editOrg.deal2_name ?? ''} onChange={e => setEditOrg(o => o ? { ...o, deal2_name: e.target.value || null } : o)} placeholder="Bv. Vennootschap" style={inputStyle} />
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: 0 }}>
+                    <label style={labelStyle}>Aanbod tekst deal 2</label>
+                    <textarea rows={3} value={editOrg.deal2_description ?? ''} onChange={e => setEditOrg(o => o ? { ...o, deal2_description: e.target.value || null } : o)} style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />
+                  </div>
+                </div>
+              )}
               <label style={labelStyle}>BTW-nummer</label>
               <input type="text" value={editOrg.vat_number ?? ''} onChange={e => setEditOrg(o => o ? { ...o, vat_number: e.target.value } : o)} style={inputStyle} />
               <label style={labelStyle}>Facturatieadres</label>

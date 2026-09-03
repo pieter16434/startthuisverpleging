@@ -39,6 +39,11 @@ const Schema = z.object({
   website: z.string().max(200).optional(),
   phone: z.string().max(50).optional(),
   show_name: z.boolean().optional(),
+  has_deal2: z.boolean().optional(),
+  deal1_name: z.string().max(100).optional(),
+  deal2_name: z.string().max(100).optional(),
+  deal2_description: z.string().max(500).optional(),
+  deal2_fee: z.number().min(0).optional(),
   password: z.string().min(8),
 })
 
@@ -84,6 +89,11 @@ export async function POST(req: NextRequest) {
       website: data.website || null,
       phone: data.phone || null,
       show_name: data.show_name ?? true,
+      has_deal2: data.has_deal2 ?? false,
+      deal1_name: data.deal1_name || null,
+      deal2_name: data.deal2_name || null,
+      deal2_description: data.deal2_description || null,
+      deal2_fee: data.deal2_fee ?? null,
       is_active: true,
     })
 

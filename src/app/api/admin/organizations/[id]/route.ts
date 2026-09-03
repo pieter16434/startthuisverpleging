@@ -21,6 +21,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (body.discount_description !== undefined) update.discount_description = body.discount_description
     if (body.is_active !== undefined) update.is_active = body.is_active
     if (body.show_name !== undefined) update.show_name = body.show_name
+    if (body.has_deal2 !== undefined) update.has_deal2 = body.has_deal2
+    if (body.deal1_name !== undefined) update.deal1_name = body.deal1_name || null
+    if (body.deal2_name !== undefined) update.deal2_name = body.deal2_name || null
+    if (body.deal2_description !== undefined) update.deal2_description = body.deal2_description || null
+    if (body.deal2_fee !== undefined) update.deal2_fee = body.deal2_fee ?? null
 
     const { error } = await supabase.from('organizations').update(update).eq('id', params.id)
     if (error) throw error
