@@ -136,7 +136,13 @@ function OnboardingContent() {
       <p style={{ color: '#6E6B62', fontSize: 15, lineHeight: 1.6 }}>Uw kantoor is aangemaakt. U wordt doorgestuurd naar de inlogpagina…</p>
     </>
   )
-  if (!tokenOk || !org) return null
+  if (!tokenOk) return null
+  if (!org) return (
+    <>
+      <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: '#B65436', marginBottom: 12 }}>Gegevens niet gevonden</h1>
+      <p style={{ color: '#6E6B62', fontSize: 15, marginBottom: 16 }}>De organisatie kon niet worden geladen. Neem contact op via <a href="mailto:info@domuscare.be" style={{ color: '#B65436' }}>info@domuscare.be</a></p>
+    </>
+  )
 
   return (
     <>

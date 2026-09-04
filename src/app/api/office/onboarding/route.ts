@@ -26,13 +26,25 @@ export async function GET(req: NextRequest) {
   if (new Date(tokenRow.expires_at) < new Date()) return NextResponse.json({ error: 'Deze link is verlopen. Neem contact op via info@domuscare.be.' }, { status: 410 })
 
   // Haal org-info op zodat het formulier context kan tonen
-  const { data: org } = await supabase
+  // Probeer eerst met deal2-kolommen; fallback zonder als migratie nog niet is uitgevoerd
+  const { data: org, error: orgErr } = await supabase
     .from('organizations')
     .select('business_name, service_type, discount_description, fee_per_customer, offices_have_own_description, offices_have_own_billing, code_mode, has_deal2, deal1_name, deal2_name, deal2_description, deal2_fee')
     .eq('id', tokenRow.organization_id)
     .single()
 
-  return NextResponse.json({ ok: true, org, provinces: PROVINCES })
+  let orgData = org
+  if (orgErr || !orgData) {
+    const { data: fallback } = await supabase
+      .from('organizations')
+      .select('business_name, service_type, discount_description, fee_per_customer, offices_have_own_description, offices_have_own_billing, code_mode')
+      .eq('id', tokenRow.organization_id)
+      .single()
+    if (!fallback) return NextResponse.json({ error: 'Organisatie niet gevonden.' }, { status: 404 })
+    orgData = { ...fallback, has_deal2: false, deal1_name: null, deal2_name: null, deal2_description: null, deal2_fee: null }
+  }
+
+  return NextResponse.json({ ok: true, org: orgData, provinces: PROVINCES })
 }
 
 const Schema = z.object({
@@ -89,7 +101,8 @@ export async function POST(req: NextRequest) {
 
     const password_hash = await bcrypt.hash(data.password, 12)
 
-    const { error: officeError } = await supabase.from('organization_offices').insert({
+    // Probeer eerst met deal2-velden; fallback zonder als migratie nog niet is uitgevoerd
+    const officeRow: Record<string, unknown> = {
       organization_id: tokenRow.organization_id,
       name: data.name,
       business_name: data.business_name,
@@ -108,7 +121,14 @@ export async function POST(req: NextRequest) {
       office_address: data.office_address || null,
       deal2_description: data.deal2_description || null,
       deal2_fee: data.deal2_fee ?? null,
-    })
+    }
+    let { error: officeError } = await supabase.from('organization_offices').insert(officeRow)
+    // Fallback zonder deal2-velden als kolommen nog niet bestaan
+    if (officeError && (officeError.code === '42703' || officeError.message?.includes('deal2'))) {
+      const { deal2_description: _d, deal2_fee: _f, ...rowWithoutDeal2 } = officeRow
+      const res2 = await supabase.from('organization_offices').insert(rowWithoutDeal2)
+      officeError = res2.error
+    }
 
     if (officeError) {
       if (officeError.code === '23505') return NextResponse.json({ error: 'Dit e-mailadres is al in gebruik.' }, { status: 409 })

@@ -11,17 +11,22 @@ export async function GET() {
 
   const supabase = createServiceClient()
 
-  const { data: orgs } = await supabase
+  // Probeer met alle kolommen inclusief show_name en deal2; fallback zonder als migratie nog niet is uitgevoerd
+  const { data: orgs, error: orgsError } = await supabase
     .from('organizations')
-    .select('id, name, business_name, email, service_type, fee_per_customer, is_active, code_mode, bundle_invoicing, offices_have_own_description, offices_have_own_billing, notes, vat_number, billing_address, created_at')
+    .select('id, name, business_name, email, service_type, discount_description, fee_per_customer, is_active, code_mode, bundle_invoicing, offices_have_own_description, offices_have_own_billing, notes, vat_number, billing_address, website, phone, created_at, show_name, has_deal2, deal1_name, deal2_name, deal2_description, deal2_fee')
     .order('created_at', { ascending: false })
 
-  // Tel kantoren per organisatie
+  const orgRows = orgsError
+    ? ((await supabase.from('organizations').select('id, name, business_name, email, service_type, discount_description, fee_per_customer, is_active, code_mode, bundle_invoicing, offices_have_own_description, offices_have_own_billing, notes, vat_number, billing_address, website, phone, created_at').order('created_at', { ascending: false })).data ?? [])
+    : (orgs ?? [])
+
+  // Tel kantoren per organisatie — inclusief show_name en deal2 velden
   const { data: offices, error: officesError } = await supabase
     .from('organization_offices')
-    .select('id, organization_id, name, business_name, email, province, province_2, is_active, fee_per_customer, phone, website, office_address, discount_description, vat_number, billing_address, notes')
+    .select('id, organization_id, name, business_name, email, province, province_2, is_active, fee_per_customer, phone, website, office_address, discount_description, vat_number, billing_address, notes, show_name, deal2_description, deal2_fee')
 
-  // Fallback als province_2 nog niet bestaat in de DB (migratie nog niet uitgevoerd)
+  // Fallback als nieuwere kolommen nog niet bestaan in de DB
   const officeRows = officesError
     ? ((await supabase.from('organization_offices').select('id, organization_id, name, business_name, email, province, is_active, fee_per_customer, phone, website, office_address, discount_description, vat_number, billing_address, notes')).data ?? [])
     : (offices ?? [])
@@ -32,11 +37,26 @@ export async function GET() {
     .select('organization_id, office_id, verified_by_office_id')
     .eq('is_verified', true)
 
-  const result = orgs?.map(org => {
+  const result = orgRows?.map((org: Record<string, unknown>) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const orgOffices = (officeRows as any[])?.filter((o: { organization_id: string }) => o.organization_id === org.id) ?? []
-    const orgVerified = verifiedCodes?.filter(c => c.organization_id === org.id).length ?? 0
-    return { ...org, offices: orgOffices, verified_codes: orgVerified }
+    const orgVerified = verifiedCodes?.filter((c: { organization_id: string }) => c.organization_id === org.id).length ?? 0
+    return {
+      ...org,
+      show_name: (org.show_name as boolean | undefined) ?? true,
+      has_deal2: (org.has_deal2 as boolean | undefined) ?? false,
+      deal1_name: (org.deal1_name as string | null | undefined) ?? null,
+      deal2_name: (org.deal2_name as string | null | undefined) ?? null,
+      deal2_description: (org.deal2_description as string | null | undefined) ?? null,
+      deal2_fee: (org.deal2_fee as number | null | undefined) ?? null,
+      offices: orgOffices.map((o: Record<string, unknown>) => ({
+        ...o,
+        show_name: (o.show_name as boolean | undefined) ?? true,
+        deal2_description: (o.deal2_description as string | null | undefined) ?? null,
+        deal2_fee: (o.deal2_fee as number | null | undefined) ?? null,
+      })),
+      verified_codes: orgVerified,
+    }
   })
 
   return NextResponse.json({ organizations: result ?? [] })
