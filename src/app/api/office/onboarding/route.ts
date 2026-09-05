@@ -125,6 +125,7 @@ export async function POST(req: NextRequest) {
     let { error: officeError } = await supabase.from('organization_offices').insert(officeRow)
     // Fallback zonder deal2-velden als kolommen nog niet bestaan
     if (officeError && (officeError.code === '42703' || officeError.message?.includes('deal2'))) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { deal2_description: _d, deal2_fee: _f, ...rowWithoutDeal2 } = officeRow
       const res2 = await supabase.from('organization_offices').insert(rowWithoutDeal2)
       officeError = res2.error

@@ -28,6 +28,23 @@ export default function PrivacyPage() {
         <li>Marketingtoestemming (enkel indien u dat aanvinkt bij aankoop)</li>
       </ul>
 
+      <h3 style={{ fontSize: 16, marginTop: 24, marginBottom: 8 }}>Gratis Opstartcheck (lead magnet)</h3>
+      <p>
+        Als u de gratis Opstartcheck aanvraagt via onze website, verzamelen wij:
+      </p>
+      <ul style={{ paddingLeft: 20, marginTop: 8 }}>
+        <li><strong>E-mailadres</strong> — om u de pdf te bezorgen</li>
+        <li><strong>Provincie</strong> — verplicht; wij gebruiken dit om u relevante provinciale informatie te geven en als anoniem statistisch gegeven voor partnergesprekken</li>
+        <li><strong>Situatie</strong> (optioneel) — &ldquo;net afgestudeerd&rdquo; of &ldquo;al in loondienst&rdquo;, om de communicatie te personaliseren</li>
+        <li><strong>Bron</strong> — de pagina of advertentie waar u vandaan komt (bijv. Instagram), enkel voor interne analyse</li>
+        <li><strong>Marketingtoestemming</strong> — enkel indien u het bijbehorende vakje aanvinkt. Zonder vinkje sturen wij u enkel de gevraagde pdf.</li>
+      </ul>
+      <p style={{ marginTop: 12 }}>
+        <strong>Doel:</strong> de Opstartcheck-pdf bezorgen per e-mail en, <em>uitsluitend indien u toestemming gaf</em>, u informeren over de volledige gids en partnervoordelen in uw provincie.
+        <br /><strong>Bewaartermijn:</strong> uw gegevens worden bewaard totdat u zich uitschrijft. U kunt dit op elk moment doen door te antwoorden met &ldquo;stop&rdquo; op de mail of door te schrijven naar{' '}
+        <a href="mailto:hallo@startthuisverpleging.be" style={{ color: '#B65436' }}>hallo@startthuisverpleging.be</a>.
+      </p>
+
       <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 8 }}>3. Waarvoor gebruiken wij uw gegevens?</h2>
       <ul style={{ paddingLeft: 20, marginTop: 8 }}>
         <li>Verwerking en bevestiging van uw bestelling</li>

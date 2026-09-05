@@ -67,7 +67,7 @@ function Pill({ active }: { active: boolean }) {
 
 export default function AdminDashboard() {
   const router = useRouter()
-  const [tab, setTab] = useState<'partners' | 'orders' | 'invoicing' | 'emails' | 'influencers' | 'organizations'>('partners')
+  const [tab, setTab] = useState<'partners' | 'orders' | 'invoicing' | 'emails' | 'influencers' | 'organizations' | 'leads'>('partners')
   const [partners, setPartners] = useState<Partner[]>([])
   const [orders, setOrders] = useState<Order[]>([])
   const [orderStats, setOrderStats] = useState({ total: 0, revenue: 0, pdfPending: 0, revenueThisMonth: 0, revenueLastMonth: 0 })
@@ -133,6 +133,22 @@ export default function AdminDashboard() {
   const [officeTeamInviteLinkMap, setOfficeTeamInviteLinkMap] = useState<Record<string, string>>({})
   const [officeTeamInviteLoading, setOfficeTeamInviteLoading] = useState<string | null>(null)
   const [officeTeamDeleteLoading, setOfficeTeamDeleteLoading] = useState<string | null>(null)
+
+  // Leads state (Opstartcheck)
+  type Lead = {
+    id: string; email: string; province: string; profile: string | null
+    source: string | null; utm_campaign: string | null; utm_content: string | null
+    marketing_consent: boolean; converted_order_id: string | null
+    created_at: string; unsubscribed_at: string | null; is_converted: boolean
+  }
+  type LeadStats = {
+    leads: Lead[]; total: number; last7: number
+    perProvince: Record<string, { label: string; total: number; last7: number }>
+  }
+  const [leadsData, setLeadsData] = useState<LeadStats | null>(null)
+  const [leadsLoaded, setLeadsLoaded] = useState(false)
+  const [leadsProvinceFilter, setLeadsProvinceFilter] = useState('')
+  const [leadsConsentFilter, setLeadsConsentFilter] = useState(false)
 
   // Influencer state
   const [influencers, setInfluencers] = useState<Influencer[]>([])
@@ -299,6 +315,18 @@ export default function AdminDashboard() {
       const d = await res.json()
       setInfluencers(d.influencers ?? [])
       setInfluencersLoaded(true)
+    }
+  }
+
+  async function loadLeads(province?: string, consent?: boolean) {
+    const params = new URLSearchParams()
+    if (province) params.set('province', province)
+    if (consent) params.set('consent', 'true')
+    const res = await fetch(`/api/admin/leads?${params}`)
+    if (res.ok) {
+      const d = await res.json()
+      setLeadsData(d)
+      setLeadsLoaded(true)
     }
   }
 
@@ -745,6 +773,17 @@ export default function AdminDashboard() {
             {orgs.length > 0 && (
               <span style={{ marginLeft: 6, background: '#EEF0FD', color: '#3949AB', borderRadius: 10, fontSize: 11, fontWeight: 700, padding: '1px 7px' }}>
                 {orgs.length}
+              </span>
+            )}
+          </button>
+          <button style={tabStyle('leads')} onClick={() => {
+            setTab('leads')
+            if (!leadsLoaded) loadLeads()
+          }}>
+            Leads
+            {leadsData && (
+              <span style={{ marginLeft: 6, background: '#FEF3E2', color: '#B65436', borderRadius: 10, fontSize: 11, fontWeight: 700, padding: '1px 7px' }}>
+                {leadsData.total}
               </span>
             )}
           </button>
@@ -1864,6 +1903,147 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── TAB: LEADS (Opstartcheck) ── */}
+        {tab === 'leads' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: '#1A1A17', margin: 0 }}>Leads — Opstartcheck</h2>
+                <p style={{ color: '#6E6B62', fontSize: 13, marginTop: 4 }}>Mensen die de gratis Opstartcheck aanvroegen. Dit getal gebruik je in partnergesprekken.</p>
+              </div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <a
+                  href={`/api/admin/leads/export${leadsProvinceFilter ? `?province=${leadsProvinceFilter}` : ''}${leadsConsentFilter ? `${leadsProvinceFilter ? '&' : '?'}consent=true` : ''}`}
+                  style={{ background: '#2A3D2E', color: '#fff', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+                >
+                  ↓ Exporteer CSV
+                </a>
+              </div>
+            </div>
+
+            {/* Provincietellers — groot en duidelijk voor partnergesprekken */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 28 }}>
+              {['ANT', 'LIM', 'OVL', 'VBR', 'WVL'].map(code => {
+                const prov = leadsData?.perProvince[code]
+                return (
+                  <button
+                    key={code}
+                    onClick={() => {
+                      const newProv = leadsProvinceFilter === code ? '' : code
+                      setLeadsProvinceFilter(newProv)
+                      loadLeads(newProv || undefined, leadsConsentFilter || undefined)
+                    }}
+                    style={{
+                      background: leadsProvinceFilter === code ? '#2A3D2E' : '#FBF8F2',
+                      border: leadsProvinceFilter === code ? '2px solid #2A3D2E' : '1px solid #D8D0C0',
+                      borderRadius: 12,
+                      padding: '16px 18px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    <div style={{ fontSize: 34, fontWeight: 700, color: leadsProvinceFilter === code ? '#E8D08A' : '#2A3D2E', fontFamily: 'Georgia, serif', lineHeight: 1 }}>
+                      {prov ? prov.total : '…'}
+                    </div>
+                    <div style={{ fontSize: 12, color: leadsProvinceFilter === code ? 'rgba(232,208,138,0.8)' : '#6E6B62', marginTop: 4 }}>
+                      {prov?.label ?? code}
+                    </div>
+                    {prov && prov.last7 > 0 && (
+                      <div style={{ fontSize: 11, color: leadsProvinceFilter === code ? 'rgba(232,208,138,0.65)' : '#B65436', marginTop: 2 }}>
+                        +{prov.last7} deze week
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+              <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 12, padding: '16px 18px' }}>
+                <div style={{ fontSize: 34, fontWeight: 700, color: '#1A1A17', fontFamily: 'Georgia, serif', lineHeight: 1 }}>{leadsData ? leadsData.total : '…'}</div>
+                <div style={{ fontSize: 12, color: '#6E6B62', marginTop: 4 }}>Totaal</div>
+                {leadsData && leadsData.last7 > 0 && (
+                  <div style={{ fontSize: 11, color: '#B65436', marginTop: 2 }}>+{leadsData.last7} deze week</div>
+                )}
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#3A3A33', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={leadsConsentFilter}
+                  onChange={e => {
+                    setLeadsConsentFilter(e.target.checked)
+                    loadLeads(leadsProvinceFilter || undefined, e.target.checked || undefined)
+                  }}
+                  style={{ accentColor: '#2A3D2E' }}
+                />
+                Alleen met marketingtoestemming
+              </label>
+              {(leadsProvinceFilter || leadsConsentFilter) && (
+                <button
+                  onClick={() => { setLeadsProvinceFilter(''); setLeadsConsentFilter(false); loadLeads() }}
+                  style={{ background: 'none', border: '1px solid #D8D0C0', borderRadius: 6, padding: '4px 10px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', color: '#6E6B62' }}
+                >
+                  ✕ Filter wissen
+                </button>
+              )}
+            </div>
+
+            {/* Leads tabel */}
+            {!leadsLoaded ? (
+              <p style={{ color: '#6E6B62', fontSize: 14 }}>Laden…</p>
+            ) : !leadsData || leadsData.leads.length === 0 ? (
+              <div style={{ background: '#FBF8F2', border: '1px solid #D8D0C0', borderRadius: 12, padding: '32px', textAlign: 'center', color: '#6E6B62', fontSize: 14 }}>
+                Nog geen leads {leadsProvinceFilter ? `voor ${leadsData?.perProvince[leadsProvinceFilter]?.label ?? leadsProvinceFilter}` : ''}.
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ background: '#F1ECE0' }}>
+                      {['E-mail', 'Provincie', 'Profiel', 'Bron', 'Consent', 'Klant', 'Datum'].map(h => (
+                        <th key={h} style={{ textAlign: 'left', padding: '9px 14px', color: '#6E6B62', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5, whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leadsData.leads.map((lead, i) => (
+                      <tr key={lead.id} style={{ borderTop: '1px solid #EDE9E0', background: i % 2 === 0 ? 'transparent' : '#FAFAF7' }}>
+                        <td style={{ padding: '9px 14px', color: '#1A1A17' }}>
+                          <a href={`mailto:${lead.email}`} style={{ color: '#B65436', textDecoration: 'none' }}>{lead.email}</a>
+                          {lead.unsubscribed_at && <span style={{ marginLeft: 6, fontSize: 10, color: '#8A9588', background: '#F1ECE0', borderRadius: 4, padding: '1px 5px' }}>uitgeschreven</span>}
+                        </td>
+                        <td style={{ padding: '9px 14px', color: '#3A3A33' }}>{PROVINCES[lead.province] ?? lead.province}</td>
+                        <td style={{ padding: '9px 14px', color: '#6E6B62' }}>
+                          {lead.profile === 'student' ? 'Afgestudeerd' : lead.profile === 'employed' ? 'In loondienst' : '—'}
+                        </td>
+                        <td style={{ padding: '9px 14px', color: '#6E6B62', fontSize: 12 }}>
+                          {lead.source ?? '—'}
+                          {lead.utm_campaign && <><br /><span style={{ color: '#8A9588' }}>{lead.utm_campaign}</span></>}
+                        </td>
+                        <td style={{ padding: '9px 14px' }}>
+                          {lead.marketing_consent
+                            ? <span style={{ color: '#2A3D2E', fontWeight: 700 }}>✓</span>
+                            : <span style={{ color: '#8A9588' }}>—</span>}
+                        </td>
+                        <td style={{ padding: '9px 14px' }}>
+                          {lead.is_converted
+                            ? <span style={{ color: '#2A3D2E', fontWeight: 700, fontSize: 12 }}>✓ Klant</span>
+                            : <span style={{ color: '#8A9588' }}>—</span>}
+                        </td>
+                        <td style={{ padding: '9px 14px', color: '#6E6B62', whiteSpace: 'nowrap' }}>
+                          {new Date(lead.created_at).toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>

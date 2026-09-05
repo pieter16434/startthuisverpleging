@@ -100,6 +100,21 @@ PARTNER_JWT_SECRET            # Secret for signing partner session JWTs
 CRON_SECRET                   # For future cron jobs
 ```
 
+## Lead magnet (Opstartcheck)
+
+Free PDF lead magnet for starting self-employed home nurses. Full funnel: landing page → API → email with signed URL → admin tab.
+
+| What | Where |
+|------|-------|
+| Landing page | `/opstartcheck` → `src/app/opstartcheck/page.tsx` |
+| API route | `POST /api/opstartcheck` → `src/app/api/opstartcheck/route.ts` |
+| Admin leads route | `GET /api/admin/leads` + `GET /api/admin/leads/export` |
+| Admin tab | "Leads" tab in `src/app/admin/dashboard/page.tsx` |
+| DB migration | `supabase-leads-migration.sql` — must be run in Supabase SQL Editor |
+| PDF bucket path | `guides/opstartcheck.pdf` — **must be uploaded manually** to Supabase Storage → `guides` bucket |
+
+**To activate**: (1) run the SQL migration, (2) upload `opstartcheck.pdf` to the `guides` bucket in Supabase Storage. No new env vars needed.
+
 ## Current state & roadmap
 
 **Live and working:**
