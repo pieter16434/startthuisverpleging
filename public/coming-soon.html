@@ -2204,34 +2204,36 @@
 </section>
 
 <!-- ==================== OPSTARTCHECK LEAD MAGNET ==================== -->
-<section class="section" id="opstartcheck" style="background:var(--forest);color:var(--cream-soft);">
+<section id="opstartcheck" style="background:#1C2A20;padding:80px 20px;">
   <div class="wrap">
     <div style="max-width:680px;margin:0 auto;text-align:center;">
-      <div class="section-num" style="color:var(--butter);">— Gratis —</div>
-      <h2 style="font-family:var(--font-display);font-size:clamp(26px,5vw,38px);color:var(--cream-soft);margin:12px 0 14px;line-height:1.2;">
-        Nog niet klaar om te kopen?<br><em style="color:var(--butter);">Begin gratis.</em>
+      <div style="font-size:11px;color:#E8D08A;text-transform:uppercase;letter-spacing:0.14em;font-weight:700;margin-bottom:10px;">— Gratis —</div>
+      <h2 style="font-family:'Fraunces',Georgia,serif;font-size:clamp(26px,5vw,38px);color:#F7F3EA;margin:0 0 14px;line-height:1.2;font-weight:700;">
+        Nog niet klaar om te kopen?<br><em style="color:#E8D08A;">Begin gratis.</em>
       </h2>
-      <p style="font-size:17px;color:rgba(247,243,234,0.8);line-height:1.6;margin:0 0 32px;max-width:520px;margin-left:auto;margin-right:auto;">
-        De <strong style="color:var(--cream-soft);">Opstartcheck</strong> is een gratis pdf die je vertelt waar je staat en wat je eerste stap is — inclusief de drie fouten die startende thuisverpleegkundigen samen meer dan €2.000 per jaar kosten.
+      <p style="font-size:17px;color:rgba(247,243,234,0.85);line-height:1.6;margin:0 0 36px;max-width:520px;margin-left:auto;margin-right:auto;">
+        De <strong style="color:#F7F3EA;">Opstartcheck</strong> is een gratis pdf die je vertelt waar je staat en wat je eerste stap is — inclusief de drie fouten die startende thuisverpleegkundigen samen meer dan €2.000 per jaar kosten.
       </p>
 
-      <!-- Mini-formulier -->
-      <div id="opstartcheck-form-wrap" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:28px 24px;max-width:480px;margin:0 auto;">
+      <!-- Mini-formulier kaart -->
+      <div id="opstartcheck-form-wrap" style="background:#FBF8F2;border-radius:16px;padding:28px 24px;max-width:480px;margin:0 auto;text-align:left;">
         <form id="opstartcheck-form" style="display:flex;flex-direction:column;gap:12px;" onsubmit="handleOpstartcheckSubmit(event)">
           <!-- Honeypot -->
           <div style="display:none;" aria-hidden="true">
             <input name="website" id="op-hp" tabindex="-1" autocomplete="off" value="">
           </div>
 
+          <label style="font-size:11px;font-weight:700;color:#6E6B62;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;" for="op-email">E-mailadres *</label>
           <input
             type="email"
             id="op-email"
             required
             placeholder="jouw@email.be"
             autocomplete="email"
-            style="width:100%;padding:12px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:var(--cream-soft);font-family:var(--font-body);font-size:15px;box-sizing:border-box;outline:none;"
+            style="width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid #D8D0C0;background:#fff;color:#1A1A17;font-size:15px;box-sizing:border-box;outline:none;font-family:inherit;"
           >
 
+          <label style="font-size:11px;font-weight:700;color:#6E6B62;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;">Provincie *</label>
           <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;" id="op-province-grid">
             <button type="button" class="op-prov-btn" data-code="ANT" onclick="selectOpProv(this)">Antwerpen</button>
             <button type="button" class="op-prov-btn" data-code="LIM" onclick="selectOpProv(this)">Limburg</button>
@@ -2241,21 +2243,20 @@
           </div>
           <input type="hidden" id="op-province" value="">
 
-          <p id="op-province-error" style="margin:0;font-size:13px;color:var(--clay);display:none;">Kies eerst je provincie.</p>
+          <p id="op-province-error" style="margin:0;font-size:13px;color:#B65436;display:none;">Kies eerst je provincie.</p>
 
-          <button type="submit" id="op-submit-btn" style="background:var(--butter);color:var(--forest);border:none;border-radius:8px;padding:13px 20px;font-size:15px;font-weight:700;font-family:var(--font-body);cursor:pointer;transition:opacity 0.2s;">
+          <button type="submit" id="op-submit-btn" style="background:#2A3D2E;color:#E8D08A;border:none;border-radius:8px;padding:14px 20px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:opacity 0.2s;margin-top:4px;">
             Stuur mij de Opstartcheck →
           </button>
-          <p id="op-error" style="margin:0;font-size:13px;color:var(--clay);display:none;"></p>
+          <p id="op-error" style="margin:0;font-size:13px;color:#B65436;display:none;"></p>
+          <p style="text-align:center;font-size:12px;color:#8A9588;margin:0;">Gratis · geen spam · <a href="/privacy" style="color:#8A9588;">privacybeleid</a></p>
         </form>
 
         <div id="opstartcheck-success" style="display:none;text-align:center;padding:8px 0;">
-          <p style="font-size:20px;font-family:var(--font-display);color:var(--butter);margin:0 0 8px;">✓ Check je mailbox!</p>
-          <p style="font-size:14px;color:rgba(247,243,234,0.75);margin:0;">Je Opstartcheck is onderweg. (Spammap even checken.)</p>
+          <p style="font-size:20px;font-family:'Fraunces',Georgia,serif;color:#2A3D2E;margin:0 0 8px;font-weight:700;">✓ Check je mailbox!</p>
+          <p style="font-size:14px;color:#6E6B62;margin:0;">Je Opstartcheck is onderweg. (Spammap even checken.)</p>
         </div>
       </div>
-
-      <p style="font-size:12px;color:rgba(247,243,234,0.45);margin-top:16px;">Gratis · geen spam · <a href="/privacy" style="color:rgba(247,243,234,0.45);">privacybeleid</a></p>
     </div>
   </div>
 </section>
@@ -2264,19 +2265,24 @@
   .op-prov-btn {
     padding: 8px 4px;
     border-radius: 6px;
-    border: 1.5px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.05);
-    color: rgba(247,243,234,0.75);
-    font-family: var(--font-body);
+    border: 1.5px solid #D8D0C0;
+    background: #fff;
+    color: #3A3A33;
+    font-family: inherit;
     font-size: 11px;
     cursor: pointer;
     transition: all 0.15s;
+    font-weight: 500;
   }
   .op-prov-btn.selected {
-    background: var(--butter);
-    border-color: var(--butter);
-    color: var(--forest);
+    background: #2A3D2E;
+    border-color: #2A3D2E;
+    color: #E8D08A;
     font-weight: 700;
+  }
+  .op-prov-btn:hover:not(.selected) {
+    border-color: #2A3D2E;
+    color: #2A3D2E;
   }
 </style>
 
