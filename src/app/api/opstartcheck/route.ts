@@ -68,25 +68,42 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServiceClient()
 
-  // Upsert lead (dubbele e-mail → update province/source, stuur mail opnieuw)
-  const { error: upsertError } = await supabase
-    .from('leads')
-    .upsert(
-      {
-        email:             data.email,
-        province:          data.province,
-        profile:           data.profile ?? null,
-        source:            data.utm_source ?? 'direct',
-        utm_campaign:      data.utm_campaign ?? null,
-        utm_content:       data.utm_content ?? null,
-        marketing_consent: data.consent ?? false,
-      },
-      { onConflict: 'email', ignoreDuplicates: false }
-    )
+  const leadRow = {
+    email:             data.email,
+    province:          data.province,
+    profile:           data.profile ?? null,
+    source:            data.utm_source ?? 'direct',
+    utm_campaign:      data.utm_campaign ?? null,
+    utm_content:       data.utm_content ?? null,
+    marketing_consent: data.consent ?? false,
+  }
 
-  if (upsertError) {
-    console.error('[opstartcheck] Upsert fout:', upsertError)
-    return NextResponse.json({ error: 'Inschrijving mislukt. Probeer opnieuw.' }, { status: 500 })
+  // Probeer eerst een INSERT; bij duplicate e-mail → UPDATE (stuur mail altijd opnieuw)
+  const { error: insertError } = await supabase.from('leads').insert(leadRow)
+
+  if (insertError) {
+    if (insertError.code === '23505') {
+      // Dubbele inschrijving: bijwerken en mail opnieuw sturen
+      const { error: updateError } = await supabase
+        .from('leads')
+        .update({
+          province:          leadRow.province,
+          profile:           leadRow.profile,
+          source:            leadRow.source,
+          utm_campaign:      leadRow.utm_campaign,
+          utm_content:       leadRow.utm_content,
+          marketing_consent: leadRow.marketing_consent,
+          unsubscribed_at:   null, // heractiveren als ze eerder uitschreven
+        })
+        .eq('email', data.email)
+      if (updateError) {
+        console.error('[opstartcheck] Update fout:', updateError)
+        return NextResponse.json({ error: 'Inschrijving mislukt. Probeer opnieuw.' }, { status: 500 })
+      }
+    } else {
+      console.error('[opstartcheck] Insert fout:', insertError.code, insertError.message)
+      return NextResponse.json({ error: 'Inschrijving mislukt. Probeer opnieuw.' }, { status: 500 })
+    }
   }
 
   // Signed URL voor de PDF (7 dagen)
