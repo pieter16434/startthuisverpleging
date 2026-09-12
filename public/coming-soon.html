@@ -1675,6 +1675,15 @@
   .price-card .wl-btn:hover { background: var(--cream-soft); border-color: var(--cream-soft); }
   .price-card .wl-note { color: rgba(247,243,234,0.6); justify-content: center; }
   .price-card .wl-note svg { color: var(--butter); }
+
+  /* ============ CODEBOEKJE ============ */
+  .codeboekje-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px 80px;
+    align-items: center;
+  }
+  @media (max-width: 780px) { .codeboekje-inner { grid-template-columns: 1fr; gap: 32px; } }
 </style>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -1857,6 +1866,38 @@
         <div class="benefit-tag">30 dagen garantie</div>
         <h3>Niet wat je verwachtte? Geld terug.</h3>
         <p>Werkt de gids niet voor jou — om welke reden ook — dan storten we het door jou betaalde bedrag terug. Vraag het wel aan vóór je een kortingscode activeert: eens je daarmee al voordeel haalde, vervalt de garantie. Eén kort formulier, geen discussie.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== CODEBOEKJE ==================== -->
+<section class="section" id="codeboekje" style="background:#1C2A20; border-top:1px solid rgba(255,255,255,0.06); padding-top:clamp(70px,9vw,130px); padding-bottom:clamp(70px,9vw,130px);">
+  <div class="wrap">
+    <div class="codeboekje-inner">
+      <div>
+        <div style="font-family:var(--font-mono);font-size:12px;text-transform:uppercase;letter-spacing:0.14em;color:rgba(232,208,138,0.65);margin-bottom:16px;">Jouw codeboekje</div>
+        <h2 style="font-family:var(--font-display);font-weight:700;font-size:clamp(28px,4.5vw,44px);line-height:1.15;color:#F7F3EA;text-wrap:balance;font-variation-settings:'SOFT' 40;">De gids betaalt <em style="font-style:italic;color:#E8D08A;font-weight:300;">zichzelf terug.</em></h2>
+        <p style="margin-top:24px;font-size:16px;color:rgba(247,243,234,0.72);line-height:1.75;">
+          Elke aankoop bevat een persoonlijk codeboekje met kortingen bij lokale partners — van software tot medisch materiaal. <strong style="color:#F7F3EA;font-weight:600;">Die kortingen samen zijn meer waard dan de prijs van de gids zelf.</strong>
+        </p>
+        <p style="margin-top:14px;font-size:16px;color:rgba(247,243,234,0.72);line-height:1.75;">
+          Welke partners beschikbaar zijn hangt af van je provincie. Wat er ook in zit — het is altijd meer dan wat je betaalde.
+        </p>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:32px 28px;display:flex;flex-direction:column;gap:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);">
+          <span style="font-size:14px;color:rgba(247,243,234,0.55);line-height:1.4;">Prijs van de gids</span>
+          <span style="font-family:var(--font-display);font-size:20px;font-weight:700;color:rgba(247,243,234,0.35);text-decoration:line-through;text-decoration-color:rgba(182,84,54,0.7);text-decoration-thickness:2px;white-space:nowrap;">€50</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.1);">
+          <span style="font-size:14px;color:rgba(247,243,234,0.55);line-height:1.4;">Waarde van jouw kortingen<br>via het codeboekje</span>
+          <span style="font-family:var(--font-display);font-size:22px;font-weight:700;color:#E8D08A;white-space:nowrap;">meer dan €50</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-top:20px;border-top:1.5px solid rgba(232,208,138,0.25);margin-top:4px;">
+          <span style="font-family:var(--font-display);font-style:italic;font-size:15px;color:rgba(247,243,234,0.7);">Jij gaat er op vooruit</span>
+          <span style="font-family:var(--font-display);font-size:28px;font-weight:700;color:#E8D08A;white-space:nowrap;">altijd</span>
+        </div>
       </div>
     </div>
   </div>
