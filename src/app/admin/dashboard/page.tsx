@@ -230,6 +230,7 @@ export default function AdminDashboard() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          province: editPartner.province,
           discount_description: editPartner.discount_description,
           fee_per_customer: editPartner.fee_per_customer,
           notes: editPartner.notes,
@@ -248,9 +249,14 @@ export default function AdminDashboard() {
         }),
       })
       if (!res.ok) { setFormError('Opslaan mislukt'); return }
+      const result = await res.json()
       setEditPartner(null)
-      setSuccessMsg('Partner bijgewerkt ✓')
-      setTimeout(() => setSuccessMsg(''), 3000)
+      setSuccessMsg(
+        result.migrated != null
+          ? `Partner bijgewerkt ✓ — ${result.migrated} codeboek(en) automatisch aangepast`
+          : 'Partner bijgewerkt ✓'
+      )
+      setTimeout(() => setSuccessMsg(''), 5000)
       loadData()
     } catch { setFormError('Opslaan mislukt') }
     finally { setFormLoading(false) }
@@ -950,6 +956,25 @@ export default function AdminDashboard() {
                           <input type="number" value={editPartner.fee_per_customer} onChange={e => setEditPartner({ ...editPartner, fee_per_customer: parseFloat(e.target.value) })} style={inputStyle} />
                         </div>
                       </div>
+                      {editPartner.partner_type === 'service' && (
+                        <div>
+                          <label style={labelStyle}>Provincie</label>
+                          <select
+                            value={editPartner.province}
+                            onChange={e => setEditPartner({ ...editPartner, province: e.target.value })}
+                            style={inputStyle}
+                          >
+                            {Object.entries(PROVINCES).map(([k, v]) => (
+                              <option key={k} value={k}>{v}</option>
+                            ))}
+                          </select>
+                          {editPartner.province !== partners.find(p => p.id === editPartner.id)?.province && (
+                            <p style={{ fontSize: 12, color: '#B65436', margin: '-8px 0 12px', lineHeight: 1.5 }}>
+                              ⚠️ Provinciewijziging: codeboeken van bestaande klanten worden automatisch bijgewerkt na opslaan.
+                            </p>
+                          )}
+                        </div>
+                      )}
                       <div>
                         <label style={labelStyle}>Aanbod voor klanten</label>
                         <textarea value={editPartner.discount_description} onChange={e => setEditPartner({ ...editPartner, discount_description: e.target.value })} rows={2} style={{ ...inputStyle, resize: 'vertical' } as React.CSSProperties} />

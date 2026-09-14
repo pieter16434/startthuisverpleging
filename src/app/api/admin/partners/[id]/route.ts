@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getAdminSession } from '@/lib/admin/auth'
+import { migratePartnerProvince, regenerateCodebookForOrder } from '@/lib/codebook/regenerate'
 
 // PATCH — partner updaten
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
@@ -50,8 +51,50 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (body.deal2_fee !== undefined) update.deal2_fee = body.deal2_fee || null
     if (body.show_name !== undefined) update.show_name = body.show_name
 
+    // ── Provincie-wijziging: migreer codeboeken ──────────────────────────────
+    let provinceMigration: { oldProvince: string; newProvince: string; hasDeal2: boolean } | null = null
+    if (body.province !== undefined) {
+      const { data: current } = await supabase
+        .from('partners')
+        .select('province, is_active, partner_type, has_deal2')
+        .eq('id', params.id)
+        .single()
+
+      const oldProvince = current?.province as string | undefined
+      const newProvince = body.province as string
+
+      update.province = newProvince
+
+      // Alleen migreren voor actieve service-partners als provincie echt verandert
+      if (
+        oldProvince &&
+        oldProvince !== newProvince &&
+        current?.is_active === true &&
+        current?.partner_type === 'service'
+      ) {
+        provinceMigration = {
+          oldProvince,
+          newProvince,
+          hasDeal2: body.has_deal2 ?? current.has_deal2 ?? false,
+        }
+      }
+    }
+
     const { error } = await supabase.from('partners').update(update).eq('id', params.id)
     if (error) throw error
+
+    // ── Codeboek-migratie uitvoeren na de update ─────────────────────────────
+    if (provinceMigration) {
+      const { oldProvince, newProvince, hasDeal2 } = provinceMigration
+      console.log(`[partner province] ${params.id}: ${oldProvince} → ${newProvince}`)
+      const affectedOrderIds = await migratePartnerProvince(params.id, oldProvince, newProvince, hasDeal2)
+      console.log(`[partner province] Codeboeken regenereren voor ${affectedOrderIds.length} orders…`)
+      for (const orderId of affectedOrderIds) {
+        await regenerateCodebookForOrder(orderId)
+      }
+      console.log(`[partner province] Migratie voltooid.`)
+      return NextResponse.json({ ok: true, migrated: affectedOrderIds.length })
+    }
 
     return NextResponse.json({ ok: true })
   } catch (err) {
