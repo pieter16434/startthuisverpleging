@@ -5,6 +5,7 @@ import { resend } from '@/lib/resend/client'
 import { generateCodebookPdf, type CodebookData } from '@/lib/pdf/codebook'
 import { generateInvoicePdf, type InvoiceData } from '@/lib/pdf/invoice'
 import { getSignedPdfUrl, GUIDE_PATH, GUIDE_PRINT_PATH } from '@/lib/storage/pdf'
+import { trackPurchase } from '@/lib/tiktok/events'
 
 const PROVINCES: Record<string, string> = {
   ANT: 'Antwerpen', LIM: 'Limburg', OVL: 'Oost-Vlaanderen',
@@ -54,6 +55,14 @@ export async function POST(req: NextRequest) {
       .from('orders')
       .update({ status: 'paid', paid_at: new Date().toISOString() })
       .eq('id', orderId)
+
+    // TikTok Events API — Purchase
+    trackPurchase(orderId, { email: customer.email }, {
+      value: order.amount_cents / 100,
+      currency: 'EUR',
+      content_id: 'gids-zelfstandig-thuisverpleegkundige',
+      content_name: 'Gids: Zelfstandig thuisverpleegkundige worden in Vlaanderen',
+    }).catch(() => {})
 
     const customer = order.customers
 

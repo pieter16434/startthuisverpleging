@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { mollieClient } from '@/lib/mollie/client'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { trackInitiateCheckout } from '@/lib/tiktok/events'
 
 const REFERRAL_CODE = (process.env.REFERRAL_CODE ?? 'VRIEND20').toUpperCase()
 
@@ -154,6 +155,18 @@ export async function POST(req: NextRequest) {
       .from('orders')
       .update({ mollie_payment_id: payment.id })
       .eq('id', order.id)
+
+    // TikTok Events API — InitiateCheckout
+    trackInitiateCheckout(order.id, {
+      email: data.email,
+      ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? undefined,
+      user_agent: req.headers.get('user-agent') ?? undefined,
+    }, {
+      value: amountCents / 100,
+      currency: 'EUR',
+      content_id: 'gids-zelfstandig-thuisverpleegkundige',
+      content_name: 'Gids: Zelfstandig thuisverpleegkundige worden in Vlaanderen',
+    }).catch(() => {})
 
     return NextResponse.json({ payment_url: payment.getCheckoutUrl() })
   } catch (err) {
