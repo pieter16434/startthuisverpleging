@@ -56,6 +56,8 @@ export async function POST(req: NextRequest) {
       .update({ status: 'paid', paid_at: new Date().toISOString() })
       .eq('id', orderId)
 
+    const customer = order.customers
+
     // TikTok Events API — Purchase
     trackPurchase(orderId, { email: customer.email }, {
       value: order.amount_cents / 100,
@@ -63,8 +65,6 @@ export async function POST(req: NextRequest) {
       content_id: 'gids-zelfstandig-thuisverpleegkundige',
       content_name: 'Gids: Zelfstandig thuisverpleegkundige worden in Vlaanderen',
     }).catch(() => {})
-
-    const customer = order.customers
 
     // ── 2. Genereer partner codes per provincie ──────────────────────────────
     type PartnerRow = {
