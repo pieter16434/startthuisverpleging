@@ -186,8 +186,25 @@
   }
   .btn-ghost:hover { background: var(--ink); color: var(--cream); }
 
+  .nav-checklist-link {
+    display: none;
+    font-size: 11px;
+    color: var(--green);
+    font-weight: 500;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(42,61,46,0.3);
+    padding-bottom: 1px;
+    white-space: nowrap;
+    transition: color 0.2s;
+  }
+  .nav-checklist-link:hover { color: var(--clay); border-bottom-color: var(--clay); }
+
   @media (max-width: 880px) {
     .nav-links { display: none; }
+    .nav-checklist-link { display: inline; }
+    .nav-cta { flex-direction: column; align-items: flex-end; gap: 5px; }
+    .brand { font-size: clamp(15px, 4.5vw, 22px); }
+    .nav-inner { gap: 12px; }
   }
 
   /* ============ HERO ============ */
@@ -1748,6 +1765,7 @@
     </nav>
     <div class="nav-cta">
       <button class="btn" id="nav-bestel-btn" style="border:none;cursor:pointer;">Bestel nu — €50 <span class="arrow">→</span></button>
+      <a href="#opstartcheck" class="nav-checklist-link">Gratis checklist →</a>
     </div>
   </div>
 </header>
