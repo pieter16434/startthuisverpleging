@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { resend } from '@/lib/resend/client'
 import { getSignedPdfUrl } from '@/lib/storage/pdf'
 import { z } from 'zod'
+import { buildUnsubscribeUrl } from '@/lib/email/unsubscribe'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,6 +30,7 @@ function isRateLimited(ip: string): boolean {
 
 // ─── Validatieschema ───────────────────────────────────────────────────────
 const Schema = z.object({
+  first_name:   z.string().min(1).max(60),
   email:        z.string().email('Ongeldig e-mailadres').transform(s => s.toLowerCase().trim()),
   province:     z.enum(['ANT', 'LIM', 'OVL', 'VBR', 'WVL'], { message: 'Kies een provincie.' }),
   profile:      z.enum(['student', 'employed']).optional(),
@@ -69,6 +71,7 @@ export async function POST(req: NextRequest) {
   const supabase = createServiceClient()
 
   const leadRow = {
+    first_name:        data.first_name,
     email:             data.email,
     province:          data.province,
     profile:           data.profile ?? null,
@@ -87,6 +90,7 @@ export async function POST(req: NextRequest) {
       const { error: updateError } = await supabase
         .from('leads')
         .update({
+          first_name:        leadRow.first_name,
           province:          leadRow.province,
           profile:           leadRow.profile,
           source:            leadRow.source,
@@ -94,6 +98,7 @@ export async function POST(req: NextRequest) {
           utm_content:       leadRow.utm_content,
           marketing_consent: leadRow.marketing_consent,
           unsubscribed_at:   null, // heractiveren als ze eerder uitschreven
+          nurture_step:      0,    // herstart nurture sequence
         })
         .eq('email', data.email)
       if (updateError) {
@@ -127,7 +132,8 @@ export async function POST(req: NextRequest) {
         <tr>
           <td style="padding:32px 32px 20px;">
             <p style="font-size:15px;color:#3A3A33;line-height:1.7;margin:0 0 24px;">
-              Welkom! We zijn blij dat je de stap zet richting zelfstandig thuisverpleegkundige worden in ${provincieName}.
+              Hoi ${data.first_name},<br><br>
+              We zijn blij dat je de stap zet richting zelfstandig thuisverpleegkundige worden in ${provincieName}.
               Hieronder vind je de link naar je gratis Opstartcheck — een pdf die je helpt te begrijpen waar je staat en wat je eerste stap is.
             </p>
 
@@ -170,8 +176,9 @@ export async function POST(req: NextRequest) {
           <td style="padding:20px 32px 28px;border-top:1px solid #E8E3D8;">
             <p style="font-size:12px;color:#8A9588;margin:0;line-height:1.6;">
               Je ontvangt deze mail omdat je de Opstartcheck aanvroeg via startthuisverpleging.be.<br>
-              Geen interesse meer? Antwoord met <strong>'stop'</strong> of schrijf naar
-              <a href="mailto:hallo@startthuisverpleging.be" style="color:#B65436;">hallo@startthuisverpleging.be</a>.
+              <a href="${buildUnsubscribeUrl(data.email)}" style="color:#8A9588;text-decoration:underline;">Uitschrijven</a>
+              &nbsp;·&nbsp;
+              <a href="mailto:hallo@startthuisverpleging.be" style="color:#8A9588;">hallo@startthuisverpleging.be</a>
             </p>
           </td>
         </tr>
@@ -216,6 +223,10 @@ export async function POST(req: NextRequest) {
         <tr>
           <td style="padding:28px 32px;">
             <table width="100%" cellpadding="0" cellspacing="0">
+              <tr><td style="padding:6px 0;border-bottom:1px solid #E8E3D8;">
+                <span style="font-size:12px;color:#6E6B62;text-transform:uppercase;letter-spacing:0.5px;">Naam</span><br>
+                <strong style="font-size:15px;color:#1A1A17;">${data.first_name}</strong>
+              </td></tr>
               <tr><td style="padding:6px 0;border-bottom:1px solid #E8E3D8;">
                 <span style="font-size:12px;color:#6E6B62;text-transform:uppercase;letter-spacing:0.5px;">E-mail</span><br>
                 <a href="mailto:${data.email}" style="font-size:15px;color:#B65436;font-weight:600;">${data.email}</a>

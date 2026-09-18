@@ -2304,6 +2304,16 @@
             <input name="website" id="op-hp" tabindex="-1" autocomplete="off" value="">
           </div>
 
+          <label style="font-size:11px;font-weight:700;color:#6E6B62;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;" for="op-first-name">Voornaam *</label>
+          <input
+            type="text"
+            id="op-first-name"
+            required
+            placeholder="Jouw voornaam"
+            autocomplete="given-name"
+            style="width:100%;padding:11px 14px;border-radius:8px;border:1.5px solid #D8D0C0;background:#fff;color:#1A1A17;font-size:15px;box-sizing:border-box;outline:none;font-family:inherit;"
+          >
+
           <label style="font-size:11px;font-weight:700;color:#6E6B62;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px;" for="op-email">E-mailadres *</label>
           <input
             type="email"
@@ -2330,7 +2340,7 @@
             Stuur mij de Opstartcheck →
           </button>
           <p id="op-error" style="margin:0;font-size:13px;color:#B65436;display:none;"></p>
-          <p style="text-align:center;font-size:12px;color:#8A9588;margin:0;">Gratis · geen spam · <a href="/privacy" style="color:#8A9588;">privacybeleid</a></p>
+          <p style="text-align:center;font-size:12px;color:#8A9588;margin:0;">Gratis · <a href="/privacy" style="color:#8A9588;">privacybeleid</a></p>
         </form>
 
         <div id="opstartcheck-success" style="display:none;text-align:center;padding:8px 0;">
@@ -3216,6 +3226,7 @@
 
   async function handleOpstartcheckSubmit(e) {
     e.preventDefault();
+    const firstName = document.getElementById('op-first-name').value.trim();
     const email    = document.getElementById('op-email').value.trim();
     const province = document.getElementById('op-province').value;
     const honeypot = document.getElementById('op-hp').value;
@@ -3239,6 +3250,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          first_name: firstName,
           email, province,
           utm_source:   p.get('utm_source')   || undefined,
           utm_campaign: p.get('utm_campaign') || undefined,
