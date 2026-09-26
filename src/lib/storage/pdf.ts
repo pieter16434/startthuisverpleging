@@ -1,7 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 
 const BUCKET = 'guides'
-const SIGNED_URL_EXPIRY = 60 * 60 * 24 * 7 // 7 dagen in seconden
+const SIGNED_URL_EXPIRY = 60 * 60 * 24 * 365 // 1 jaar in seconden
 
 /**
  * Genereer een tijdelijke signed URL voor een PDF in Supabase Storage.

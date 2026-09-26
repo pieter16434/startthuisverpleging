@@ -314,10 +314,10 @@ export async function POST(req: NextRequest) {
       upsert: true,
     })
 
-    // Signed URL voor codeboek (7 dagen)
+    // Signed URL voor codeboek (3 maanden)
     const { data: codebookSigned } = await supabase.storage
       .from('guides')
-      .createSignedUrl(codebookPath, 60 * 60 * 24 * 7)
+      .createSignedUrl(codebookPath, 60 * 60 * 24 * 90)
     const codebookUrl = codebookSigned?.signedUrl ?? null
 
     // ── 3b. Genereer factuur ─────────────────────────────────────────────────
@@ -356,7 +356,7 @@ export async function POST(req: NextRequest) {
 
     const { data: invoiceSigned } = await supabase.storage
       .from('guides')
-      .createSignedUrl(invoicePath, 60 * 60 * 24 * 7)
+      .createSignedUrl(invoicePath, 60 * 60 * 24 * 365)
     const invoiceUrl = invoiceSigned?.signedUrl ?? null
 
     // ── 4. Controleer of hoofdgids al geüpload is ────────────────────────────
@@ -401,7 +401,7 @@ export async function POST(req: NextRequest) {
                     </h1>
                     <p style="margin:0 0 24px;font-size:16px;color:#3A3A33;line-height:1.6;">
                       ${hasGuide
-                        ? 'Jouw bestanden staan klaar. Download ze hieronder — de links zijn 7 dagen geldig.'
+                        ? 'Jouw bestanden staan klaar. Download ze hieronder en sla ze op je toestel op.'
                         : 'Jouw bestelling is bevestigd en betaald. Je gids wordt zo snel mogelijk doorgestuurd.'}
                     </p>
 
@@ -474,7 +474,7 @@ export async function POST(req: NextRequest) {
                     <p style="margin:0 0 20px;font-size:11px;color:#8A9588;">Factuur op naam van ${customer.first_name} ${customer.last_name} · Vitalion Ascent BV · Vrijgesteld van btw</p>
                     ` : ''}
                     <p style="margin:0 0 24px;font-size:13px;color:#8A9588;">
-                      ⏱ Deze downloadlinks zijn 7 dagen geldig. Sla de bestanden op na het downloaden.
+                      📅 <strong>Geldigheid downloadlinks:</strong> gids = 1 jaar · codeboek = 3 maanden · factuur = 1 jaar. Sla je bestanden op na het downloaden.
                     </p>
                     ` : `
                     <p style="margin:0 0 24px;font-size:15px;color:#3A3A33;line-height:1.6;">

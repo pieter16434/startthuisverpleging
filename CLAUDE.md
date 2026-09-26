@@ -161,7 +161,7 @@ Pixel ID: `DAN6VT3C77U5PB5VV910`
 | `src/lib/mollie/client.ts` | Mollie betaalclient |
 | `src/lib/tiktok/events.ts` | TikTok Events API helpers |
 | `src/lib/email/unsubscribe.ts` | HMAC unsubscribe token generatie + verificatie |
-| `src/lib/storage/pdf.ts` | Signed URL voor opstartcheck.pdf (7 dagen geldig) |
+| `src/lib/storage/pdf.ts` | Signed URL generator voor PDFs (1 jaar geldig) |
 | `src/lib/admin/auth.ts` | JWT verificatie admin |
 | `src/lib/partner/auth.ts` | JWT verificatie partner portaal |
 | `src/lib/influencer/auth.ts` | JWT verificatie influencer portaal |
