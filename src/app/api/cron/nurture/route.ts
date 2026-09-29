@@ -131,17 +131,17 @@ function buildMail2(naam: string, provincie: string, unsubUrl: string): MailData
 function buildMail3(naam: string, unsubUrl: string): MailData {
   const body = `
     ${p(`Hoi ${naam},`)}
-    ${p('Kort en duidelijk: de introprijs van <strong>€50</strong> loopt t.e.m. 30 september. Daarna kost exact dezelfde gids <strong>€85</strong>.')}
-    ${p('Elke week uitstel is ook een week later starten als zelfstandige — en nu €35 duurder.')}
+    ${p('Kort en duidelijk: de introprijs van <strong>€50</strong> loopt t.e.m. 31 december. Daarna kost exact dezelfde gids <strong>€85</strong>.')}
+    ${p('Elke week uitstel is ook een week later starten als zelfstandige — en straks €35 duurder.')}
     ${p('Wie vandaag begint, verdient de gids terug vóór de prijs stijgt.')}
     ${p('Twijfel je nog? Onthoud: <strong>30 dagen geld terug</strong>, geen risico.')}
     <p style="font-size:15px;color:#3A3A33;line-height:1.7;margin:16px 0 0;">— Pieter &amp; Jonas</p>
     ${ctaButton(`${SITE_URL}/#wachtlijst`, 'Bestel nu voor €50 →')}
   `
   return {
-    subject: 'Na 30 september betaal je €35 meer',
+    subject: 'Na 31 december betaal je €35 meer',
     preheader: 'Zelfde gids, hogere prijs. Dit is je herinnering.',
-    html: wrapEmail('Na 30 september betaal je €35 meer', body, unsubUrl),
+    html: wrapEmail('Na 31 december betaal je €35 meer', body, unsubUrl),
   }
 }
 

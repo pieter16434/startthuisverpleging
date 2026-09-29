@@ -1745,7 +1745,7 @@
 <div class="launch-banner">
   <div class="lb-inner">
     <span class="lb-dot"></span>
-    <span id="lb-price-text"><strong>Nu beschikbaar.</strong> Introductieprijs t.e.m. 30 sept 2026 — nu €50 in plaats van €85. Bestel vandaag.</span>
+    <span id="lb-price-text"><strong>Nu beschikbaar.</strong> Introductieprijs t.e.m. 31 dec 2026 — nu €50 in plaats van €85. Bestel vandaag.</span>
   </div>
 </div>
 
@@ -1820,7 +1820,7 @@
         <button class="wl-btn" id="hero-bestel-btn" onclick="openModal()">Bestel nu — €50 <span class="arrow">→</span></button>
         <div class="wl-note" style="margin-top:12px;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-          <span id="hero-price-note">Introductieprijs €50 t.e.m. 30 sept 2026 · 30 dagen geld-terug-garantie</span>
+          <span id="hero-price-note">Introductieprijs €50 t.e.m. 31 dec 2026 · 30 dagen geld-terug-garantie</span>
         </div>
       </div>
 
@@ -2392,13 +2392,13 @@
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Het complete stappenplan als PDF (direct na betaling)</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Codeboek met lokale partners voor jouw provincie</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> 30 dagen geld-terug-garantie — geen vragen</li>
-            <li id="price-list-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Tijdelijk €50 t.e.m. 30 sept 2026 — normaal €85</li>
+            <li id="price-list-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Tijdelijk €50 t.e.m. 31 dec 2026 — normaal €85</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> Officiële factuur van de PDF — in te brengen als eerste zakelijke kost</li>
           </ul>
         </div>
         <div class="price-card">
           <div class="price-amount"><span class="currency">€</span><span id="price-amount-num">50</span></div>
-          <div class="price-meta" id="price-meta-text">Introductieprijs t.e.m. 30 sept 2026 · <s style="opacity:0.6;">normaal €85</s></div>
+          <div class="price-meta" id="price-meta-text">Introductieprijs t.e.m. 31 dec 2026 · <s style="opacity:0.6;">normaal €85</s></div>
           <div id="price-info-box" style="margin:10px 0 0;padding:10px 14px;background:rgba(232,208,138,0.15);border-radius:8px;font-size:12px;color:rgba(255,255,255,0.8);line-height:1.5;text-align:left;">
             ℹ️ De lagere prijs is omdat we nog niet in elke provincie lokale partners hebben. Zodra het netwerk volledig is, stijgt de prijs naar €85. Wie nu koopt, houdt de introductieprijs.
           </div>
@@ -2731,7 +2731,7 @@
      Introductieprijs — automatisch omschakelen na 30 sept 2026
      Na deze datum gaat de prijs automatisch naar €85 overal.
   ============================================================ */
-  const INTRO_PRICE_ENDS = new Date('2026-09-30T23:59:59+02:00');
+  const INTRO_PRICE_ENDS = new Date('2026-12-31T23:59:59+01:00');
   const IS_INTRO   = new Date() < INTRO_PRICE_ENDS;
   const BASE_DISP  = IS_INTRO ? '50'    : '85';
   const DISC_DISP  = IS_INTRO ? '40'    : '68';

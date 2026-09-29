@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
     const supabase = createServiceClient()
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL!
 
-    // Introductieprijs t.e.m. 30 september 2026 — daarna automatisch €85
-    const INTRO_PRICE_ENDS = new Date('2026-09-30T23:59:59+02:00')
+    // Introductieprijs t.e.m. 31 december 2026 — daarna automatisch €85
+    const INTRO_PRICE_ENDS = new Date('2026-12-31T23:59:59+01:00')
     const isIntro = new Date() < INTRO_PRICE_ENDS
     const BASE_CENTS = isIntro ? 5000 : 8500
     const BASE_EUROS = isIntro ? '50.00' : '85.00'
