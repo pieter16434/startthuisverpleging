@@ -2737,6 +2737,10 @@
   const DISC_DISP  = IS_INTRO ? '40'    : '68';
   const DISC_EUROS = IS_INTRO ? '40.00' : '68.00';
   const DISC_CENTS = IS_INTRO ? 4000    : 6800;
+  // START50 — 50% korting
+  const DISC50_DISP  = IS_INTRO ? '25'    : '42,50';
+  const DISC50_EUROS = IS_INTRO ? '25.00' : '42.50';
+  const DISC50_CENTS = IS_INTRO ? 2500    : 4250;
 
   if (!IS_INTRO) {
     const setHtml = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
@@ -2931,13 +2935,15 @@
       const res = await fetch("/api/validate-code?code=" + encodeURIComponent(code));
       const data = await res.json();
       if (data.valid) {
+        const pct = data.discount_pct ?? 20;
+        const priceDisp  = pct === 50 ? DISC50_DISP  : DISC_DISP;
         discountApplied = true;
         appliedCode = code;
         input.style.borderColor = "var(--green)";
         msg.className = "co-coupon-msg ok";
-        msg.textContent = `✓ 20% korting toegepast — je betaalt €${DISC_DISP}`;
-        submitBtn.textContent = `Betaal €${DISC_DISP} — Ga naar betaling →`;
-        coLabel.innerHTML = `Bestelling · <s style="opacity:0.55;font-size:13px;">€${BASE_DISP}</s> <strong style="color:#2A3D2E;">€${DISC_DISP}</strong> <span style="background:#2A3D2E;color:#E8D08A;font-size:10px;padding:2px 7px;border-radius:4px;margin-left:4px;font-family:var(--font-mono);">${code} −20%</span>`;
+        msg.textContent = `✓ ${pct}% korting toegepast — je betaalt €${priceDisp}`;
+        submitBtn.textContent = `Betaal €${priceDisp} — Ga naar betaling →`;
+        coLabel.innerHTML = `Bestelling · <s style="opacity:0.55;font-size:13px;">€${BASE_DISP}</s> <strong style="color:#2A3D2E;">€${priceDisp}</strong> <span style="background:#2A3D2E;color:#E8D08A;font-size:10px;padding:2px 7px;border-radius:4px;margin-left:4px;font-family:var(--font-mono);">${code} −${pct}%</span>`;
       } else {
         discountApplied = false;
         appliedCode = "";

@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { trackInitiateCheckout } from '@/lib/tiktok/events'
 
 const REFERRAL_CODE = (process.env.REFERRAL_CODE ?? 'VRIEND20').toUpperCase()
+const PROMO_DISCOUNTS: Record<string, number> = { START50: 50 }
 
 const CheckoutSchema = z.object({
   email: z.string().email(),
@@ -42,7 +43,13 @@ export async function POST(req: NextRequest) {
     let influencerId: string | null = null
 
     if (data.discount_code) {
-      if (data.discount_code === REFERRAL_CODE) {
+      if (PROMO_DISCOUNTS[data.discount_code] !== undefined) {
+        // Promotiecode (bv. START50) — geen per-e-mail restrictie
+        const pct = PROMO_DISCOUNTS[data.discount_code]
+        applyDiscount = true
+        amountCents = Math.round(BASE_CENTS * (1 - pct / 100))
+        amountEuros = (amountCents / 100).toFixed(2)
+      } else if (data.discount_code === REFERRAL_CODE) {
         // Bestaande VRIEND20 referral logica
         const { data: existingCustomer } = await supabase
           .from('customers')

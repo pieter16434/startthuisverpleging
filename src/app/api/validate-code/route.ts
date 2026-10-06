@@ -3,13 +3,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 
 const REFERRAL_CODE = (process.env.REFERRAL_CODE ?? 'VRIEND20').toUpperCase()
+const PROMO_CODES: Record<string, number> = { START50: 50 }
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code')?.trim().toUpperCase()
   if (!code) return NextResponse.json({ valid: false })
 
   if (code === REFERRAL_CODE) {
-    return NextResponse.json({ valid: true, type: 'referral' })
+    return NextResponse.json({ valid: true, type: 'referral', discount_pct: 20 })
+  }
+
+  if (PROMO_CODES[code] !== undefined) {
+    return NextResponse.json({ valid: true, type: 'promo', discount_pct: PROMO_CODES[code] })
   }
 
   const supabase = createServiceClient()
@@ -28,5 +33,5 @@ export async function GET(req: NextRequest) {
     if (new Date() > graceEnd) return NextResponse.json({ valid: false })
   }
 
-  return NextResponse.json({ valid: true, type: 'influencer' })
+  return NextResponse.json({ valid: true, type: 'influencer', discount_pct: 20 })
 }
