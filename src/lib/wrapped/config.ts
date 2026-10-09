@@ -79,12 +79,32 @@ export type SuperkrachtSlug = typeof SUPERKRACHTEN[number]['slug']
 
 // ─── Afdelingen ───────────────────────────────────────────────────────────────
 export const AFDELINGEN = [
-  'Spoed',
-  'Intensieve zorg',
+  'Abdominale heelkunde',
+  'Cardiologie',
+  'Cathlab',
+  'CCU (Coronary Care Unit)',
+  'Dagziekenhuis',
+  'Dialyse',
+  'Gastro-entero',
   'Geriatrie',
-  'Chirurgie',
-  'Interne',
-  'Andere',
+  'Gynaeco',
+  'Hematologie',
+  'Hematologie (steriele kamers)',
+  'ITE1 (Intensieve Therapie Eenheid)',
+  'Neonatologie',
+  'Neurochirurgie',
+  'Neurologie',
+  'OK (Operatiekwartier)',
+  'Oncologie',
+  'Oncologie / Hematologie',
+  'Orthopedie',
+  'PAAZ (Psychiatrische Afdeling)',
+  'Palliatieve Zorgen',
+  'Pneumologie',
+  'Psychogeriatrie',
+  'REVA',
+  'Spoed',
+  'Urologie / nefrologie / infectie',
 ] as const
 
 // ─── Hogescholen (voor Stage Wrapped) ─────────────────────────────────────────
