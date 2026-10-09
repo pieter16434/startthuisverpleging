@@ -6,7 +6,6 @@ import type { Antwoorden } from '@/lib/wrapped/calculations'
 import { trackMeta, trackTikTok } from '@/lib/wrapped/track'
 import { getStoredUtms } from '@/lib/wrapped/utm'
 
-const BG     = '#1C2A20'
 const SURF   = '#2A3D2E'
 const CLAY   = '#B65436'
 const BUTTER = '#E8D08A'

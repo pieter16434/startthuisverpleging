@@ -8,8 +8,6 @@ import { buildWrappedUnsubscribeUrl, buildEmail1, buildEmail2, buildEmail3 } fro
 
 const FROM = process.env.RESEND_WRAPPED_FROM_EMAIL ?? process.env.RESEND_FROM_EMAIL!
 
-// Hoeveel dagen na aanmelding elke stap verstuurd wordt
-const DELAYS = { 1: 0, 2: 3, 7: 3 } // step → minDaysAfterPrev
 // step 1: stuur zodra created_at ≤ nu (safety-net voor leads die email 1 niet ontvingen)
 // step 2: ≥ 3 dagen na seq_step 1
 // step 3: ≥ 7 dagen na seq_step 2
