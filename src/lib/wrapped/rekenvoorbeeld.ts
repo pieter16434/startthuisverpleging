@@ -10,9 +10,9 @@ export const REKENVOORBEELD = {
   patientenPerDag: 18,      // 17–20 patiënten per dag bij volle ronde
   omzet: 83910,             // RIZIV-omzet sept 2024 – mei 2025 (excl. remgeld — nakijken of remgeld erbij moet)
   kosten: 20250,            // schatting: €2.000–2.500/maand × 9 maanden
-  socialeBijdragen: null as number | null,   // minimum provisie — laat definitief bedrag nakijken door boekhouder
-  belastingen: null as number | null,        // personenbelasting eenmanszaak — nakijken door boekhouder
-  overgebleven: null as number | null,       // nog niet bekend
+  socialeBijdragen: 13050,   // 20,5% van netto winst (tarief zelfstandige hoofdberoep 2024) — boekhouder bevestigt definitief bedrag
+  belastingen: 15444,        // personenbelasting eenmanszaak 2024 (progressieve schijven na aftrek sociale bijdragen + belastingvrije som) — kan verschillen op basis van persoonlijke situatie
+  overgebleven: 35166,       // netto winst - sociale bijdragen - belasting
   vergelijking: null as number | null,       // optioneel: netto loon ziekenhuis voor dezelfde uren
-  opmerking: 'De eerste drie maanden waren rustiger omdat ik volledig van nul begon. Een andere route is instappen in een bestaande groep met patiënten — maar je geeft dan 15% van je omzet af.',
+  opmerking: 'De eerste drie maanden waren rustiger omdat ik volledig van nul begon. Een andere route is instappen in een bestaande groep met patiënten — maar je geeft dan 15% van je omzet af. Let op: de belasting- en bijdragecijfers zijn schattingen — jouw persoonlijke situatie (partner, kinderen, aftrekposten) kan het bedrag beïnvloeden.',
 }

@@ -90,16 +90,16 @@ export const AFDELINGEN = [
 // ─── Hogescholen (voor Stage Wrapped) ─────────────────────────────────────────
 // slug = korte URL (bv. /wrapped/pxl), naam = volledige naam
 export const HOGESCHOLEN = [
-  { slug: 'pxl',      naam: 'PXL Hasselt' },
-  { slug: 'artevelde', naam: 'Artevelde Hogeschool Gent' },
-  { slug: 'karel-de-grote', naam: 'Karel de Grote Hogeschool Antwerpen' },
-  { slug: 'vives',    naam: 'VIVES Brugge / Kortrijk / Roeselare' },
-  { slug: 'ucll',     naam: 'UC Leuven-Limburg' },
-  { slug: 'ap',       naam: 'AP Hogeschool Antwerpen' },
-  { slug: 'odisee',   naam: 'Odisee Brussel / Aalst' },
-  { slug: 'hogent',   naam: 'HoGent Gent' },
-  { slug: 'thomas-more', naam: 'Thomas More Mechelen / Geel / Lier' },
-  { slug: 'andere',   naam: 'Andere hogeschool' },
+  { slug: 'pxl',          naam: 'PXL Hasselt',                          link: 'https://www.pxl.be' },
+  { slug: 'artevelde',    naam: 'Artevelde Hogeschool Gent',             link: 'https://www.arteveldehogeschool.be' },
+  { slug: 'karel-de-grote', naam: 'Karel de Grote Hogeschool Antwerpen', link: 'https://www.kdg.be' },
+  { slug: 'vives',        naam: 'VIVES Brugge / Kortrijk / Roeselare',   link: 'https://www.vives.be' },
+  { slug: 'ucll',         naam: 'UC Leuven-Limburg',                     link: 'https://www.ucll.be' },
+  { slug: 'ap',           naam: 'AP Hogeschool Antwerpen',               link: 'https://www.ap.be' },
+  { slug: 'odisee',       naam: 'Odisee Brussel / Aalst',                link: 'https://www.odisee.be' },
+  { slug: 'hogent',       naam: 'HoGent Gent',                           link: 'https://www.hogent.be' },
+  { slug: 'thomas-more',  naam: 'Thomas More Mechelen / Geel / Lier',    link: 'https://www.thomasmore.be' },
+  { slug: 'andere',       naam: 'Andere hogeschool',                     link: null },
 ] as const
 
 export type HogeschoolSlug = typeof HOGESCHOLEN[number]['slug']
