@@ -240,7 +240,7 @@ export default function OpstartcheckPage() {
                   <div style={{ borderTop: '1px solid #E8E3D8', paddingTop: 20 }}>
                     <p style={{ fontSize: 14, color: '#3A3A33', margin: '0 0 6px', fontWeight: 600 }}>Wil je het volledige stappenplan?</p>
                     <p style={{ fontSize: 13, color: '#6E6B62', margin: '0 0 14px', lineHeight: 1.55 }}>
-                      De gids kost nu €50 in plaats van €85 — met 30 dagen geld-terug-garantie.
+                      De gids kost nu €45 in plaats van €85 — met 30 dagen geld-terug-garantie.
                     </p>
                     <a
                       href="/#wachtlijst"

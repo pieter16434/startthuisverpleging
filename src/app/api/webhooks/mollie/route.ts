@@ -529,7 +529,7 @@ export async function POST(req: NextRequest) {
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL!,
       to: process.env.ADMIN_NOTIFICATION_EMAIL!,
-      subject: `💰 Nieuwe aankoop — ${customer.first_name} ${customer.last_name} (€50)`,
+      subject: `💰 Nieuwe aankoop — ${customer.first_name} ${customer.last_name} (€45)`,
       html: `
         <p><strong>Nieuwe aankoop!</strong></p>
         <table>

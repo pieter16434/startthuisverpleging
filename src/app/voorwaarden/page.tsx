@@ -28,7 +28,7 @@ export default function VoorwaardenPage() {
         startthuisverpleging biedt één digitaal product aan:
       </p>
       <ul style={{ paddingLeft: 20, marginTop: 8 }}>
-        <li><strong>Gids: Zelfstandig thuisverpleegkundige worden in Vlaanderen</strong> — een digitale PDF-gids (introductieprijs € 50,00 incl. btw; normaal € 85,00)</li>
+        <li><strong>Gids: Zelfstandig thuisverpleegkundige worden in Vlaanderen</strong> — een digitale PDF-gids (introductieprijs € 45,00 incl. btw; normaal € 85,00)</li>
       </ul>
       <p style={{ marginTop: 12 }}>
         Na succesvolle betaling ontvangt de koper de gids per e-mail als downloadlink. Het gaat om een digitaal product — er wordt geen fysiek exemplaar verzonden.

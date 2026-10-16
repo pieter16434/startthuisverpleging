@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: 'summary',
     title: 'startthuisverpleging — Zelfstandig thuisverpleegkundige worden in Vlaanderen',
     description:
-      'Het complete stappenplan om als zelfstandig thuisverpleegkundige te starten in Vlaanderen. Nu beschikbaar voor €50.',
+      'Het complete stappenplan om als zelfstandig thuisverpleegkundige te starten in Vlaanderen. Nu beschikbaar voor €45.',
   },
   robots: {
     index: true,

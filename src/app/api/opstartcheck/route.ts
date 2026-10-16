@@ -158,7 +158,7 @@ export async function POST(req: NextRequest) {
               <p style="font-size:15px;color:#1A1A17;font-weight:700;margin:0 0 10px;">Klaar voor de volledige gids?</p>
               <p style="font-size:14px;color:#3A3A33;line-height:1.7;margin:0 0 16px;">
                 De Opstartcheck geeft je de basis. De volledige gids neemt je stap voor stap mee door alle documenten, de volgorde én de drie dure fouten die je <strong>€2.100 per jaar</strong> kunnen kosten.
-                <strong>Introductieprijs: €50 (normaal €85)</strong> — met 30 dagen geld-terug-garantie, geldig t.e.m. 30 september 2026.
+                <strong>Introductieprijs: €45 (normaal €85)</strong> — met 30 dagen geld-terug-garantie, geldig t.e.m. 31 december 2026.
               </p>
               <table cellpadding="0" cellspacing="0">
                 <tr>

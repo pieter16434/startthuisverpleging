@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { resend } from '@/lib/resend/client'
 import { buildUnsubscribeUrl } from '@/lib/email/unsubscribe'
@@ -95,7 +95,7 @@ function buildMail1(naam: string, unsubUrl: string): MailData {
     ${p('Het zit niet in hun tarieven. Het zit in de volgorde waarin ze hun opstart regelen: boekhouder, verzekering en RIZIV in de verkeerde volgorde aanpakken.')}
     ${p('In de volledige gids leggen we die volgorde stap voor stap uit, mét de exacte documenten en de kortingscodes bij onze partners.')}
     <p style="font-size:15px;color:#3A3A33;line-height:1.7;margin:16px 0 0;">— Pieter &amp; Jonas</p>
-    ${ctaButton(`${SITE_URL}/#wachtlijst`, 'Bekijk de volledige gids → (€50)')}
+    ${ctaButton(`${SITE_URL}/#wachtlijst`, 'Bekijk de volledige gids → (€45)')}
   `
   return {
     subject: 'De fout die starters €2.100 per jaar kost',
@@ -108,40 +108,40 @@ function buildMail2(naam: string, provincie: string, unsubUrl: string): MailData
   const provincieNaam = PROVINCIE_LABELS[provincie] ?? 'Vlaanderen'
   const body = `
     ${p(`Hoi ${naam},`)}
-    ${p('Even eerlijk: waarom €50 betalen als er info gratis op Google staat?')}
+    ${p('Even eerlijk: waarom €45 betalen als er info gratis op Google staat?')}
     ${p(`Omdat die info verspreid, verouderd en niet Vlaanderen-specifiek is — en je er weken mee kwijt bent. De gids bundelt alles, actueel en op maat van <strong>${provincieNaam}</strong>.`)}
     <p style="font-size:15px;color:#3A3A33;line-height:1.7;margin:0 0 8px;">Je krijgt:</p>
     <ul style="font-size:15px;color:#3A3A33;line-height:1.8;margin:0 0 16px;padding-left:20px;">
       <li>31 pagina's stappenplan, van RIZIV tot je eerste patiënt</li>
       <li>De juiste volgorde en checklists (geen dure fouten)</li>
-      <li>Persoonlijke kortingscodes bij boekhouder, verzekeraar en software — samen meer dan €50 waard</li>
+      <li>Persoonlijke kortingscodes bij boekhouder, verzekeraar en software — samen meer dan €45 waard</li>
       <li>30 dagen geld-terug-garantie</li>
     </ul>
     ${p('<strong>De kortingen alleen al verdienen de gids terug.</strong>')}
     <p style="font-size:15px;color:#3A3A33;line-height:1.7;margin:16px 0 0;">— Pieter &amp; Jonas</p>
-    ${ctaButton(`${SITE_URL}/#wachtlijst`, 'Ik wil de gids → (€50)')}
+    ${ctaButton(`${SITE_URL}/#wachtlijst`, 'Ik wil de gids → (€45)')}
   `
   return {
-    subject: 'Wat je krijgt voor €50 (en waarom het zichzelf terugbetaalt)',
-    preheader: "31 pagina’s stappenplan + kortingscodes van meer dan €50 waard.",
-    html: wrapEmail('Wat je krijgt voor €50', body, unsubUrl),
+    subject: 'Wat je krijgt voor €45 (en waarom het zichzelf terugbetaalt)',
+    preheader: "31 pagina’s stappenplan + kortingscodes van meer dan €45 waard.",
+    html: wrapEmail('Wat je krijgt voor €45', body, unsubUrl),
   }
 }
 
 function buildMail3(naam: string, unsubUrl: string): MailData {
   const body = `
     ${p(`Hoi ${naam},`)}
-    ${p('Kort en duidelijk: de introprijs van <strong>€50</strong> loopt t.e.m. 31 december. Daarna kost exact dezelfde gids <strong>€85</strong>.')}
-    ${p('Elke week uitstel is ook een week later starten als zelfstandige — en straks €35 duurder.')}
+    ${p('Kort en duidelijk: de introprijs van <strong>€45</strong> loopt t.e.m. 31 december. Daarna kost exact dezelfde gids <strong>€85</strong>.')}
+    ${p('Elke week uitstel is ook een week later starten als zelfstandige — en straks €40 duurder.')}
     ${p('Wie vandaag begint, verdient de gids terug vóór de prijs stijgt.')}
     ${p('Twijfel je nog? Onthoud: <strong>30 dagen geld terug</strong>, geen risico.')}
     <p style="font-size:15px;color:#3A3A33;line-height:1.7;margin:16px 0 0;">— Pieter &amp; Jonas</p>
-    ${ctaButton(`${SITE_URL}/#wachtlijst`, 'Bestel nu voor €50 →')}
+    ${ctaButton(`${SITE_URL}/#wachtlijst`, 'Bestel nu voor €45 →')}
   `
   return {
-    subject: 'Na 31 december betaal je €35 meer',
+    subject: 'Na 31 december betaal je €40 meer',
     preheader: 'Zelfde gids, hogere prijs. Dit is je herinnering.',
-    html: wrapEmail('Na 31 december betaal je €35 meer', body, unsubUrl),
+    html: wrapEmail('Na 31 december betaal je €40 meer', body, unsubUrl),
   }
 }
 

@@ -31,10 +31,10 @@ export async function POST(req: NextRequest) {
     // Introductieprijs t.e.m. 31 december 2026 — daarna automatisch €85
     const INTRO_PRICE_ENDS = new Date('2026-12-31T23:59:59+01:00')
     const isIntro = new Date() < INTRO_PRICE_ENDS
-    const BASE_CENTS = isIntro ? 5000 : 8500
-    const BASE_EUROS = isIntro ? '50.00' : '85.00'
-    const DISC_CENTS = isIntro ? 4000 : 6800  // 20% korting
-    const DISC_EUROS = isIntro ? '40.00' : '68.00'
+    const BASE_CENTS = isIntro ? 4500 : 8500
+    const BASE_EUROS = isIntro ? '45.00' : '85.00'
+    const DISC_CENTS = isIntro ? 3600 : 6800  // 20% korting
+    const DISC_EUROS = isIntro ? '36.00' : '68.00'
 
     // Valideer kortingscode indien opgegeven
     let applyDiscount = false
