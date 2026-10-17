@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Projectoverzicht
 
-**startthuisverpleging.be** is een Belgische webshop die een digitale gids verkoopt voor thuisverpleegkundigen die zelfstandig willen starten in Vlaanderen. De gids kost €50 (introductieprijs t.e.m. 30 september 2026, daarna €85) en wordt direct na betaling als PDF afgeleverd.
+**startthuisverpleging.be** is een Belgische webshop die een digitale gids verkoopt voor thuisverpleegkundigen die zelfstandig willen starten in Vlaanderen. De gids kost €45 (introductieprijs t.e.m. 31 december 2026, daarna €85) en wordt direct na betaling als PDF afgeleverd.
 
 **Eigenaar:** Pieter Vanermen — niet-developer, werkt samen met Claude Code voor alle technische aanpassingen.
 
@@ -21,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Betalingen | Mollie |
 | E-mail | Resend |
 | Hosting | Vercel (Hobby plan) |
-| Analytics | TikTok Pixel + Events API |
+| Analytics | TikTok Pixel + Events API, Meta Pixel + Conversions API |
 | Validatie | Zod |
 
 ---
@@ -65,7 +65,7 @@ De Supabase service role client (`createServiceClient`) omzeilt RLS en wordt uit
 |---|---|---|
 | `/api/opstartcheck` | POST | Lead aanmaken, bevestigingsmail + PDF sturen |
 | `/api/checkout` | POST | Klant + order aanmaken, Mollie betaling starten |
-| `/api/webhooks/mollie` | POST | Betaling verwerken, PDF-mail sturen, TikTok Purchase event |
+| `/api/webhooks/mollie` | POST | Betaling verwerken, PDF-mail sturen, TikTok + Meta Purchase event |
 | `/api/validate-code` | POST | Kortingscode valideren (VRIEND20 of influencer code) |
 | `/api/unsubscribe` | GET | HMAC-gebaseerde uitschrijflink verwerken |
 | `/api/refund-request` | POST | Terugbetalingsverzoek indienen |
@@ -102,8 +102,8 @@ Na inschrijving op de Opstartcheck ontvangen leads 3 follow-up mails:
 | Mail | Dag | Onderwerp |
 |---|---|---|
 | 1 | +2 | "De fout die starters €2.100 per jaar kost" |
-| 2 | +4 | "Wat je krijgt voor €50 (en waarom het zichzelf terugbetaalt)" |
-| 3 | +6 | "Na 30 september betaal je €35 meer" |
+| 2 | +4 | "Wat je krijgt voor €45 (en waarom het zichzelf terugbetaalt)" |
+| 3 | +6 | "Na 31 december betaal je €40 meer" |
 
 **Logica:** Vercel Cron Job draait dagelijks om 08:00 UTC. De cron kijkt welke leads `nurture_step = N-1` hebben en minstens N×2 dagen geleden inschreven. Buyers (orders met status `paid`) worden overgeslagen. Na versturen wordt `nurture_step` verhoogd.
 
@@ -130,13 +130,35 @@ Na inschrijving op de Opstartcheck ontvangen leads 3 follow-up mails:
 
 ```typescript
 // In /api/checkout/route.ts
-const INTRO_PRICE_ENDS = new Date('2026-09-30T23:59:59+02:00')
+const INTRO_PRICE_ENDS = new Date('2026-12-31T23:59:59+01:00')
 const isIntro = new Date() < INTRO_PRICE_ENDS
-const BASE_CENTS = isIntro ? 5000 : 8500  // €50 of €85
-const DISC_CENTS = isIntro ? 4000 : 6800  // €40 of €68 (20% korting)
+const BASE_CENTS = isIntro ? 4500 : 8500  // €45 of €85
+const DISC_CENTS = isIntro ? 3600 : 6800  // €36 of €68 (20% korting)
 ```
 
-De prijs schakelt automatisch over op 1 oktober 2026.
+De prijs schakelt automatisch over op 1 januari 2027.
+
+---
+
+## Meta tracking
+
+**Browser-side pixel:** inline script in `public/coming-soon.html`  
+Pixel ID: `1885798712582280` (hardcoded in HTML; op server via `META_PIXEL_ID`)
+
+- `fbq('init')` + `fbq('track', 'PageView')` laden **alleen na cookietoestemming** (`__grantCookieConsent()`).
+- `ViewContent` — IntersectionObserver op `#wachtlijst` (eenmalig, na consent).
+- `Lead` — na succesvol indienen Opstartcheck-formulier; `event_id` via `crypto.randomUUID()`.
+- `InitiateCheckout` — vlak vóór redirect naar Mollie; `event_id` via `crypto.randomUUID()`.
+- `Purchase` — op `/checkout/success` via React client component (`MetaPurchaseFirer`); `event_id = "purchase_<orderId>"`.
+
+**Server-side Conversions API:** `src/lib/meta/capi.ts`  
+Graph API versie: `v21.0` (controleer periodiek op updates).
+
+- `Lead` → `/api/opstartcheck` (deduplication via `meta_event_id` uit body)
+- `InitiateCheckout` → `/api/checkout` (deduplication via `meta_event_id` uit body)
+- `Purchase` → `/api/webhooks/mollie` na bevestigde betaling; `event_id = "purchase_<orderId>"` (matcht browser)
+
+**Tracking data opslaan:** kolommen `tracking_fbp`, `tracking_fbc`, `tracking_ip`, `tracking_ua` op de `orders` tabel (vereist Supabase-migratie: `supabase/migrations/20261017_orders_tracking_columns.sql`).
 
 ---
 
@@ -160,6 +182,7 @@ Pixel ID: `DAN6VT3C77U5PB5VV910`
 | `src/lib/resend/client.ts` | Resend e-mail client |
 | `src/lib/mollie/client.ts` | Mollie betaalclient |
 | `src/lib/tiktok/events.ts` | TikTok Events API helpers |
+| `src/lib/meta/capi.ts`    | Meta Conversions API helper (`sendMetaEvent`) |
 | `src/lib/email/unsubscribe.ts` | HMAC unsubscribe token generatie + verificatie |
 | `src/lib/storage/pdf.ts` | Signed URL generator voor PDFs (1 jaar geldig) |
 | `src/lib/admin/auth.ts` | JWT verificatie admin |
@@ -199,6 +222,11 @@ ORGANIZATION_JWT_SECRET
 NEXT_PUBLIC_TIKTOK_PIXEL_ID   # DAN6VT3C77U5PB5VV910
 TIKTOK_EVENTS_ACCESS_TOKEN
 
+# Meta
+META_PIXEL_ID                 # 1885798712582280 (optioneel — hardcoded als fallback)
+META_CAPI_ACCESS_TOKEN        # Vercel Production only
+META_TEST_EVENT_CODE          # optioneel — voor Meta Events Manager testmodus
+
 # E-mail automation
 UNSUBSCRIBE_SECRET        # HMAC geheim voor uitschrijflinks
 CRON_SECRET               # Vercel stuurt dit mee bij cron calls
@@ -237,5 +265,5 @@ Draait dagelijks om 08:00 UTC (= 10:00 Belgische tijd). Vercel stuurt automatisc
 - `public/coming-soon.html` is een statisch bestand — Next.js layout is hier **niet** actief. TikTok pixel, formulier-JS en styles staan allemaal inline in dit bestand.
 - De Supabase service role client omzeilt RLS — nooit in client-side code gebruiken.
 - `marketing_consent` staat voor alle bestaande leads op `false` (geen zichtbare checkbox in het formulier). Filter hier **niet** op voor de nurture-mails — dan gaan er nooit mails uit.
-- De introductieprijs (€50) vervalt automatisch op 1 oktober 2026 — geen code-aanpassing nodig.
+- De introductieprijs (€45) vervalt automatisch op 1 januari 2027 — geen code-aanpassing nodig.
 - Mollie webhook is niet geauthenticeerd via signature — de betalingsstatus wordt opgehaald via de Mollie API (niet vertrouwd op de webhook payload zelf).

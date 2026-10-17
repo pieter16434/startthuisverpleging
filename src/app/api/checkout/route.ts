@@ -3,6 +3,7 @@ import { mollieClient } from '@/lib/mollie/client'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { trackInitiateCheckout } from '@/lib/tiktok/events'
+import { sendMetaEvent } from '@/lib/meta/capi'
 
 const REFERRAL_CODE = (process.env.REFERRAL_CODE ?? 'VRIEND20').toUpperCase()
 const PROMO_DISCOUNTS: Record<string, number> = { START50: 50 }
@@ -18,6 +19,9 @@ const CheckoutSchema = z.object({
   address_street: z.string().max(150).optional().transform(s => s?.trim() || undefined),
   address_postal_code: z.string().max(20).optional().transform(s => s?.trim() || undefined),
   address_city: z.string().max(100).optional().transform(s => s?.trim() || undefined),
+  meta_event_id: z.string().max(100).optional(),
+  meta_fbp:      z.string().max(300).optional(),
+  meta_fbc:      z.string().max(300).optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -130,6 +134,9 @@ export async function POST(req: NextRequest) {
 
     if (customerError) throw customerError
 
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined
+    const userAgent = req.headers.get('user-agent') ?? undefined
+
     // Order aanmaken (pending)
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -139,6 +146,10 @@ export async function POST(req: NextRequest) {
         status: 'pending',
         ...(applyDiscount ? { discount_code: data.discount_code } : {}),
         ...(influencerId ? { influencer_id: influencerId } : {}),
+        ...(data.meta_fbp ? { tracking_fbp: data.meta_fbp } : {}),
+        ...(data.meta_fbc ? { tracking_fbc: data.meta_fbc } : {}),
+        ...(clientIp ? { tracking_ip: clientIp } : {}),
+        ...(userAgent ? { tracking_ua: userAgent } : {}),
       })
       .select('id')
       .single()
@@ -149,7 +160,7 @@ export async function POST(req: NextRequest) {
     const payment = await mollieClient.payments.create({
       amount: { currency: 'EUR', value: amountEuros },
       description: 'Gids — Zelfstandig thuisverpleegkundige worden in Vlaanderen',
-      redirectUrl: `${baseUrl}/checkout/success?order_id=${order.id}`,
+      redirectUrl: `${baseUrl}/checkout/success?order_id=${order.id}&amount_cents=${amountCents}`,
       webhookUrl: `${baseUrl}/api/webhooks/mollie`,
       metadata: {
         order_id: order.id,
@@ -166,14 +177,31 @@ export async function POST(req: NextRequest) {
     // TikTok Events API — InitiateCheckout
     trackInitiateCheckout(order.id, {
       email: data.email,
-      ip: req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? undefined,
-      user_agent: req.headers.get('user-agent') ?? undefined,
+      ip: clientIp,
+      user_agent: userAgent,
     }, {
       value: amountCents / 100,
       currency: 'EUR',
       content_id: 'gids-zelfstandig-thuisverpleegkundige',
       content_name: 'Gids: Zelfstandig thuisverpleegkundige worden in Vlaanderen',
     }).catch(() => {})
+
+    // Meta CAPI — InitiateCheckout
+    if (data.meta_event_id) {
+      sendMetaEvent({
+        eventName: 'InitiateCheckout',
+        eventId:   data.meta_event_id,
+        email:     data.email,
+        firstName: data.first_name,
+        value:     amountCents / 100,
+        currency:  'EUR',
+        fbp:       data.meta_fbp,
+        fbc:       data.meta_fbc,
+        clientIp,
+        userAgent,
+        sourceUrl: 'https://www.startthuisverpleging.be',
+      }).catch(() => {})
+    }
 
     return NextResponse.json({ payment_url: payment.getCheckoutUrl() })
   } catch (err) {

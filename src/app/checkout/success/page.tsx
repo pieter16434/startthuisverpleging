@@ -1,3 +1,61 @@
+'use client'
+
+import { Suspense, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
+
+const PIXEL_ID = '1885798712582280'
+
+function MetaPurchaseFirer() {
+  const params = useSearchParams()
+
+  useEffect(() => {
+    const orderId    = params.get('order_id')
+    const amountStr  = params.get('amount_cents')
+    if (!orderId || !amountStr) return
+
+    let consent: string | null = null
+    try { consent = localStorage.getItem('stv_cookie_consent') } catch {}
+    if (consent !== 'yes') return
+
+    const value   = parseInt(amountStr, 10) / 100
+    const eventId = `purchase_${orderId}`
+
+    function fireEvent() {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fbq = (window as any).fbq as ((...args: unknown[]) => void) | undefined
+      if (typeof fbq !== 'function') return
+      fbq('init', PIXEL_ID)
+      fbq('track', 'Purchase',
+        { value, currency: 'EUR', content_ids: ['gids-zelfstandig-thuisverpleegkundige'], num_items: 1 },
+        { eventID: eventId }
+      )
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof (window as any).fbq === 'function') {
+      fireEvent()
+      return
+    }
+
+    // Laad fbevents.js en definieer fbq stub
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any
+    if (!w.fbq) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const q: unknown[][] = []; const n: any = (...a: unknown[]) => q.push(a)
+      n.queue = q; n.loaded = true; n.version = '2.0'; n.push = n
+      w.fbq = n; w._fbq = n
+    }
+    const script = document.createElement('script')
+    script.async = true
+    script.src   = 'https://connect.facebook.net/en_US/fbevents.js'
+    script.onload = fireEvent
+    document.head.appendChild(script)
+  }, [params])
+
+  return null
+}
+
 export default function SuccessPage() {
   return (
     <main style={{
@@ -9,6 +67,10 @@ export default function SuccessPage() {
       justifyContent: 'center',
       padding: '40px 24px',
     }}>
+      <Suspense fallback={null}>
+        <MetaPurchaseFirer />
+      </Suspense>
+
       <div style={{ width: '100%', maxWidth: 520, textAlign: 'center' }}>
 
         {/* Check icoon */}

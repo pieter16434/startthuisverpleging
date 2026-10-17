@@ -4,6 +4,7 @@ import { resend } from '@/lib/resend/client'
 import { getSignedPdfUrl } from '@/lib/storage/pdf'
 import { z } from 'zod'
 import { buildUnsubscribeUrl } from '@/lib/email/unsubscribe'
+import { sendMetaEvent } from '@/lib/meta/capi'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,6 +40,9 @@ const Schema = z.object({
   utm_campaign: z.string().max(80).optional(),
   utm_content:  z.string().max(80).optional(),
   website:      z.string().optional(), // honeypot: moet leeg zijn
+  meta_event_id: z.string().max(100).optional(),
+  meta_fbp:      z.string().max(300).optional(),
+  meta_fbc:      z.string().max(300).optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -263,6 +267,21 @@ export async function POST(req: NextRequest) {
     subject: `📥 Nieuwe lead — ${provincieName} (${provinceTotal ?? '?'} totaal)`,
     html:    adminHtml,
   })
+
+  // ─── Meta CAPI — Lead ─────────────────────────────────────────────────────
+  if (data.meta_event_id) {
+    sendMetaEvent({
+      eventName: 'Lead',
+      eventId:   data.meta_event_id,
+      email:     data.email,
+      firstName: data.first_name,
+      fbp:       data.meta_fbp,
+      fbc:       data.meta_fbc,
+      clientIp:  ip !== 'unknown' ? ip : undefined,
+      userAgent: req.headers.get('user-agent') ?? undefined,
+      sourceUrl: 'https://www.startthuisverpleging.be',
+    }).catch(() => {})
+  }
 
   return NextResponse.json({ ok: true })
 }

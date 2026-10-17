@@ -6,6 +6,7 @@ import { generateCodebookPdf, type CodebookData } from '@/lib/pdf/codebook'
 import { generateInvoicePdf, type InvoiceData } from '@/lib/pdf/invoice'
 import { getSignedPdfUrl, GUIDE_PATH, GUIDE_PRINT_PATH } from '@/lib/storage/pdf'
 import { trackPurchase } from '@/lib/tiktok/events'
+import { sendMetaEvent } from '@/lib/meta/capi'
 
 const PROVINCES: Record<string, string> = {
   ANT: 'Antwerpen', LIM: 'Limburg', OVL: 'Oost-Vlaanderen',
@@ -64,6 +65,22 @@ export async function POST(req: NextRequest) {
       currency: 'EUR',
       content_id: 'gids-zelfstandig-thuisverpleegkundige',
       content_name: 'Gids: Zelfstandig thuisverpleegkundige worden in Vlaanderen',
+    }).catch(() => {})
+
+    // Meta CAPI — Purchase (event_id = "purchase_<orderId>" matcht browser-side event)
+    sendMetaEvent({
+      eventName: 'Purchase',
+      eventId:   `purchase_${orderId}`,
+      email:     customer.email,
+      firstName: customer.first_name ?? undefined,
+      value:     order.amount_cents / 100,
+      currency:  'EUR',
+      orderId,
+      fbp:       order.tracking_fbp ?? undefined,
+      fbc:       order.tracking_fbc ?? undefined,
+      clientIp:  order.tracking_ip  ?? undefined,
+      userAgent: order.tracking_ua  ?? undefined,
+      sourceUrl: 'https://www.startthuisverpleging.be/checkout',
     }).catch(() => {})
 
     // ── 2. Genereer partner codes per provincie ──────────────────────────────
